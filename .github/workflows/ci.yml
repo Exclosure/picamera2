@@ -19,3 +19,18 @@ jobs:
         run: poetry install
       - name: Lint
         run: poetry run black --check .
+  test:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Run image
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: "1.1.12"
+      - name: Install
+        run: poetry install
+      - name: Test
+        run: pytest tests/test_collection.py
