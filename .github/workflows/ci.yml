@@ -23,9 +23,10 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.9"
+      - name: Ls python
+        run: which python
+      - name: pyversion
+        run: python --version
       - name: Run image
         uses: abatilo/actions-poetry@v2
         with:
