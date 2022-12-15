@@ -26,12 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install packages
-        run: sudo apt install -y python3.9
-      - name: Run image
-        uses: abatilo/actions-poetry@v2
-        with:
-          poetry-version: "1.1.12"
-      - name: Install
+        run: pip3 install poetry
+      - name: Poetry Install Deps
         run: poetry install
       - name: Test
-        run: pytest tests/test_collection.py
+        run: poetry run pytest tests/test_collection.py
