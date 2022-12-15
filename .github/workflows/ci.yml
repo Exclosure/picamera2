@@ -2,10 +2,10 @@ name: CI
 on:
   pull_request:
     branches: [main, next]
+
 jobs:
   lint:
     name: lint code
-    needs: compile
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
