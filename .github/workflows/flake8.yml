@@ -80,3 +80,5 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8 . --exit-zero --count --show-source --statistics
+    - name: Lint with black
+      run: black --check .
