@@ -20,4 +20,4 @@ jobs:
       - name: Black
         run: poetry run black --check .
       - name: isort
-        run: isort --check-only
+        run: poetry run isort --check-only .
