@@ -1,7 +1,8 @@
 import os
-import pytest
 import subprocess
 import sys
+
+import pytest
 
 this_folder, this_file = os.path.split(__file__)
 
