@@ -30,6 +30,6 @@ def test_file(test_file_name):
         success = True
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
         forward_subprocess_output(e)
-        
+
     if not success:
         pytest.fail(f"Test failed: {test_file_name}")
