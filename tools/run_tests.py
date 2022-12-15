@@ -35,12 +35,12 @@ import time
 
 def load_test_list(test_list_file, picamera2_dir):
     tests = []
-    with open(test_list_file, 'r') as f:
+    with open(test_list_file, "r") as f:
         for test in f:
             test = test.strip()
             if test == "EOL":
                 break
-            elif not test.startswith('#'):
+            elif not test.startswith("#"):
                 tests.append(os.path.join(picamera2_dir, test))
     return tests
 
@@ -59,11 +59,11 @@ def indent(text, num_spaces=4):
 def print_subprocess_output(exc: subprocess.CalledProcessError):
     if exc.stdout is not None:
         print("=" * 20 + "    STDOUT    " + "=" * 20)
-        print(indent(exc.stdout.decode('utf-8')))
+        print(indent(exc.stdout.decode("utf-8")))
 
     if exc.stderr is not None:
         print("=" * 20 + "    STDERR    " + "=" * 20)
-        print(indent(exc.stderr.decode('utf-8')))
+        print(indent(exc.stderr.decode("utf-8")))
 
 
 def run_tests(tests, xserver=True):
@@ -79,24 +79,36 @@ def run_tests(tests, xserver=True):
     num_failed = 0
     for test in tests:
         clean_directory()
-        print("Running ", test, "... ", sep='', end='', flush=True)
+        print("Running ", test, "... ", sep="", end="", flush=True)
         try:
-            output = subprocess.check_output(['python3', test], timeout=90, stderr=subprocess.STDOUT)
-            output = output.decode('utf-8')
-            output = output.split('\n')
+            output = subprocess.check_output(
+                ["python3", test], timeout=90, stderr=subprocess.STDOUT
+            )
+            output = output.decode("utf-8")
+            output = output.split("\n")
             test_passed = True
             test_skipped = False
             for line in output:
                 line = line.lower()
-                if "test pattern modes" in line:  # libcamera spits out a bogus error here
+                if (
+                    "test pattern modes" in line
+                ):  # libcamera spits out a bogus error here
                     pass
-                elif "qxcbconnection" in line:  # this can come out when running headless
+                elif (
+                    "qxcbconnection" in line
+                ):  # this can come out when running headless
                     pass
-                elif "xdg_runtime_dir" in line:  # this one too when running on behalf of GitHub
+                elif (
+                    "xdg_runtime_dir" in line
+                ):  # this one too when running on behalf of GitHub
                     pass
-                elif "unable to set controls" in line:  # currently provoked by multi camera tests
+                elif (
+                    "unable to set controls" in line
+                ):  # currently provoked by multi camera tests
                     pass
-                elif "skipped" in line:  # allow tests to report that they aren't doing anything
+                elif (
+                    "skipped" in line
+                ):  # allow tests to report that they aren't doing anything
                     test_skipped = True
                 elif "error" in line:
                     print("\tERROR")
@@ -124,16 +136,37 @@ def directoryexists(arg):
         return arg
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='picamera2 automated tests')
-    parser.add_argument('--dir', '-d', action='store',
-                        default='/home/pi/picamera2_tests', help='Folder in which to run tests')
-    parser.add_argument('--picamera2-dir', '-p', action='store', type=directoryexists,
-                        default='/home/pi/picamera2', help='Location of picamera2 folder')
-    parser.add_argument('--test-list-file', '-t', action='store',
-                        default='tests/test_list.txt', help='File containing list of tests to run')
-    parser.add_argument('--test-list-file-drm', '-t2', action='store',
-                        default='tests/test_list_drm.txt', help='File containing list of tests to run')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="picamera2 automated tests")
+    parser.add_argument(
+        "--dir",
+        "-d",
+        action="store",
+        default="/home/pi/picamera2_tests",
+        help="Folder in which to run tests",
+    )
+    parser.add_argument(
+        "--picamera2-dir",
+        "-p",
+        action="store",
+        type=directoryexists,
+        default="/home/pi/picamera2",
+        help="Location of picamera2 folder",
+    )
+    parser.add_argument(
+        "--test-list-file",
+        "-t",
+        action="store",
+        default="tests/test_list.txt",
+        help="File containing list of tests to run",
+    )
+    parser.add_argument(
+        "--test-list-file-drm",
+        "-t2",
+        action="store",
+        default="tests/test_list_drm.txt",
+        help="File containing list of tests to run",
+    )
     args = parser.parse_args()
 
     dir = args.dir
