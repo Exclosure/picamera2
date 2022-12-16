@@ -10,6 +10,7 @@ from picamera2.metadata import Metadata
 from picamera2.picamera2 import Picamera2, Preview
 from picamera2.request import CompletedRequest, MappedArray
 
+
 # TODO(meawoppl) - Make Transforms dataclasses and percolate out
 # the logic below into them
 def libcamera_transforms_eq(t1, t2):
@@ -25,6 +26,7 @@ def libcamera_colour_spaces_eq(c1, c2):
         and c1.ycbcrEncoding == c2.ycbcrEncoding
         and c1.range == c2.range
     )
+
 
 # NOTE(meawoppl) - ugleeee monkey patch. Kill the below VV
 libcamera.Transform.__repr__ = libcamera.Transform.__str__

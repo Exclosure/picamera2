@@ -1,7 +1,7 @@
 from picamera2.controls import Controls
 
 
-# TODO(meawoppl) - These class are kinda nutty, and should be a dataclasses
+# TODO(meawoppl) - These classes are kinda nutty, and should be a dataclasses
 # Needs to be in sync with libcamera, but will fail fast/hard if it isn't
 class Configuration:
     """
