@@ -21,6 +21,8 @@ class NullPreview:
         sel.register(picam2.notifyme_r, selectors.EVENT_READ, self.handle_request)
         self._started.set()
 
+        # TODO(meawoppl) - abort flag and select can be polled in parallel
+        # which will make startup/shutdown faster
         while not self._abort.is_set():
             events = sel.select(0.2)
             for key, _ in events:
