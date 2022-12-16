@@ -3,6 +3,7 @@ import threading
 
 from libcamera import ControlType, Rectangle, Size
 
+
 # TODO(meawoppl) Bring the libcamera cohersion functions into this file
 # currently in the root `__init__.py` Perform forward and backward
 # type conversion in one place... here.
