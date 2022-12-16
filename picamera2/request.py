@@ -40,7 +40,8 @@ class _MappedBuffer:
         if self.__mm is not None:
             self.__mm.close()
 
-
+# TODO (meawoppl) - Flatten into the above class using an np array view.
+# or at the very least actully use the context manager protocol it reps.
 class MappedArray:
     def __init__(self, request, stream, reshape=True):
         self.__request = request
@@ -96,6 +97,8 @@ class MappedArray:
     def array(self):
         return self.__array
 
+# TODO(meawoppl) - Make Completed Requests only exist inside of a context manager
+# This remove all the bizzare locking and reference counting we are doing here manually
 
 class CompletedRequest:
     def __init__(self, request, picam2):
@@ -172,6 +175,8 @@ class CompletedRequest:
             self.make_buffer(name), self.get_metadata(), self.config[name], filename
         )
 
+# TODO(meawoppl) - Make this an ABC with these helper methods, and make
+# sane inheritance structure for it.
 
 class Helpers:
     """This class implements functionality required by the CompletedRequest methods, but
