@@ -16,16 +16,16 @@ def forward_subprocess_output(e: subprocess.CalledProcessError):
     print(e.stderr.decode("utf-8"), end="", file=sys.stderr)
 
 
+@pytest.mark.xfail(reason="Minimum viable test.")
 def test_init():
     os.system("udevadm control --reload")
-
     from picamera2 import Picamera2
 
     print(Picamera2.global_camera_info())
     Picamera2()
 
 
-@pytest.mark.skip(reason="WIP")
+@pytest.mark.xfail(reason="Not validated to be working")
 @pytest.mark.parametrize("test_file_name", test_file_names)
 def test_file(test_file_name):
     print(sys.path)
