@@ -30,4 +30,4 @@ jobs:
       - name: Poetry Install Deps
         run: poetry install
       - name: Test
-        run: poetry run pytest tests/test_collection.py -k 'test_init'
+        run: poetry run pytest tests/test_collection.py
