@@ -34,6 +34,7 @@ VIEWFINDER = libcamera.StreamRole.Viewfinder
 _log = logging.getLogger(__name__)
 
 
+# TODO(meawoppl) Kill this enum and flatten where it is used
 class Preview(Enum):
     """Enum that applications can pass to the start_preview method."""
 
