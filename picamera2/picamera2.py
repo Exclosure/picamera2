@@ -1067,7 +1067,7 @@ class Picamera2:
 
         # Allocate all the frame buffers.
         self.streams = [stream_config.stream for stream_config in libcamera_config]
-        
+
         # TODO(meawoppl) - can be taken off public and used in the 1 function
         # that calls it.
         self.allocator = libcamera.FrameBufferAllocator(self.camera)
