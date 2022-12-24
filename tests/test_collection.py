@@ -45,12 +45,14 @@ def test_file(test_file_name):
         subprocess.run(
             ["python", test_file_name],
             cwd=this_folder,
-            timeout=20,
+            timeout=60,
             capture_output=True,
             check=True,
         ).check_returncode()
         success = True
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+    except subprocess.TimeoutExpired as e:
+        forward_subprocess_output(e)
+    except subprocess.CalledProcessError as e:
         forward_subprocess_output(e)
 
     if not success:
