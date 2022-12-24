@@ -4,6 +4,9 @@ import sys
 
 import pytest
 
+from picamera2 import Picamera2
+
+
 this_folder, this_file = os.path.split(__file__)
 
 test_file_names = [name for name in os.listdir(this_folder) if name.endswith(".py")]
@@ -17,11 +20,14 @@ def forward_subprocess_output(e: subprocess.CalledProcessError):
 
 
 def test_init():
-    os.system("udevadm control --reload")
-    from picamera2 import Picamera2
-
-    print(Picamera2.global_camera_info())
     Picamera2()
+
+
+def test_init_acquire():
+    cam = Picamera2()
+    cam.acquire()
+    cam.release()
+    cam.close()
 
 
 # @pytest.mark.xfail(reason="Not validated to be working")
