@@ -20,11 +20,10 @@ def forward_subprocess_output(e: subprocess.CalledProcessError):
 
 
 def test_init():
-    cm = CameraManager()
-    cam = Picamera2()
-    for n, camera in enumerate(cm.cameras):
-        camera.close()
-        cm.cleanup(n)
+    for i in range(3):
+        cam = Picamera2()
+        cam.close()
+
 
 
 def test_init_acquire():

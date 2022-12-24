@@ -337,7 +337,7 @@ class Picamera2:
 
     def __del__(self):
         """Without this libcamera will complain if we shut down without closing the camera."""
-        _log.debug(f"Resources now free: {self}")
+        _log.warning(f"__del__ call responsible for cleanup of {self}")
         self.close()
 
     @staticmethod
