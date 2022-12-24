@@ -28,6 +28,8 @@ def test_init():
 
 def test_init_acquire():
     cam = Picamera2()
+    cam.start()
+    cam.stop()
     cam.close()
 
 
