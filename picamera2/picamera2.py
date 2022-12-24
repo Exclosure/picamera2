@@ -1282,7 +1282,7 @@ class Picamera2:
     def capture_file_(self, file_output, name: str, format=None) -> dict:
         request = self.completed_requests.pop(0)
         assert not name.endswith(".raw"), "Raw export is not supported."
-            
+
         request.save(name, file_output, format=format)
 
         result = request.get_metadata()

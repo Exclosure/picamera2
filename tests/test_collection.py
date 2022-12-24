@@ -2,8 +2,8 @@ import os
 import subprocess
 import sys
 
-import pytest
 import numpy as np
+import pytest
 
 from picamera2 import Picamera2
 from picamera2.picamera2 import CameraManager
@@ -26,7 +26,6 @@ def forward_subprocess_output(e: subprocess.CalledProcessError):
 #     for i in range(3):
 #         cam = Picamera2()
 #         cam.close()
-
 
 
 # def test_init_acquire():
