@@ -24,7 +24,7 @@ def test_init():
     Picamera2()
 
 
-@pytest.mark.xfail(reason="Not validated to be working")
+# @pytest.mark.xfail(reason="Not validated to be working")
 @pytest.mark.parametrize("test_file_name", test_file_names)
 def test_file(test_file_name):
     print(sys.path)
