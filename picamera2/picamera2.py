@@ -59,7 +59,7 @@ class CameraManager:
             if not self.running:
                 self.setup()
 
-    def cleanup(self, index):
+    def cleanup(self, index: int):
         flag = False
         with self._lock:
             del self.cameras[index]
