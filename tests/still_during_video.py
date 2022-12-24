@@ -4,7 +4,7 @@ import os
 import time
 
 from picamera2 import Picamera2
-from picamera2.encoders.jpeg_encoder import JpegEncoder 
+from picamera2.encoders.jpeg_encoder import JpegEncoder
 
 # Encode a VGA stream, and capture a higher resolution still image half way through.
 

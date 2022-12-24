@@ -2,7 +2,7 @@
 import time
 
 from picamera2 import Picamera2
-from picamera2.encoders.jpeg_encoder import JpegEncoder 
+from picamera2.encoders.jpeg_encoder import JpegEncoder
 
 picam2 = Picamera2()
 video_config = picam2.create_video_configuration()
