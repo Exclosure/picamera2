@@ -92,7 +92,7 @@ def test_file(test_file_name):
             )
         else:
             if test_file_name in KNOWN_XFAIL:
-                pytest.xfail("Not validated to be working", pytrace=False)
+                pytest.xfail(f"Known broken: {test_file_name}")
 
     if not success:
         pytest.fail(f"Test failed: {test_file_name}", pytrace=False)
