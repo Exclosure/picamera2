@@ -5,6 +5,7 @@ import sys
 import pytest
 
 from picamera2 import Picamera2
+from picamera2.picamera2 import CameraManager
 
 
 this_folder, this_file = os.path.split(__file__)
@@ -20,8 +21,11 @@ def forward_subprocess_output(e: subprocess.CalledProcessError):
 
 
 def test_init():
-    Picamera2()
-
+    cm = CameraManager()
+    cam = Picamera2()
+    for camera in cm.cameras:
+        camera.close()
+    cm.cleanup()
 
 def test_init_acquire():
     cam = Picamera2()

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """picamera2 main class"""
-
+from __future__ import annotations
 import json
 import logging
 import os
@@ -53,7 +53,7 @@ class CameraManager:
         self.running = True
         self.thread.start()
 
-    def add(self, index, camera):
+    def add(self, index, camera: Picamera2):
         with self._lock:
             self.cameras[index] = camera
             if not self.running:
