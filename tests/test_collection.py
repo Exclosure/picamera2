@@ -20,20 +20,20 @@ def forward_subprocess_output(e: subprocess.CalledProcessError):
     print(e.stderr.decode("utf-8"), end="", file=sys.stderr)
 
 
-def test_init():
-    for i in range(3):
-        cam = Picamera2()
-        cam.close()
+# def test_init():
+#     for i in range(3):
+#         cam = Picamera2()
+#         cam.close()
 
 
 
-def test_init_acquire():
-    cam = Picamera2()
-    cam.start()
-    array = cam.capture_array()
-    assert isintance(array, np.ndarray)
-    cam.stop()
-    cam.close()
+# def test_init_acquire():
+#     cam = Picamera2()
+#     cam.start()
+#     array = cam.capture_array()
+#     assert isintance(array, np.ndarray)
+#     cam.stop()
+#     cam.close()
 
 
 # @pytest.mark.xfail(reason="Not validated to be working")
