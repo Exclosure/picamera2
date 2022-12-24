@@ -22,24 +22,23 @@ def forward_subprocess_output(e: subprocess.CalledProcessError):
         print(e.stderr.decode("utf-8"), end="", file=sys.stderr)
 
 
-KNOWN_XFAIL = [
-    "capture_average.py",
-    "capture_circular.py",
+KNOWN_XFAIL = set([
     "capture_circular_nooutput.py",
     "capture_circular_stream.py",
-    "capture_dng.py",
+    "capture_circular.py",
     "capture_dng_and_jpeg_helpers.py",
+    "capture_dng.py",
     "capture_image_full_res.py",
-    "capture_mjpeg.py",
     "capture_mjpeg_timestamp.py",
     "capture_mjpeg_v4l2.py",
+    "capture_mjpeg.py",
     "capture_multiplexer.py",
-    "capture_stream.py",
     "capture_stream_udp.py",
+    "capture_stream.py",
     "capture_timelapse_video.py",
-    "capture_video.py",
     "capture_video_raw.py",
     "capture_video_timestamp.py",
+    "capture_video.py",
     "check_timestamps.py",
     "display_transform_null.py",
     "drm_multiple_test.py",
@@ -54,7 +53,7 @@ KNOWN_XFAIL = [
     "stack_raw.py",
     "still_during_video.py",
     "video_with_config.py",
-]
+])
 
 
 def test_xfail_list():

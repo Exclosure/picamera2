@@ -30,4 +30,4 @@ jobs:
       - name: Poetry Install Deps
         run: poetry install
       - name: Test
-        run: poetry run pytest -rpfx tests/test_collection.py 
+        run: poetry run pytest -rpfxE tests/test_collection.py 
