@@ -16,8 +16,10 @@ test_file_names.sort()
 
 
 def forward_subprocess_output(e: subprocess.CalledProcessError):
-    print(e.stdout.decode("utf-8"), end="")
-    print(e.stderr.decode("utf-8"), end="", file=sys.stderr)
+    if e.stdout:
+        print(e.stdout.decode("utf-8"), end="")
+    if e.stderr:
+        print(e.stderr.decode("utf-8"), end="", file=sys.stderr)
 
 
 # def test_init():
