@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """picamera2 main class"""
 from __future__ import annotations
+
 import json
 import logging
 import os

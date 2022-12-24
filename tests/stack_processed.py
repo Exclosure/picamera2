@@ -6,8 +6,8 @@
 # it and apply it ourselves at the end.
 
 import numpy as np
-
 from PIL import Image
+
 from picamera2 import Picamera2
 
 exposure_time = 60000  # put your own numbers here

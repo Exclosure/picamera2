@@ -7,7 +7,6 @@ import pytest
 from picamera2 import Picamera2
 from picamera2.picamera2 import CameraManager
 
-
 this_folder, this_file = os.path.split(__file__)
 
 test_file_names = [name for name in os.listdir(this_folder) if name.endswith(".py")]
@@ -26,6 +25,7 @@ def test_init():
     for n, camera in enumerate(cm.cameras):
         camera.close()
         cm.cleanup(n)
+
 
 def test_init_acquire():
     cam = Picamera2()
