@@ -22,20 +22,6 @@ def forward_subprocess_output(e: subprocess.CalledProcessError):
         print(e.stderr.decode("utf-8"), end="", file=sys.stderr)
 
 
-# def test_init():
-#     for i in range(3):
-#         cam = Picamera2()
-#         cam.close()
-
-
-# def test_init_acquire():
-#     cam = Picamera2()
-#     cam.start()
-#     array = cam.capture_array()
-#     assert isintance(array, np.ndarray)
-#     cam.stop()
-#     cam.close()
-
 KNOWN_XFAIL = [
     "capture_average.py",
     "capture_circular.py",
@@ -97,15 +83,17 @@ def test_file(test_file_name):
     except subprocess.CalledProcessError as e:
         forward_subprocess_output(e)
 
-    if not success:
-        if test_file_name in KNOWN_XFAIL:
-            pytest.xfail("Not validated to be working")
-
-        pytest.fail(f"Test failed: {test_file_name}", pytrace=False)
-
-    if success:
-        if test_file_name in KNOWN_XFAIL:
+    # Special handle the XFAIL tests
+    if test_file_name in KNOWN_XFAIL:
+        if success:
             pytest.fail(
-                f"Test passed (needs removal from XFAIL list): {test_file_name}",
+                f"Test passed unexpectedly (needs removal from XFAIL list): {test_file_name}",
                 pytrace=False,
             )
+        else:
+            if test_file_name in KNOWN_XFAIL:
+                pytest.xfail("Not validated to be working", pytrace=False)
+
+    if not success:
+        pytest.fail(f"Test failed: {test_file_name}", pytrace=False)
+
