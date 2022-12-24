@@ -3,6 +3,7 @@ import subprocess
 import sys
 
 import pytest
+import numpy as np
 
 from picamera2 import Picamera2
 from picamera2.picamera2 import CameraManager
@@ -29,6 +30,8 @@ def test_init():
 def test_init_acquire():
     cam = Picamera2()
     cam.start()
+    array = cam.capture_array()
+    assert isintance(array, np.ndarray)
     cam.stop()
     cam.close()
 
