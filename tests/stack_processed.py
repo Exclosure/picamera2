@@ -5,9 +5,9 @@
 # prevents us from adding the images straightforwardly), but then we must recreate
 # it and apply it ourselves at the end.
 
-import cv2
 import numpy as np
 
+from PIL import Image
 from picamera2 import Picamera2
 
 exposure_time = 60000  # put your own numbers here
@@ -44,4 +44,4 @@ for image in images:
     accumulated += image
 accumulated = gamma_lut[accumulated]
 
-cv2.imwrite("accumulated.jpg", accumulated)
+Image.fromarray(accumulated).save("accumulated.jpg")
