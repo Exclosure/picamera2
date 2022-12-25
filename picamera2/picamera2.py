@@ -1005,7 +1005,7 @@ class Picamera2:
             _log.error("Camera did not start properly.")
             raise RuntimeError("Camera did not start properly.")
 
-    def start(self, config=None, show_preview=False) -> None:
+    def start(self, config=None) -> None:
         """
         Start the camera system running.
 
@@ -1015,12 +1015,6 @@ class Picamera2:
 
         config - if not None this is used to configure the camera. This is just a
             convenience so that you don't have to call configure explicitly.
-
-        show_preview - whether to show a preview window. You can pass in the preview
-            type or True to attempt to autodetect. If left as False you'll get no
-            visible preview window but the "NULL preview" will still be run. The
-            value None would mean no event loop runs at all and you would have to
-            implement your own.
         """
         if self.camera_config is None and config is None:
             config = "preview"
@@ -1029,8 +1023,8 @@ class Picamera2:
         if self.camera_config is None:
             raise RuntimeError("Camera has not been configured")
         # By default we will create an event loop is there isn't one running already.
-        if show_preview is not None and not self._preview:
-            self.start_preview(show_preview)
+        if not self._preview:
+            self.start_preview()
         self.start_()
 
     def stop_(self, request=None) -> None:

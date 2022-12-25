@@ -15,7 +15,7 @@ camera = Picamera2()
 preview = camera.create_preview_configuration()
 camera.configure(preview)
 
-camera.start(show_preview=None)
+camera.start()
 
 null1 = time.monotonic()
 print("Null Preview")
