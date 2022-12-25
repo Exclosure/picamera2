@@ -46,7 +46,7 @@ class Preview(Enum):
 
     NULL = 0
 
-
+# TODO(meawoppl) doc these arrtibutes
 @dataclass
 class CameraInfo:
     id: str
@@ -91,6 +91,7 @@ class CameraInfo:
 
 
 class CameraManager:
+    cameras: Dict[int, Picamera2]
     def __init__(self):
         self.running = False
         self.cameras = {}
@@ -102,7 +103,7 @@ class CameraManager:
         self.running = True
         self.thread.start()
 
-    def add(self, index, camera: Picamera2):
+    def add(self, index:int, camera: Picamera2):
         with self._lock:
             self.cameras[index] = camera
             if not self.running:
@@ -133,11 +134,7 @@ class CameraManager:
         self.cms = None
 
     def handle_request(self, flushid=None):
-        """Handle requests
-
-        :param cameras: Dictionary of Picamera2
-        :type cameras: dict
-        """
+        """Handle requests"""
         with self._lock:
             cams = set()
             for req in self.cms.get_ready_requests():
@@ -146,10 +143,12 @@ class CameraManager:
                     and req.cookie != flushid
                 ):
                     cams.add(req.cookie)
-                    with self.cameras[req.cookie]._requestslock:
-                        self.cameras[req.cookie]._requests += [
+                    
+                    self.cameras[req.cookie].add_completed_request(
                             CompletedRequest(req, self.cameras[req.cookie])
-                        ]
+                    )
+            # OS based file pipes seem really overkill for this.
+            # TODO(meawoppl) - Convert to queue primitive
             for c in cams:
                 os.write(self.cameras[c].notifyme_w, b"\x00")
 
@@ -1106,6 +1105,10 @@ class Picamera2:
     def set_controls(self, controls) -> None:
         """Set camera controls. These will be delivered with the next request that gets submitted."""
         self.controls.set_controls(controls)
+
+    def add_completed_request(self, request: CompletedRequest) -> None:
+        with self._requestslock:
+            self._requests.append(request)
 
     # TODO(meawoppl) - This whole thing needs to be smashed to simpler
     def process_requests(self) -> None:
