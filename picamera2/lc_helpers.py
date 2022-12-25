@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Any, Dict
 
 import libcamera
 
@@ -10,11 +10,13 @@ def _convert_from_libcamera_type(value):
         value = (value.width, value.height)
     return value
 
+
 def lc_unpack(lc_dict) -> Dict[str, Any]:
     unpacked = {}
     for k, v in lc_dict.items():
         unpacked[k.name] = _convert_from_libcamera_type(v)
     return unpacked
+
 
 def lc_unpack_controls(lc_dict) -> Dict[str, Any]:
     unpacked = {}

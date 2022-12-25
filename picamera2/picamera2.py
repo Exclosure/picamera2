@@ -20,8 +20,8 @@ import picamera2.formats as formats
 from picamera2.configuration import CameraConfiguration
 from picamera2.controls import Controls
 from picamera2.encoders import Encoder, Quality
-from picamera2.lc_helpers import lc_unpack, lc_unpack_controls
 from picamera2.job import Job
+from picamera2.lc_helpers import lc_unpack, lc_unpack_controls
 from picamera2.outputs import FileOutput
 from picamera2.previews import NullPreview
 from picamera2.request import CompletedRequest, Helpers
@@ -359,7 +359,6 @@ class Picamera2:
         """Without this libcamera will complain if we shut down without closing the camera."""
         _log.warning(f"__del__ call responsible for cleanup of {self}")
         self.close()
-
 
     def _grab_camera(self, idx: str | int):
         if isinstance(idx, str):
@@ -890,8 +889,8 @@ class Picamera2:
         _log.debug(f"Final configuration: {camera_config}")
 
         # Update the controls and properties list as some of the values may have changed.
-        self.camera_ctrl_info = lc_unpack(self.camera.controls)
-        self.camera_properties_ = lc_unpack_controls(self.camera.properties)
+        self.camera_ctrl_info = lc_unpack_controls(self.camera.controls)
+        self.camera_properties_ = lc_unpack(self.camera.properties)
 
         # Record which libcamera stream goes with which of our names.
         self.stream_map = {"main": libcamera_config.at(0).stream}
