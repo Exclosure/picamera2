@@ -1088,14 +1088,14 @@ class Picamera2:
             for request in requests:
                 if self._job_list:
                     call, future = self._job_list.pop(0)
-                    _log.debug(f"Begin Execution: {call.__name__}")
+                    _log.debug(f"Begin Execution: {call}")
                     try:
                         result = call(request)
                         future.set_result(result)
                     except Exception as e:
-                        _log.warning(f"Error in call {call.__name__}: {e}")
+                        _log.warning(f"Error in call {call}: {e}")
                         future.set_exception(e)
-                    _log.debug(f"End Execution: {call.__name__}")
+                    _log.debug(f"End Execution: {call}")
 
             if self.encode_stream_name in self.stream_map:
                 stream = self.stream_map[self.encode_stream_name]
