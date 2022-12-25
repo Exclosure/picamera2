@@ -1,5 +1,5 @@
-from logging import getLogger
 import time
+from logging import getLogger
 
 from picamera2 import Picamera2, Preview
 
@@ -7,6 +7,7 @@ wait = 2
 buffer = 1
 
 _log = getLogger(__name__)
+
 
 def main():
     # First we create a camera instance.
