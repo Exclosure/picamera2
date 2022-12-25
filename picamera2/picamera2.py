@@ -1042,8 +1042,7 @@ class Picamera2:
             _log.debug("Camera was not started")
             return
         if self.asynchronous:
-            # FIXME(meawoppl) wait on this.
-            self._dispatch_functions([self.stop_], wait=True)
+            self._dispatch_functions([self.stop_])[0].result()
         else:
             self.stop_()
 
