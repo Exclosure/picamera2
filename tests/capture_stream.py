@@ -7,9 +7,9 @@ from picamera2 import Picamera2
 from picamera2.encoders.jpeg_encoder import JpegEncoder
 from picamera2.outputs import FileOutput
 
-picam2 = Picamera2()
-video_config = picam2.create_video_configuration({"size": (1280, 720)})
-picam2.configure(video_config)
+camera = Picamera2()
+video_config = camera.create_video_configuration({"size": (1280, 720)})
+camera.configure(video_config)
 encoder = JpegEncoder()
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -17,16 +17,16 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     sock.bind(("0.0.0.0", 10001))
     sock.listen()
 
-    picam2.encoder = encoder
+    camera.encoder = encoder
 
     conn, addr = sock.accept()
     stream = conn.makefile("wb")
-    picam2.encoder.output = FileOutput(stream)
-    picam2.start_encoder()
-    picam2.start()
+    camera.encoder.output = FileOutput(stream)
+    camera.start_encoder()
+    camera.start()
     time.sleep(2)
-    picam2.stop()
-    picam2.stop_encoder()
+    camera.stop()
+    camera.stop_encoder()
     conn.close()
 
-picam2.close()
+camera.close()
