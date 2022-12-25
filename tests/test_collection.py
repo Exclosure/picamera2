@@ -73,7 +73,7 @@ def test_file(test_file_name):
         subprocess.run(
             ["python", test_file_name],
             cwd=this_folder,
-            timeout=60,
+            timeout=20,
             capture_output=True,
             check=True,
         ).check_returncode()
