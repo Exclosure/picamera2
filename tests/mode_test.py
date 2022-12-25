@@ -6,6 +6,10 @@
 import time
 from math import isclose
 
+import sys
+
+sys.path.append("/usr/lib/python3/dist-packages")
+
 from libcamera import Transform
 
 from picamera2 import Picamera2

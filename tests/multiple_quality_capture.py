@@ -12,6 +12,6 @@ picam2.configure(video_config)
 encoder = JpegEncoder()
 
 picam2.start_recording(encoder, "low.mjpeg")
-print(encoder._bitrate)
 time.sleep(1)
 picam2.stop_recording()
+picam2.close()
