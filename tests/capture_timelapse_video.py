@@ -46,7 +46,7 @@ time.sleep(1)
 
 picam2.start_encoder(encoder, quality=Quality.VERY_HIGH)
 
-time.sleep(20)
+time.sleep(2)
 
 picam2.stop_encoder()
 picam2.stop()

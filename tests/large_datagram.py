@@ -16,7 +16,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
     sock.connect(("127.0.0.1", 10001))
     stream = sock.makefile("wb")
     picam2.start_recording(encoder, FileOutput(stream))
-    time.sleep(5)
+    time.sleep(2)
     picam2.stop_recording()
 
 picam2.close()

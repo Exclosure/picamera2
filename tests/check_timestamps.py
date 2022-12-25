@@ -25,7 +25,7 @@ output = TimestampCollector()
 timestamps = []
 
 picam2.start_recording(encoder, output)
-time.sleep(5)
+time.sleep(2)
 picam2.stop_recording()
 
 # Now let's analyse all the timestamps

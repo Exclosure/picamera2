@@ -24,7 +24,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     picam2.encoder.output = FileOutput(stream)
     picam2.start_encoder()
     picam2.start()
-    time.sleep(20)
+    time.sleep(2)
     picam2.stop()
     picam2.stop_encoder()
     conn.close()

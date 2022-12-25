@@ -20,7 +20,7 @@ picam2.configure(video_config)
 encoder = JpegEncoder()
 
 picam2.start_recording(encoder, "test.h264")
-time.sleep(5)
+time.sleep(2)
 
 # It's better to capture the still in this thread, not in the one driving the camera.
 request = picam2.capture_request()
@@ -28,5 +28,5 @@ request.save("main", "test.jpg")
 request.release()
 print("Still image captured!")
 
-time.sleep(5)
+time.sleep(2)
 picam2.stop_recording()
