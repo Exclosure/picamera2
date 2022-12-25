@@ -35,7 +35,6 @@ KNOWN_XFAIL = set(
         "capture_mjpeg.py",
         "capture_multiplexer.py",
         "capture_stream_udp.py",
-        "capture_stream.py",
         "capture_timelapse_video.py",
         "capture_video_raw.py",
         "capture_video_timestamp.py",
