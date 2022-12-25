@@ -1,5 +1,5 @@
 """Encoder functionality"""
-
+import logging
 import threading
 from enum import Enum
 
@@ -7,6 +7,7 @@ import picamera2.formats as formats
 from picamera2.outputs import Output
 from picamera2.request import _MappedBuffer
 
+_log = logging.getLogger(__name__)
 
 class Quality(Enum):
     """Enum type to describe the quality wanted from an encoder. This may be passed
@@ -116,12 +117,9 @@ class Encoder:
         :raises RuntimeError: Invalid format
         """
         self._format = None
-
-        if type(self) is Encoder:
-            formats.assert_format_valid(value)
-            self._format = value
-        else:
-            raise RuntimeError(f"Invalid format: '{value}'")
+        if not formats.is_format_valid(value):
+            _log.warning("Possibly invalid format: '%s'", value)
+        self._format = value
 
     @property
     def output(self):
