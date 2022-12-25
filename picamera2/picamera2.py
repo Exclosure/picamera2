@@ -1143,6 +1143,16 @@ class Picamera2:
     def _dispatch_no_request(self, function: Callable[[], Any]) -> Future:
         return self._dispatch_functions([lambda r: function()])[0]
 
+    def _dispatch_mode_shift(self, config) -> Future:
+        return self._dispatch_no_request(partial(self._switch_mode, config))
+
+    def _dispatch_with_temporary_mode(self, callable, config) -> Future:
+        previous_config = self.camera_config
+        self._dispatch_mode_shift(config)
+        fut = self._dispatch(callable)
+        self._dispatch_mode_shift(previous_config)
+        return fut
+
     def _capture_file(
         self, name, file_output, format, request: CompletedRequest
     ) -> dict:
@@ -1191,13 +1201,9 @@ class Picamera2:
         """Switch the camera into a new (capture) mode, capture an image to file, then return
         back to the initial camera mode.
         """
-        previous_config = self.camera_config
-        self._dispatch_no_request(partial(self._switch_mode, camera_config))
-        result = self._dispatch(partial(self._capture_file, file_output, name, format))
-        self._dispatch_no_request(partial(self._switch_mode, camera_config))
-        return result.result()
+        return self._dispatch_with_temporary_mode(partial(self._capture_file, file_output, name, format), camera_config).result()
 
-    def capture_request_(self, request: CompletedRequest):
+    def _capture_request(self, request: CompletedRequest):
         # The "use" of this request is transferred from the completed_requests list to the caller.
         return request
 
@@ -1205,13 +1211,12 @@ class Picamera2:
         """Fetch the next completed request from the camera system. You will be holding a
         reference to this request so you must release it again to return it to the camera system.
         """
-        function = self.capture_request_
-        return self._dispatch(function).result()
+        return self._dispatch(self._capture_request).result()
 
     def switch_mode_capture_request_and_stop(self, camera_config):
         """Switch the camera into a new (capture) mode, capture a request in the new mode and then stop the camera."""
         self._dispatch_no_request(partial(self._switch_mode, camera_config))
-        request = self._dispatch(self.capture_request_)
+        request = self._dispatch(self._capture_request)
         self._dispatch_no_request(self.stop_)
         return request.result()
 
@@ -1247,28 +1252,24 @@ class Picamera2:
         """Switch the camera into a new (capture) mode, capture the first buffer, then return
         back to the initial camera mode.
         """
-        previous_config = self.camera_config
-        self._dispatch_no_request(partial(self._switch_mode, camera_config))
-        buf_future = self._dispatch(partial(self._capture_buffer, name))
-        self._dispatch_no_request(partial(self._switch_mode, previous_config))
-        return buf_future.result()
+        return self._dispatch_with_temporary_mode(
+            partial(self._capture_buffer, name), camera_config
+        ).result()
 
     def switch_mode_and_capture_buffers(self, camera_config, names=["main"]):
         """Switch the camera into a new (capture) mode, capture the first buffers, then return
         back to the initial camera mode.
         """
-        preview_config = self.camera_config
-        self._dispatch_no_request(partial(self._switch_mode, camera_config))
-        result = self._dispatch(partial(self._capture_buffers_and_metadata, names))
-        self._dispatch_no_request(partial(self._switch_mode, preview_config))
-        return result.result()
+        return self._dispatch_with_temporary_mode(
+            partial(self._capture_buffers_and_metadata, names), camera_config
+        ).result()
 
-    def capture_array_(self, name, request: CompletedRequest):
+    def _capture_array(self, name, request: CompletedRequest):
         return request.make_array(name)
 
     def capture_array(self, name="main"):
         """Make a 2d image from the next frame in the named stream."""
-        return self._dispatch(partial(self.capture_array_, name)).result()
+        return self._dispatch(partial(self._capture_array, name)).result()
 
     def _capture_arrays_and_metadata(
         self, names, request: CompletedRequest
@@ -1284,28 +1285,16 @@ class Picamera2:
     def switch_mode_and_capture_array(self, camera_config, name="main"):
         """Switch the camera into a new (capture) mode, capture the image array data, then return
         back to the initial camera mode."""
-        preview_config = self.camera_config
-
-        def capture_array_and_switch_back_(request: CompletedRequest):
-            result = self.capture_array_(name, request)
-            self._switch_mode(preview_config)
-            return result
-
-        self._dispatch_no_request(partial(self._switch_mode, camera_config))
-        return self._dispatch(capture_array_and_switch_back_).result()
+        return self._dispatch_with_temporary_mode(
+            partial(self._capture_array, name), camera_config
+        ).result()
 
     def switch_mode_and_capture_arrays(self, camera_config, names=["main"]):
         """Switch the camera into a new (capture) mode, capture the image arrays, then return
         back to the initial camera mode."""
-        preview_config = self.camera_config
-
-        def capture_arrays_and_switch_back_(request: CompletedRequest):
-            result = self._capture_arrays_and_metadata(names, request)
-            self._switch_mode(preview_config)
-            return result
-
-        self._dispatch_no_request(partial(self._switch_mode, camera_config))
-        return self._dispatch(capture_arrays_and_switch_back_).result()
+        return self._dispatch_with_temporary_mode(
+            partial(self._capture_arrays_and_metadata, names), camera_config
+        ).result()
 
     def _capture_image(self, name: str, request: CompletedRequest) -> Image:
         return request.make_image(name)
@@ -1328,15 +1317,9 @@ class Picamera2:
         """Switch the camera into a new (capture) mode, capture the image, then return
         back to the initial camera mode.
         """
-        preview_config = self.camera_config
-
-        def capture_image_and_switch_back_(request: CompletedRequest) -> Image:
-            result = self._capture_image(name, request)
-            self._switch_mode(preview_config)
-            return result
-
-        self._dispatch_no_request(partial(self._switch_mode, camera_config))
-        return self._dispatch(capture_image_and_switch_back_).result()
+        return self._dispatch_with_temporary_mode(
+            partial(self._capture_image, name), camera_config
+        ).result()
 
     def start_encoder(
         self, encoder=None, output=None, pts=None, quality=Quality.MEDIUM
