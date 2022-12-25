@@ -2,7 +2,7 @@
 
 import time
 
-from picamera2 import Picamera2, Preview, CameraInfo
+from picamera2 import CameraInfo, Picamera2, Preview
 
 if CameraInfo.n_cameras() <= 1:
     print("SKIPPED (one camera)")
