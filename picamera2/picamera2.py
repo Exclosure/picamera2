@@ -1143,7 +1143,7 @@ class Picamera2:
     def _dispatch_no_request(self, function: Callable[[], Any]) -> Future:
         return self._dispatch_functions([lambda r: function()])[0]
 
-    def _capture_file(name, file_output, format, request: CompletedRequest) -> dict:
+    def _capture_file(self, name, file_output, format, request: CompletedRequest) -> dict:
         request.save(name, file_output, format=format)
         return request.get_metadata()
 
@@ -1217,7 +1217,6 @@ class Picamera2:
 
     def capture_metadata_(self, request: CompletedRequest):
         return request.get_metadata()
-        return result
 
     def capture_metadata(self):
         """Fetch the metadata from the next camera frame."""
