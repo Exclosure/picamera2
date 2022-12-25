@@ -45,7 +45,7 @@ class Job:
             # as its "result" once it completes.
             result = self._functions[0]()
             self.calls += 1
-            
+
             self._functions.pop(0)
 
             # When no functions are left, the entire job is complete.
