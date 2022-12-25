@@ -1,5 +1,5 @@
-import time
 import sys
+import time
 
 sys.path.append("/usr/lib/python3/dist-packages")
 
