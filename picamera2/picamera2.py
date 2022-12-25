@@ -1092,7 +1092,6 @@ class Picamera2:
                 self._requests = []
             self.completed_requests = []
             _log.info("Camera stopped")
-        return (True, None)
 
     def stop(self) -> None:
         """Stop the camera."""
@@ -1211,7 +1210,7 @@ class Picamera2:
 
         result = request.get_metadata()
         request.release()
-        return (True, result)
+        return result
 
     def _execute_or_dispatch(self, function, wait, signal_function):
         if wait is None:
@@ -1248,7 +1247,7 @@ class Picamera2:
         self.stop_()
         self.configure_(camera_config)
         self.start_()
-        return (True, self.camera_config)
+        return self.camera_config
 
     def switch_mode(self, camera_config, wait=None, signal_function=None):
         """Switch the camera into another mode given by the camera_config."""
@@ -1270,9 +1269,9 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_and_switch_back_(self, file_output, preview_config, format):
-            _, result = self.capture_file_(file_output, name, format=format)
+            result = self.capture_file_(file_output, name, format=format)
             self.switch_mode_(preview_config)
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
@@ -1284,7 +1283,7 @@ class Picamera2:
 
     def capture_request_(self):
         # The "use" of this request is transferred from the completed_requests list to the caller.
-        return (True, self.completed_requests.pop(0))
+        return self.completed_requests.pop(0)
 
     def capture_request(self, wait=None, signal_function=None):
         """Fetch the next completed request from the camera system. You will be holding a
@@ -1299,9 +1298,9 @@ class Picamera2:
         """Switch the camera into a new (capture) mode, capture a request in the new mode and then stop the camera."""
 
         def capture_request_and_stop_(self):
-            _, result = self.capture_request_()
+            result = self.capture_request_()
             self.stop_()
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
@@ -1313,7 +1312,7 @@ class Picamera2:
         request = self.completed_requests.pop(0)
         result = request.get_metadata()
         request.release()
-        return (True, result)
+        return result
 
     def capture_metadata(self, wait=None, signal_function=None):
         """Fetch the metadata from the next camera frame."""
@@ -1324,7 +1323,7 @@ class Picamera2:
         request = self.completed_requests.pop(0)
         result = request.make_buffer(name)
         request.release()
-        return (True, result)
+        return result
 
     def capture_buffer(self, name="main", wait=None, signal_function=None):
         """Make a 1d numpy array from the next frame in the named stream."""
@@ -1336,7 +1335,7 @@ class Picamera2:
         request = self.completed_requests.pop(0)
         result = ([request.make_buffer(name) for name in names], request.get_metadata())
         request.release()
-        return (True, result)
+        return result
 
     def capture_buffers(self, names=["main"], wait=None, signal_function=None):
         """Make a 1d numpy array from the next frame for each of the named streams."""
@@ -1353,9 +1352,9 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_buffer_and_switch_back_(self, preview_config, name):
-            _, result = self.capture_buffer_(name)
+            result = self.capture_buffer_(name)
             self.switch_mode_(preview_config)
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
@@ -1372,9 +1371,9 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_buffers_and_switch_back_(self, preview_config, names):
-            _, result = self.capture_buffers_and_metadata_(names)
+            result = self.capture_buffers_and_metadata_(names)
             self.switch_mode_(preview_config)
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
@@ -1386,7 +1385,7 @@ class Picamera2:
         request = self.completed_requests.pop(0)
         result = request.make_array(name)
         request.release()
-        return (True, result)
+        return result
 
     def capture_array(self, name="main", wait=None, signal_function=None):
         """Make a 2d image from the next frame in the named stream."""
@@ -1400,7 +1399,7 @@ class Picamera2:
         request = self.completed_requests.pop(0)
         result = ([request.make_array(name) for name in names], request.get_metadata())
         request.release()
-        return (True, result)
+        return result
 
     def capture_arrays(self, names=["main"], wait=None, signal_function=None):
         """Make 2d image arrays from the next frames in the named streams."""
@@ -1416,9 +1415,9 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_array_and_switch_back_(self, preview_config, name):
-            _, result = self.capture_array_(name)
+            result = self.capture_array_(name)
             self.switch_mode_(preview_config)
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
@@ -1434,9 +1433,9 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_arrays_and_switch_back_(self, preview_config, names):
-            _, result = self.capture_arrays_and_metadata_(names)
+            result = self.capture_arrays_and_metadata_(names)
             self.switch_mode_(preview_config)
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
@@ -1453,7 +1452,7 @@ class Picamera2:
         request = self.completed_requests.pop(0)
         result = request.make_image(name)
         request.release()
-        return (True, result)
+        return result
 
     def capture_image(
         self, name: str = "main", wait: bool = None, signal_function=None
@@ -1482,9 +1481,9 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_image_and_switch_back_(self, preview_config, name) -> Image:
-            _, result = self.capture_image_(name)
+            result = self.capture_image_(name)
             self.switch_mode_(preview_config)
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
