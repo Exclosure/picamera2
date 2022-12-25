@@ -1132,7 +1132,7 @@ class Picamera2:
             futures = []
             for f in functions:
                 fut = Future()
-                Future.set_running_or_notify_cancel()
+                fut.set_running_or_notify_cancel()
                 self._job_list.append((f, fut))
                 futures.append(fut)
         return futures
