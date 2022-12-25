@@ -24,7 +24,10 @@ def lc_unpack_controls(lc_dict) -> Dict[str, Any]:
         unpacked[k.name] = (k, v)
     return unpacked
 
+
 LCTransform = libcamera._libcamera.Transform
+
+
 def libcamera_transforms_eq(t1: LCTransform, t2: LCTransform) -> bool:
     """Return ``True`` if the two transforms are equivalent."""
     return (
