@@ -83,7 +83,7 @@ class CameraInfo:
     def requires_camera(n: int = 1):
         if CameraInfo.n_cameras() < n:
             msg = "Camera(s) not found (You may need to disable legacy camera with raspi-config)."
-            _log.error(msg            )
+            _log.error(msg)
             raise RuntimeError(msg)
 
 
