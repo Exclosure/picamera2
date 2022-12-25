@@ -21,7 +21,6 @@ import picamera2.formats as formats
 from picamera2.configuration import CameraConfiguration
 from picamera2.controls import Controls
 from picamera2.encoders import Encoder, Quality
-from picamera2.job import Job
 from picamera2.outputs import FileOutput
 from picamera2.previews import NullPreview
 from picamera2.request import CompletedRequest, Helpers
@@ -1202,9 +1201,9 @@ class Picamera2:
         self._dispatch_no_request(partial(self._switch_mode, camera_config))
         return self._dispatch(capture_and_switch_back_).result()
 
-    def capture_request_(self):
+    def capture_request_(self, request: CompletedRequest):
         # The "use" of this request is transferred from the completed_requests list to the caller.
-        return self.completed_requests.pop(0)
+        return request
 
     def capture_request(self):
         """Fetch the next completed request from the camera system. You will be holding a
@@ -1220,13 +1219,15 @@ class Picamera2:
         self._dispatch_no_request(self.stop_)
         return request.result()
 
-    def capture_metadata_(self, request: CompletedRequest):
+    def _capture_metadata(self, request: CompletedRequest):
         return request.get_metadata()
 
-    def capture_metadata(self):
+    def capture_metadata(self) -> dict:
         """Fetch the metadata from the next camera frame."""
-        return self._dispatch(self.capture_metadata_).result()
+        return self.capture_metadata_async().result()
 
+    def capture_metadata_async(self):
+        return self._dispatch(self._capture_metadata)
     def capture_buffer_(self, name: str, request: CompletedRequest):
         return request.make_buffer(name)
 
