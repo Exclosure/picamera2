@@ -386,7 +386,6 @@ class Picamera2:
             _log.error(message)
             raise RuntimeError(message)
 
-    # TODO(meawoppl) - Only returns true.  Should be removed.
     def _initialize_camera(self) -> None:
         """Initialize camera
 
@@ -426,9 +425,8 @@ class Picamera2:
 
         :raises RuntimeError: Failed to setup camera
         """
-        if not self._initialize_camera():
-            raise RuntimeError("Failed to initialize camera")
-
+        self._initialize_camera()
+        
         acq_code = self.camera.acquire()
         if acq_code != 0:
             raise RuntimeError(f"camera.acquire() returned unexpected code: {acq_code}")
