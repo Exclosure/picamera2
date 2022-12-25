@@ -46,6 +46,7 @@ class Preview(Enum):
 
     NULL = 0
 
+
 # TODO(meawoppl) doc these arrtibutes
 @dataclass
 class CameraInfo:
@@ -92,6 +93,7 @@ class CameraInfo:
 
 class CameraManager:
     cameras: Dict[int, Picamera2]
+
     def __init__(self):
         self.running = False
         self.cameras = {}
@@ -103,7 +105,7 @@ class CameraManager:
         self.running = True
         self.thread.start()
 
-    def add(self, index:int, camera: Picamera2):
+    def add(self, index: int, camera: Picamera2):
         with self._lock:
             self.cameras[index] = camera
             if not self.running:
@@ -143,9 +145,9 @@ class CameraManager:
                     and req.cookie != flushid
                 ):
                     cams.add(req.cookie)
-                    
+
                     self.cameras[req.cookie].add_completed_request(
-                            CompletedRequest(req, self.cameras[req.cookie])
+                        CompletedRequest(req, self.cameras[req.cookie])
                     )
             # OS based file pipes seem really overkill for this.
             # TODO(meawoppl) - Convert to queue primitive
