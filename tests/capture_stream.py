@@ -24,7 +24,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     camera.encoder.output = FileOutput(stream)
     camera.start_encoder()
     camera.start()
-    time.sleep(2)
+    time.sleep(0.25)
     camera.stop()
     camera.stop_encoder()
     conn.close()
