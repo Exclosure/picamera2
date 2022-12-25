@@ -6,7 +6,6 @@ import time
 
 from picamera2 import Picamera2
 
-
 print("First preview...")
 picam2 = Picamera2()
 picam2.configure(picam2.create_preview_configuration())
