@@ -985,7 +985,7 @@ class Picamera2:
         controls = self.controls.get_libcamera_controls()
         self.controls = Controls(self)
 
-        return_code = self.camera.start(controls) 
+        return_code = self.camera.start(controls)
         if return_code < 0:
             msg = f"Camera did not start properly. ({return_code})"
             _log.error(msg)
