@@ -9,6 +9,7 @@ import numpy as np
 
 from picamera2 import Picamera2
 from picamera2.sensor_format import SensorFormat
+from picamera2.request import Helpers
 
 exposure_time = 60000
 num_frames = 6
@@ -40,4 +41,4 @@ accumulated -= (num_frames - 1) * int(black_level)
 accumulated = accumulated.clip(0, 2**raw_format.bit_depth - 1).astype(np.uint16)
 accumulated = accumulated.view(np.uint8)
 metadata["ExposureTime"] = exposure_time
-picam2.helpers.save(accumulated, metadata, "accumulated.jpeg")
+Helpers.save(picam2, accumulated, metadata, "accumulated.jpeg")

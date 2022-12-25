@@ -8,6 +8,7 @@ from PIL import Image
 
 import picamera2.formats as formats
 from picamera2.controls import Controls
+from picamera2.picamera2 import Picamera2
 
 _log = logging.getLogger(__name__)
 
@@ -168,7 +169,7 @@ class CompletedRequest:
 
     def save(self, name, file_output, format=None):
         """Save a JPEG or PNG image of the named stream's buffer."""
-        return self.picam2.helpers.save(
+        return Helpers.save(self.picam2,
             self.make_image(name), self.get_metadata(), file_output, format
         )
 
@@ -180,11 +181,8 @@ class CompletedRequest:
 class Helpers:
     """This class implements functionality required by the CompletedRequest methods, but
     in such a way that it can be usefully accessed even without a CompletedRequest object."""
-
-    def __init__(self, picam2):
-        self.picam2 = picam2
-
-    def make_array(self, buffer, config):
+    @staticmethod
+    def make_array(buffer, config):
         """Make a 2d numpy array from the named stream's buffer."""
         array = buffer
         fmt = config["format"]
@@ -223,13 +221,14 @@ class Helpers:
             raise RuntimeError("Format " + fmt + " not supported")
         return image
 
-    def make_image(self, buffer, config, width=None, height=None):
+    @staticmethod
+    def make_image(buffer, config, width=None, height=None):
         """Make a PIL image from the named stream's buffer."""
         fmt = config["format"]
         if fmt == "MJPEG":
             return Image.open(io.BytesIO(buffer))
         else:
-            rgb = self.make_array(buffer, config)
+            rgb = Helpers.make_array(buffer, config)
         mode_lookup = {
             "RGB888": "BGR",
             "BGR888": "RGB",
@@ -251,7 +250,8 @@ class Helpers:
             pil_img = pil_img.resize((width, height))
         return pil_img
 
-    def save(self, img, metadata, file_output, format=None):
+    @staticmethod
+    def save(picam2: Picamera2, img, metadata, file_output, format=None):
         """Save a JPEG or PNG image of the named stream's buffer."""
         # This is probably a hideously expensive way to do a capture.
         start_time = time.monotonic()
@@ -268,8 +268,8 @@ class Helpers:
                 # doesn't like RGBA to we have to bodge that to RGBX.
                 img.mode = "RGBX"
         # compress_level=1 saves pngs much faster, and still gets most of the compression.
-        png_compress_level = self.picam2.options.get("compress_level", 1)
-        jpeg_quality = self.picam2.options.get("quality", 90)
+        png_compress_level = picam2.options.get("compress_level", 1)
+        jpeg_quality = picam2.options.get("quality", 90)
         keywords = {
             "compress_level": png_compress_level,
             "quality": jpeg_quality,
