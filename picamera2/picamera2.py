@@ -1205,10 +1205,6 @@ class Picamera2:
             return
         self.frames += len(requests)
         # It works like this:
-        # * We maintain a list of the requests that libcamera has completed (completed_requests).
-        #   But we keep only a minimal number here so that we have one available to "return
-        #   quickly" if an application asks for it, but the rest get recycled to libcamera to
-        #   keep the camera system running.
         # * The lock here protects the completed_requests list (because if it's non-empty, an
         #   application can pop a request from it asynchronously), and the _job_list. If
         #   we don't have a request immediately available, the application will queue a
