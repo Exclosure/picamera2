@@ -1,7 +1,7 @@
 import time
 from logging import getLogger
 
-from picamera2 import Picamera2, Preview
+from picamera2 import Picamera2
 
 wait = 2
 buffer = 1
@@ -20,7 +20,7 @@ camera.start(show_preview=None)
 null1 = time.monotonic()
 print("Null Preview")
 time.sleep(buffer)
-camera.start_preview(Preview.NULL)
+camera.start_preview()
 time.sleep(wait)
 camera.stop_preview()
 null2 = time.monotonic()

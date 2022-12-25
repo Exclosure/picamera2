@@ -4,14 +4,13 @@
 
 import time
 
-from picamera2 import Picamera2, Preview
+from picamera2 import Picamera2
 
-preview_type = Preview.NULL
 
 print("First preview...")
 picam2 = Picamera2()
 picam2.configure(picam2.create_preview_configuration())
-picam2.start_preview(preview_type)
+picam2.start_preview()
 picam2.start()
 time.sleep(2)
 picam2.close()
@@ -20,7 +19,7 @@ print("Done")
 print("Second preview...")
 picam2 = Picamera2()
 picam2.configure(picam2.create_preview_configuration())
-picam2.start_preview(preview_type)
+picam2.start_preview()
 picam2.start()
 time.sleep(2)
 picam2.close()
