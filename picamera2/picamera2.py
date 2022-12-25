@@ -8,7 +8,6 @@ import os
 import selectors
 import tempfile
 import threading
-import time
 from dataclasses import dataclass
 from enum import Enum
 from functools import partial
@@ -27,8 +26,11 @@ from picamera2.outputs import FileOutput
 from picamera2.previews import NullPreview
 from picamera2.request import CompletedRequest, Helpers
 from picamera2.sensor_format import SensorFormat
-
-from picamera2.stream_config import align_stream, make_initial_stream_config, check_stream_config
+from picamera2.stream_config import (
+    align_stream,
+    check_stream_config,
+    make_initial_stream_config,
+)
 
 STILL = libcamera.StreamRole.StillCapture
 RAW = libcamera.StreamRole.Raw
@@ -563,7 +565,6 @@ class Picamera2:
         self.notifymeread.close()
         os.close(self.notifyme_w)
         _log.info("Camera closed successfully.")
-
 
     # TODO(meawoppl) - Nuked by using a dataclass
     @staticmethod

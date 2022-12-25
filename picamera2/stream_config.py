@@ -1,3 +1,7 @@
+from picamera2 import formats
+from picamera2.sensor_format import SensorFormat
+
+
 def align_stream(stream_config: dict, optimal=True) -> None:
     if optimal:
         # Adjust the image size so that all planes are a mutliple of 32 bytes wide.
@@ -6,19 +10,19 @@ def align_stream(stream_config: dict, optimal=True) -> None:
         if stream_config["format"] in ("YUV420", "YVU420"):
             align = 64  # because the UV planes will have half this alignment
         elif stream_config["format"] in ("XBGR8888", "XRGB8888"):
-            align = (
-                16  # 4 channels per pixel gives us an automatic extra factor of 2
-            )
+            align = 16  # 4 channels per pixel gives us an automatic extra factor of 2
     else:
         align = 2
     size = stream_config["size"]
     stream_config["size"] = (size[0] - size[0] % align, size[1] - size[1] % 2)
+
 
 def align_configuration(config: dict, optimal=True) -> None:
     align_stream(config["main"], optimal=optimal)
     if "lores" in config and config["lores"] is not None:
         align_stream(config["lores"], optimal=optimal)
     # No point aligning the raw stream, it wouldn't mean anything.
+
 
 def make_initial_stream_config(
     stream_config: dict, updates: dict, ignore_list=[]
@@ -49,6 +53,7 @@ def make_initial_stream_config(
             )
     return stream_config
 
+
 # TODO(meawoppl) - dataclass __post_init__ materials
 def check_stream_config(stream_config, name) -> None:
     """Check the configuration of the passed in config.
@@ -67,7 +72,7 @@ def check_stream_config(stream_config, name) -> None:
         raise RuntimeError("format in " + name + " stream should be a string")
     if name == "raw":
         if not formats.is_raw(format):
-            raise RuntimeError("Unrecognised raw format " + format)
+            raise RuntimeError("Unrecognized raw format " + format)
     else:
         # Allow "MJPEG" as we have some support for USB MJPEG-type cameras.
         if (
