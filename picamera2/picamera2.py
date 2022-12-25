@@ -426,7 +426,7 @@ class Picamera2:
         :raises RuntimeError: Failed to setup camera
         """
         self._initialize_camera()
-        
+
         acq_code = self.camera.acquire()
         if acq_code != 0:
             raise RuntimeError(f"camera.acquire() returned unexpected code: {acq_code}")
