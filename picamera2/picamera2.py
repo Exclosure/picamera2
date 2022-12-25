@@ -8,10 +8,10 @@ import os
 import selectors
 import tempfile
 import threading
+from concurrent.futures import Future
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Dict, List, Optional, Tuple, Callable
-from concurrent.futures import Future
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import libcamera
 import numpy as np
@@ -1096,7 +1096,6 @@ class Picamera2:
                         _log.warning(f"Error in call {call.__name__}: {e}")
                         future.set_exception(e)
                     _log.debug(f"End Execution: {call.__name__}")
-                    
 
             if self.encode_stream_name in self.stream_map:
                 stream = self.stream_map[self.encode_stream_name]
@@ -1119,7 +1118,9 @@ class Picamera2:
 
         return display_request
 
-    def _dispatch_functions(self, functions: List[Callable[[CompletedRequest], Any]]) -> List[Future]:
+    def _dispatch_functions(
+        self, functions: List[Callable[[CompletedRequest], Any]]
+    ) -> List[Future]:
         """The main thread should use this to dispatch a number of operations for the event
         loop to perform.
 
@@ -1143,7 +1144,9 @@ class Picamera2:
     def _dispatch_no_request(self, function: Callable[[], Any]) -> Future:
         return self._dispatch_functions([lambda r: function()])[0]
 
-    def _capture_file(self, name, file_output, format, request: CompletedRequest) -> dict:
+    def _capture_file(
+        self, name, file_output, format, request: CompletedRequest
+    ) -> dict:
         request.save(name, file_output, format=format)
         return request.get_metadata()
 
@@ -1175,7 +1178,9 @@ class Picamera2:
 
     def switch_mode(self, camera_config):
         """Switch the camera into another mode given by the camera_config."""
-        return self._dispatch_no_request(partial(self._switch_mode, camera_config)).result()
+        return self._dispatch_no_request(
+            partial(self._switch_mode, camera_config)
+        ).result()
 
     def switch_mode_and_capture_file(
         self,
@@ -1229,14 +1234,14 @@ class Picamera2:
         """Make a 1d numpy array from the next frame in the named stream."""
         return self._dispatch(partial(self.capture_buffer_, name)).result()
 
-    def capture_buffers_and_metadata_(self, names: List[str], request: CompletedRequest) -> Tuple[List[np.ndarray], dict]:
+    def capture_buffers_and_metadata_(
+        self, names: List[str], request: CompletedRequest
+    ) -> Tuple[List[np.ndarray], dict]:
         return ([request.make_buffer(name) for name in names], request.get_metadata())
 
     def capture_buffers(self, names=["main"]):
         """Make a 1d numpy array from the next frame for each of the named streams."""
-        return self._dispatch(
-            partial(self.capture_buffers_and_metadata_, names)
-        )
+        return self._dispatch(partial(self.capture_buffers_and_metadata_, names))
 
     def switch_mode_and_capture_buffer(self, camera_config, name="main"):
         """Switch the camera into a new (capture) mode, capture the first buffer, then return
@@ -1275,14 +1280,14 @@ class Picamera2:
         """Make a 2d image from the next frame in the named stream."""
         return self._dispatch(partial(self.capture_array_, name))
 
-    def capture_arrays_and_metadata_(self, names, request: CompletedRequest) -> Tuple[List[np.ndarray], Dict[str, Any]]:
+    def capture_arrays_and_metadata_(
+        self, names, request: CompletedRequest
+    ) -> Tuple[List[np.ndarray], Dict[str, Any]]:
         return ([request.make_array(name) for name in names], request.get_metadata())
 
     def capture_arrays(self, names=["main"]):
         """Make 2d image arrays from the next frames in the named streams."""
-        return self._dispatch(
-            partial(self.capture_arrays_and_metadata_, names)
-        )
+        return self._dispatch(partial(self.capture_arrays_and_metadata_, names))
 
     def switch_mode_and_capture_array(self, camera_config, name="main"):
         """Switch the camera into a new (capture) mode, capture the image array data, then return
@@ -1297,7 +1302,7 @@ class Picamera2:
         self._dispatch_no_request(partial(self._switch_mode, camera_config))
         return self._dispatch(capture_array_and_switch_back_).result()
 
-    def switch_mode_and_capture_arrays(self, camera_config, names=["main"]    ):
+    def switch_mode_and_capture_arrays(self, camera_config, names=["main"]):
         """Switch the camera into a new (capture) mode, capture the image arrays, then return
         back to the initial camera mode."""
         preview_config = self.camera_config
@@ -1306,7 +1311,7 @@ class Picamera2:
             result = self.capture_arrays_and_metadata_(names, request)
             self.switch_mode_(preview_config)
             return result
-        
+
         self._dispatch_no_request(partial(self._switch_mode, camera_config))
         return self._dispatch(capture_arrays_and_switch_back_).result()
 
@@ -1337,6 +1342,7 @@ class Picamera2:
             result = self._capture_image(name, request)
             self._switch_mode(preview_config)
             return result
+
         self._dispatch_no_request(partial(self._switch_mode, camera_config))
         return self._dispatch(capture_image_and_switch_back_).result()
 
