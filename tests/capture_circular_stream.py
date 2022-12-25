@@ -51,7 +51,7 @@ t = threading.Thread(target=server)
 t.setDaemon(True)
 t.start()
 
-while True:
+for _ in range(4):
     cur = camera.capture_buffer("lores")
     cur = cur[: w * h].reshape(h, w)
     if prev is not None:
@@ -73,3 +73,4 @@ while True:
     prev = cur
 
 camera.stop_encoder()
+camera.close()
