@@ -15,12 +15,12 @@ capture_config = picam2.create_still_configuration()
 picam2.configure(capture_config)
 
 picam2.start()
-time.sleep(2)
+time.sleep(1)
 
 with picam2.controls as ctrl:
     ctrl.AnalogueGain = 1.0
-    ctrl.ExposureTime = 400000
-time.sleep(2)
+    ctrl.ExposureTime = 10_000
+time.sleep(1)
 
 imgs = 5  # Capture 20 images to average
 sumv = None

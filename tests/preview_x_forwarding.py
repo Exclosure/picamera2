@@ -14,4 +14,7 @@ preview_config = picam2.create_preview_configuration()
 picam2.configure(preview_config)
 
 picam2.start()
-time.sleep(5)
+time.sleep(1)
+picam2.stop()
+
+picam2.close()
