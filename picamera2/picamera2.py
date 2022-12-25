@@ -1041,7 +1041,7 @@ class Picamera2:
             _log.debug("Camera was not started")
             return
         if self.asynchronous:
-            self._dispatch_no_request([self._stop]).result()
+            self._dispatch_no_request(self._stop).result()
         else:
             self._stop()
 
@@ -1137,11 +1137,11 @@ class Picamera2:
                 futures.append(fut)
         return futures
 
-    def _dispatch(self, function: Callable[[CompletedRequest], Any]) -> Future:
-        return self._dispatch_functions([function])[0]
+    def _dispatch(self, call: Callable[[CompletedRequest], Any]) -> Future:
+        return self._dispatch_functions([call])[0]
 
-    def _dispatch_no_request(self, function: Callable[[], Any]) -> Future:
-        return self._dispatch_functions([lambda r: function()])[0]
+    def _dispatch_no_request(self, call: Callable[[], Any]) -> Future:
+        return self._dispatch_functions([lambda r: call()])[0]
 
     def _dispatch_mode_shift(self, config) -> Future:
         return self._dispatch_no_request(partial(self._switch_mode, config))
