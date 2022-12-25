@@ -82,12 +82,9 @@ class CameraInfo:
 
     def requires_camera(n: int = 1):
         if CameraInfo.n_cameras() < n:
-            _log.error(
-                "Camera(s) not found (Do not forget to disable legacy camera with raspi-config)."
-            )
-            raise RuntimeError(
-                "Camera(s) not found (Do not forget to disable legacy camera with raspi-config)."
-            )
+            msg = "Camera(s) not found (You may need to disable legacy camera with raspi-config)."
+            _log.error(msg            )
+            raise RuntimeError(msg)
 
 
 class CameraManager:
@@ -240,8 +237,9 @@ class Picamera2:
             self.still_configuration = self.create_still_configuration()
             self.video_configuration = self.create_video_configuration()
         except Exception as e:
-            _log.error("Camera __init__ sequence did not complete.", exc_info=e)
-            raise RuntimeError("Camera __init__ sequence did not complete.") from e
+            msg = "Camera __init__ sequence did not complete."
+            _log.error(msg, exc_info=e)
+            raise RuntimeError(msg) from e
         finally:
             if tuning_file is not None:
                 tuning_file.close()  # delete the temporary file
@@ -364,7 +362,8 @@ class Picamera2:
 
     def __del__(self):
         """Without this libcamera will complain if we shut down without closing the camera."""
-        _log.warning(f"__del__ call responsible for cleanup of {self}")
+        if self.is_open:
+            _log.warning(f"__del__ call responsible for cleanup of {self}")
         self.close()
 
     @staticmethod
