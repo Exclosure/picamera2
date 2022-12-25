@@ -116,7 +116,6 @@ class Encoder:
         :type value: str
         :raises RuntimeError: Invalid format
         """
-        self._format = None
         if not formats.is_format_valid(value):
             _log.warning("Possibly invalid format: '%s'", value)
         self._format = value
