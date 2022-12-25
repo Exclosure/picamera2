@@ -1265,14 +1265,6 @@ class Picamera2:
 
         return display_request
 
-    def wait(self, job):
-        """Wait for the given job to finish (if necessary) and return its final result.
-        The job is obtained either by calling one of the Picamera2 methods asynchronously
-        (passing wait=False), or as a parameter to the signal_function that can be
-        supplied to those same methods.
-        """
-        return job.get_result()
-
     def dispatch_functions(self, functions, wait, signal_function=None) -> None:
         """The main thread should use this to dispatch a number of operations for the event
         loop to perform.
@@ -1288,16 +1280,6 @@ class Picamera2:
             self._job_list.append(job)
         return job.get_result() if wait else job
 
-    def capture_file_(self, file_output, name: str, format=None) -> dict:
-        request = self.completed_requests.pop(0)
-        assert not name.endswith(".raw"), "Raw export is not supported."
-
-        request.save(name, file_output, format=format)
-
-        result = request.get_metadata()
-        request.release()
-        return result
-
     def _execute_or_dispatch(self, function, wait, signal_function):
         if wait is None:
             wait = signal_function is None
@@ -1310,6 +1292,16 @@ class Picamera2:
                 if job.execute():
                     self._job_list.pop(0)
         return job.get_result() if wait else job
+
+    def capture_file_(self, file_output, name: str, format=None) -> dict:
+        request = self.completed_requests.pop(0)
+        assert not name.endswith(".raw"), "Raw export is not supported."
+
+        request.save(name, file_output, format=format)
+
+        result = request.get_metadata()
+        request.release()
+        return result
 
     def capture_file(
         self,
