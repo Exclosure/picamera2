@@ -49,8 +49,10 @@ def is_mono(fmt: str) -> bool:
 def is_raw(fmt: str) -> bool:
     return is_Bayer(fmt) or is_mono(fmt)
 
+
 def is_format_valid(fmt: str) -> bool:
     return fmt in ALL_FORMATS
+
 
 def assert_format_valid(fmt: str) -> None:
     if not is_format_valid(fmt):

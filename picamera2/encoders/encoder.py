@@ -9,6 +9,7 @@ from picamera2.request import _MappedBuffer
 
 _log = logging.getLogger(__name__)
 
+
 class Quality(Enum):
     """Enum type to describe the quality wanted from an encoder. This may be passed
     if a specific value (such as bitrate) has not been set."""
