@@ -1015,7 +1015,7 @@ class Picamera2:
             self.start_preview()
         self.start_()
 
-    def stop_(self, request=None) -> None:
+    def _stop(self) -> None:
         """Stop the camera.
 
         Only call this function directly from within the camera event
@@ -1041,9 +1041,9 @@ class Picamera2:
             _log.debug("Camera was not started")
             return
         if self.asynchronous:
-            self._dispatch_functions([self.stop_])[0].result()
+            self._dispatch_no_request([self._stop]).result()
         else:
-            self.stop_()
+            self._stop()
 
     def set_controls(self, controls) -> None:
         """Set camera controls. These will be delivered with the next request that gets submitted."""
@@ -1180,7 +1180,7 @@ class Picamera2:
         return self.capture_file_async(file_output, name, format).result()
 
     def _switch_mode(self, camera_config):
-        self.stop_()
+        self._stop()
         self.configure_(camera_config)
         self.start_()
         return self.camera_config
@@ -1201,10 +1201,13 @@ class Picamera2:
         """Switch the camera into a new (capture) mode, capture an image to file, then return
         back to the initial camera mode.
         """
-        return self._dispatch_with_temporary_mode(partial(self._capture_file, file_output, name, format), camera_config).result()
+        return self._dispatch_with_temporary_mode(
+            partial(self._capture_file, file_output, name, format), camera_config
+        ).result()
 
     def _capture_request(self, request: CompletedRequest):
         # The "use" of this request is transferred from the completed_requests list to the caller.
+        request.acquire()
         return request
 
     def capture_request(self):
@@ -1217,7 +1220,7 @@ class Picamera2:
         """Switch the camera into a new (capture) mode, capture a request in the new mode and then stop the camera."""
         self._dispatch_no_request(partial(self._switch_mode, camera_config))
         request = self._dispatch(self._capture_request)
-        self._dispatch_no_request(self.stop_)
+        self._dispatch_no_request(self._stop)
         return request.result()
 
     def _capture_metadata(self, request: CompletedRequest):
