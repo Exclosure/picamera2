@@ -237,7 +237,7 @@ class Picamera2:
             self.video_configuration = self.create_video_configuration()
         except Exception as e:
             _log.error("Camera __init__ sequence did not complete.", exc_info=e)
-            raise RuntimeError("Camera __init__ sequence did not complete.")
+            raise RuntimeError("Camera __init__ sequence did not complete.") from e
         finally:
             if tuning_file is not None:
                 tuning_file.close()  # delete the temporary file
