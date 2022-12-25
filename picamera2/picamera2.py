@@ -8,7 +8,6 @@ import os
 import selectors
 import tempfile
 import threading
-import time
 from dataclasses import dataclass
 from enum import Enum
 from functools import partial
@@ -27,6 +26,11 @@ from picamera2.outputs import FileOutput
 from picamera2.previews import NullPreview
 from picamera2.request import CompletedRequest, Helpers
 from picamera2.sensor_format import SensorFormat
+from picamera2.stream_config import (
+    align_stream,
+    check_stream_config,
+    make_initial_stream_config,
+)
 
 STILL = libcamera.StreamRole.StillCapture
 RAW = libcamera.StreamRole.Raw
@@ -530,37 +534,6 @@ class Picamera2:
         os.close(self.notifyme_w)
         _log.info("Camera closed successfully.")
 
-    # TODO(meawoppl) Hoist into helpers
-    @staticmethod
-    def _make_initial_stream_config(
-        stream_config: dict, updates: dict, ignore_list=[]
-    ) -> dict:
-        """Take an initial stream_config and add any user updates.
-
-        :param stream_config: Stream configuration
-        :type stream_config: dict
-        :param updates: Updates
-        :type updates: dict
-        :raises ValueError: Invalid key
-        :return: Dictionary of stream config
-        :rtype: dict
-        """
-        if updates is None:
-            return None
-        valid = ("format", "size")
-        for key, value in updates.items():
-            if isinstance(value, SensorFormat):
-                value = str(value)
-            if key in valid:
-                stream_config[key] = value
-            elif key in ignore_list:
-                pass  # allows us to pass items from the sensor_modes as a raw stream
-            else:
-                raise ValueError(
-                    f"Bad key '{key}': valid stream configuration keys are {valid}"
-                )
-        return stream_config
-
     # TODO(meawoppl) - Nuked by using a dataclass
     @staticmethod
     def _add_display_and_encode(config, display, encode) -> None:
@@ -596,16 +569,16 @@ class Picamera2:
     ) -> dict:
         """Make a configuration suitable for camera preview."""
         self.requires_camera()
-        main = self._make_initial_stream_config(
+        main = make_initial_stream_config(
             {"format": "XBGR8888", "size": (640, 480)}, main
         )
-        self.align_stream(main, optimal=False)
-        lores = self._make_initial_stream_config(
+        align_stream(main, optimal=False)
+        lores = make_initial_stream_config(
             {"format": "YUV420", "size": main["size"]}, lores
         )
         if lores is not None:
-            self.align_stream(lores, optimal=False)
-        raw = self._make_initial_stream_config(
+            align_stream(lores, optimal=False)
+        raw = make_initial_stream_config(
             {"format": self.sensor_format, "size": main["size"]},
             raw,
             self._raw_stream_ignore_list,
@@ -649,16 +622,16 @@ class Picamera2:
     ) -> dict:
         """Make a configuration suitable for still image capture. Default to 2 buffers, as the Gl preview would need them."""
         self.requires_camera()
-        main = self._make_initial_stream_config(
+        main = make_initial_stream_config(
             {"format": "BGR888", "size": self.sensor_resolution}, main
         )
-        self.align_stream(main, optimal=False)
-        lores = self._make_initial_stream_config(
+        align_stream(main, optimal=False)
+        lores = make_initial_stream_config(
             {"format": "YUV420", "size": main["size"]}, lores
         )
         if lores is not None:
-            self.align_stream(lores, optimal=False)
-        raw = self._make_initial_stream_config(
+            align_stream(lores, optimal=False)
+        raw = make_initial_stream_config(
             {"format": self.sensor_format, "size": main["size"]}, raw
         )
         # Let the framerate span the entire possible range of the sensor.
@@ -700,16 +673,16 @@ class Picamera2:
     ) -> dict:
         """Make a configuration suitable for video recording."""
         self.requires_camera()
-        main = self._make_initial_stream_config(
+        main = make_initial_stream_config(
             {"format": "XBGR8888", "size": (1280, 720)}, main
         )
-        self.align_stream(main, optimal=False)
-        lores = self._make_initial_stream_config(
+        align_stream(main, optimal=False)
+        lores = make_initial_stream_config(
             {"format": "YUV420", "size": main["size"]}, lores
         )
         if lores is not None:
-            self.align_stream(lores, optimal=False)
-        raw = self._make_initial_stream_config(
+            align_stream(lores, optimal=False)
+        raw = make_initial_stream_config(
             {"format": self.sensor_format, "size": main["size"]}, raw
         )
         if colour_space is None:
@@ -745,39 +718,6 @@ class Picamera2:
         return config
 
     # TODO(meawoppl) - dataclass __post_init__ materials
-    def check_stream_config(self, stream_config, name) -> None:
-        """Check the configuration of the passed in config.
-
-        Raises RuntimeError if the configuration is invalid.
-        """
-        # Check the parameters for a single stream.
-        if type(stream_config) is not dict:
-            raise RuntimeError(name + " stream should be a dictionary")
-        if "format" not in stream_config:
-            raise RuntimeError("format not found in " + name + " stream")
-        if "size" not in stream_config:
-            raise RuntimeError("size not found in " + name + " stream")
-        format = stream_config["format"]
-        if type(format) is not str:
-            raise RuntimeError("format in " + name + " stream should be a string")
-        if name == "raw":
-            if not formats.is_raw(format):
-                raise RuntimeError("Unrecognised raw format " + format)
-        else:
-            # Allow "MJPEG" as we have some support for USB MJPEG-type cameras.
-            if (
-                not formats.is_YUV(format)
-                and not formats.is_RGB(format)
-                and format != "MJPEG"
-            ):
-                raise RuntimeError("Bad format " + format + " in stream " + name)
-        size = stream_config["size"]
-        if type(size) is not tuple or len(size) != 2:
-            raise RuntimeError("size in " + name + " stream should be (width, height)")
-        if size[0] % 2 or size[1] % 2:
-            raise RuntimeError("width and height should be even")
-
-    # TODO(meawoppl) - dataclass __post_init__ materials
     def check_camera_config(self, camera_config: dict) -> None:
         required_keys = ["colour_space", "transform", "main", "lores", "raw"]
         for name in required_keys:
@@ -792,9 +732,9 @@ class Picamera2:
         if not isinstance(camera_config["transform"], libcamera._libcamera.Transform):
             raise RuntimeError("Transform has incorrect type")
 
-        self.check_stream_config(camera_config["main"], "main")
+        check_stream_config(camera_config["main"], "main")
         if camera_config["lores"] is not None:
-            self.check_stream_config(camera_config["lores"], "lores")
+            check_stream_config(camera_config["lores"], "lores")
             main_w, main_h = camera_config["main"]["size"]
             lores_w, lores_h = camera_config["lores"]["size"]
             if lores_w > main_w or lores_h > main_h:
@@ -802,7 +742,7 @@ class Picamera2:
             if not formats.is_YUV(camera_config["lores"]["format"]):
                 raise RuntimeError("lores stream must be YUV")
         if camera_config["raw"] is not None:
-            self.check_stream_config(camera_config["raw"], "raw")
+            check_stream_config(camera_config["raw"], "raw")
 
     # TODO(meawoppl) - Obviated by dataclasses
     @staticmethod
@@ -863,32 +803,6 @@ class Picamera2:
             libcamera_config.at(self.raw_index).color_space = libcamera.ColorSpace.Raw()
 
         return libcamera_config
-
-    # TODO(meawoppl) - Method on stream config dataclass
-    @staticmethod
-    def align_stream(stream_config: dict, optimal=True) -> None:
-        if optimal:
-            # Adjust the image size so that all planes are a mutliple of 32 bytes wide.
-            # This matches the hardware behaviour and means we can be more efficient.
-            align = 32
-            if stream_config["format"] in ("YUV420", "YVU420"):
-                align = 64  # because the UV planes will have half this alignment
-            elif stream_config["format"] in ("XBGR8888", "XRGB8888"):
-                align = (
-                    16  # 4 channels per pixel gives us an automatic extra factor of 2
-                )
-        else:
-            align = 2
-        size = stream_config["size"]
-        stream_config["size"] = (size[0] - size[0] % align, size[1] - size[1] % 2)
-
-    # TODO(meawoppl) - Method on stream config dataclass
-    @staticmethod
-    def align_configuration(config: dict, optimal=True) -> None:
-        Picamera2.align_stream(config["main"], optimal=optimal)
-        if "lores" in config and config["lores"] is not None:
-            Picamera2.align_stream(config["lores"], optimal=optimal)
-        # No point aligning the raw stream, it wouldn't mean anything.
 
     def _make_requests(self) -> List[libcamera.Request]:
         """Make libcamera request objects.
@@ -1146,7 +1060,6 @@ class Picamera2:
                 self._requests = []
             self.completed_requests = []
             _log.info("Camera stopped")
-        return (True, None)
 
     def stop(self) -> None:
         """Stop the camera."""
@@ -1265,7 +1178,7 @@ class Picamera2:
 
         result = request.get_metadata()
         request.release()
-        return (True, result)
+        return result
 
     def _execute_or_dispatch(self, function, wait, signal_function):
         if wait is None:
@@ -1302,7 +1215,7 @@ class Picamera2:
         self.stop_()
         self.configure_(camera_config)
         self.start_()
-        return (True, self.camera_config)
+        return self.camera_config
 
     def switch_mode(self, camera_config, wait=None, signal_function=None):
         """Switch the camera into another mode given by the camera_config."""
@@ -1324,9 +1237,9 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_and_switch_back_(self, file_output, preview_config, format):
-            _, result = self.capture_file_(file_output, name, format=format)
+            result = self.capture_file_(file_output, name, format=format)
             self.switch_mode_(preview_config)
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
@@ -1338,7 +1251,7 @@ class Picamera2:
 
     def capture_request_(self):
         # The "use" of this request is transferred from the completed_requests list to the caller.
-        return (True, self.completed_requests.pop(0))
+        return self.completed_requests.pop(0)
 
     def capture_request(self, wait=None, signal_function=None):
         """Fetch the next completed request from the camera system. You will be holding a
@@ -1353,9 +1266,9 @@ class Picamera2:
         """Switch the camera into a new (capture) mode, capture a request in the new mode and then stop the camera."""
 
         def capture_request_and_stop_(self):
-            _, result = self.capture_request_()
+            result = self.capture_request_()
             self.stop_()
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
@@ -1367,7 +1280,7 @@ class Picamera2:
         request = self.completed_requests.pop(0)
         result = request.get_metadata()
         request.release()
-        return (True, result)
+        return result
 
     def capture_metadata(self, wait=None, signal_function=None):
         """Fetch the metadata from the next camera frame."""
@@ -1378,7 +1291,7 @@ class Picamera2:
         request = self.completed_requests.pop(0)
         result = request.make_buffer(name)
         request.release()
-        return (True, result)
+        return result
 
     def capture_buffer(self, name="main", wait=None, signal_function=None):
         """Make a 1d numpy array from the next frame in the named stream."""
@@ -1390,7 +1303,7 @@ class Picamera2:
         request = self.completed_requests.pop(0)
         result = ([request.make_buffer(name) for name in names], request.get_metadata())
         request.release()
-        return (True, result)
+        return result
 
     def capture_buffers(self, names=["main"], wait=None, signal_function=None):
         """Make a 1d numpy array from the next frame for each of the named streams."""
@@ -1407,9 +1320,9 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_buffer_and_switch_back_(self, preview_config, name):
-            _, result = self.capture_buffer_(name)
+            result = self.capture_buffer_(name)
             self.switch_mode_(preview_config)
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
@@ -1426,9 +1339,9 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_buffers_and_switch_back_(self, preview_config, names):
-            _, result = self.capture_buffers_and_metadata_(names)
+            result = self.capture_buffers_and_metadata_(names)
             self.switch_mode_(preview_config)
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
@@ -1440,7 +1353,7 @@ class Picamera2:
         request = self.completed_requests.pop(0)
         result = request.make_array(name)
         request.release()
-        return (True, result)
+        return result
 
     def capture_array(self, name="main", wait=None, signal_function=None):
         """Make a 2d image from the next frame in the named stream."""
@@ -1454,7 +1367,7 @@ class Picamera2:
         request = self.completed_requests.pop(0)
         result = ([request.make_array(name) for name in names], request.get_metadata())
         request.release()
-        return (True, result)
+        return result
 
     def capture_arrays(self, names=["main"], wait=None, signal_function=None):
         """Make 2d image arrays from the next frames in the named streams."""
@@ -1470,9 +1383,9 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_array_and_switch_back_(self, preview_config, name):
-            _, result = self.capture_array_(name)
+            result = self.capture_array_(name)
             self.switch_mode_(preview_config)
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
@@ -1488,9 +1401,9 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_arrays_and_switch_back_(self, preview_config, names):
-            _, result = self.capture_arrays_and_metadata_(names)
+            result = self.capture_arrays_and_metadata_(names)
             self.switch_mode_(preview_config)
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
@@ -1507,7 +1420,7 @@ class Picamera2:
         request = self.completed_requests.pop(0)
         result = request.make_image(name)
         request.release()
-        return (True, result)
+        return result
 
     def capture_image(
         self, name: str = "main", wait: bool = None, signal_function=None
@@ -1536,9 +1449,9 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_image_and_switch_back_(self, preview_config, name) -> Image:
-            _, result = self.capture_image_(name)
+            result = self.capture_image_(name)
             self.switch_mode_(preview_config)
-            return (True, result)
+            return result
 
         functions = [
             partial(self.switch_mode_, camera_config),
