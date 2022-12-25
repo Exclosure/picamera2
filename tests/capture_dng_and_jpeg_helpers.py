@@ -5,7 +5,7 @@
 import time
 
 from picamera2 import Picamera2
-from picamera2.request import Helpers
+from picamera2.helpers import Helpers
 
 picam2 = Picamera2()
 picam2.start_preview()
@@ -21,7 +21,7 @@ buffers, metadata = picam2.switch_mode_and_capture_buffers(
     capture_config, ["main", "raw"]
 )
 
-Helpers.save(picam2,
-    picam2.helpers.make_image(buffers[0], capture_config["main"]), metadata, "full.jpg"
+Helpers.save(
+    picam2, Helpers.make_image(buffers[0], capture_config["main"]), metadata, "full.jpg"
 )
 Helpers.save(picam2, buffers[1], metadata, "full.jpeg")

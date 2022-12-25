@@ -8,8 +8,8 @@
 import numpy as np
 
 from picamera2 import Picamera2
-from picamera2.sensor_format import SensorFormat
 from picamera2.request import Helpers
+from picamera2.sensor_format import SensorFormat
 
 exposure_time = 60000
 num_frames = 6
