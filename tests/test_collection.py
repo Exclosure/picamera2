@@ -33,7 +33,6 @@ KNOWN_XFAIL = set(
         "check_timestamps.py",
         "drm_multiple_test.py",
         "encoder_start_stop.py",
-        "mjpeg_server.py",
         "multicamera_preview.py",
         "stack_raw.py",
     ]
