@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 import time
-from threading import Thread
 from concurrent.futures import Future
+from threading import Thread
 from typing import List
 
 from picamera2 import Picamera2

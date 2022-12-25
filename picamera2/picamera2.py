@@ -1191,15 +1191,11 @@ class Picamera2:
         """Switch the camera into a new (capture) mode, capture an image to file, then return
         back to the initial camera mode.
         """
-        preview_config = self.camera_config
-
-        def capture_and_switch_back_(request: CompletedRequest):
-            result = self._capture_file(file_output, name, format, request)
-            self._switch_mode(preview_config)
-            return result
-
+        previous_config = self.camera_config
         self._dispatch_no_request(partial(self._switch_mode, camera_config))
-        return self._dispatch(capture_and_switch_back_).result()
+        result = self._dispatch(partial(self._capture_file, file_output, name, format))
+        self._dispatch_no_request(partial(self._switch_mode, camera_config))
+        return result.result()
 
     def capture_request_(self, request: CompletedRequest):
         # The "use" of this request is transferred from the completed_requests list to the caller.
@@ -1210,7 +1206,7 @@ class Picamera2:
         reference to this request so you must release it again to return it to the camera system.
         """
         function = self.capture_request_
-        return self._dispatch(function)
+        return self._dispatch(function).result()
 
     def switch_mode_capture_request_and_stop(self, camera_config):
         """Switch the camera into a new (capture) mode, capture a request in the new mode and then stop the camera."""
@@ -1228,67 +1224,62 @@ class Picamera2:
 
     def capture_metadata_async(self):
         return self._dispatch(self._capture_metadata)
-    def capture_buffer_(self, name: str, request: CompletedRequest):
+
+    def _capture_buffer(self, name: str, request: CompletedRequest):
         return request.make_buffer(name)
 
     def capture_buffer(self, name="main"):
         """Make a 1d numpy array from the next frame in the named stream."""
-        return self._dispatch(partial(self.capture_buffer_, name)).result()
+        return self._dispatch(partial(self._capture_buffer, name)).result()
 
-    def capture_buffers_and_metadata_(
+    def _capture_buffers_and_metadata(
         self, names: List[str], request: CompletedRequest
     ) -> Tuple[List[np.ndarray], dict]:
         return ([request.make_buffer(name) for name in names], request.get_metadata())
 
     def capture_buffers(self, names=["main"]):
         """Make a 1d numpy array from the next frame for each of the named streams."""
-        return self._dispatch(partial(self.capture_buffers_and_metadata_, names))
+        return self._dispatch(
+            partial(self._capture_buffers_and_metadata, names)
+        ).result()
 
     def switch_mode_and_capture_buffer(self, camera_config, name="main"):
         """Switch the camera into a new (capture) mode, capture the first buffer, then return
         back to the initial camera mode.
         """
-        preview_config = self.camera_config
-
-        def capture_buffer_and_switch_back_(request: CompletedRequest):
-            result = self.capture_buffer_(name, request)
-            self._switch_mode(preview_config)
-            return result
-
+        previous_config = self.camera_config
         self._dispatch_no_request(partial(self._switch_mode, camera_config))
-        return self._dispatch_no_request(capture_buffer_and_switch_back_).result()
+        buf_future = self._dispatch(partial(self._capture_buffer, name))
+        self._dispatch_no_request(partial(self._switch_mode, previous_config))
+        return buf_future.result()
 
     def switch_mode_and_capture_buffers(self, camera_config, names=["main"]):
         """Switch the camera into a new (capture) mode, capture the first buffers, then return
         back to the initial camera mode.
         """
         preview_config = self.camera_config
-
-        def capture_buffers_and_switch_back_(request: CompletedRequest):
-            result = self.capture_buffers_and_metadata_(names, request)
-            self._switch_mode(preview_config)
-            return result
-
         self._dispatch_no_request(partial(self._switch_mode, camera_config))
-        return self._dispatch(
-            partial(capture_buffers_and_switch_back_, self, preview_config, names)
-        ).result()
+        result = self._dispatch(partial(self._capture_buffers_and_metadata, names))
+        self._dispatch_no_request(partial(self._switch_mode, preview_config))
+        return result.result()
 
     def capture_array_(self, name, request: CompletedRequest):
         return request.make_array(name)
 
     def capture_array(self, name="main"):
         """Make a 2d image from the next frame in the named stream."""
-        return self._dispatch(partial(self.capture_array_, name))
+        return self._dispatch(partial(self.capture_array_, name)).result()
 
-    def capture_arrays_and_metadata_(
+    def _capture_arrays_and_metadata(
         self, names, request: CompletedRequest
     ) -> Tuple[List[np.ndarray], Dict[str, Any]]:
         return ([request.make_array(name) for name in names], request.get_metadata())
 
     def capture_arrays(self, names=["main"]):
         """Make 2d image arrays from the next frames in the named streams."""
-        return self._dispatch(partial(self.capture_arrays_and_metadata_, names))
+        return self._dispatch(
+            partial(self._capture_arrays_and_metadata, names)
+        ).result()
 
     def switch_mode_and_capture_array(self, camera_config, name="main"):
         """Switch the camera into a new (capture) mode, capture the image array data, then return
@@ -1309,8 +1300,8 @@ class Picamera2:
         preview_config = self.camera_config
 
         def capture_arrays_and_switch_back_(request: CompletedRequest):
-            result = self.capture_arrays_and_metadata_(names, request)
-            self.switch_mode_(preview_config)
+            result = self._capture_arrays_and_metadata(names, request)
+            self._switch_mode(preview_config)
             return result
 
         self._dispatch_no_request(partial(self._switch_mode, camera_config))
