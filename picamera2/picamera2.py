@@ -838,7 +838,7 @@ class Picamera2:
                 camera_config["raw"], libcamera_config.at(self.raw_index)
             )
 
-    def configure_(self, camera_config="preview") -> None:
+    def _configure(self, camera_config="preview") -> None:
         """Configure the camera system with the given configuration.
 
         :param camera_config: Configuration, defaults to the 'preview' configuration
@@ -966,7 +966,7 @@ class Picamera2:
 
     def configure(self, camera_config="preview") -> None:
         """Configure the camera system with the given configuration."""
-        self.configure_(camera_config)
+        self._configure(camera_config)
 
     def camera_configuration(self) -> dict:
         """Return the camera configuration."""
@@ -976,7 +976,7 @@ class Picamera2:
         """Return the stream configuration for the named stream."""
         return self.camera_config[name]
 
-    def start_(self) -> None:
+    def _start(self) -> None:
         """Start the camera system running."""
         if self.camera_config is None:
             raise RuntimeError("Camera has not been configured")
@@ -984,14 +984,17 @@ class Picamera2:
             raise RuntimeError("Camera already started")
         controls = self.controls.get_libcamera_controls()
         self.controls = Controls(self)
-        if self.camera.start(controls) >= 0:
-            for request in self._make_requests():
-                self.camera.queue_request(request)
-            _log.info("Camera started")
-            self.started = True
-        else:
-            _log.error("Camera did not start properly.")
-            raise RuntimeError("Camera did not start properly.")
+
+        return_code = self.camera.start(controls) 
+        if return_code < 0:
+            msg = f"Camera did not start properly. ({return_code})"
+            _log.error(msg)
+            raise RuntimeError(msg)
+
+        for request in self._make_requests():
+            self.camera.queue_request(request)
+        self.started = True
+        _log.info("Camera started")
 
     def start(self, config=None) -> None:
         """
@@ -1013,7 +1016,7 @@ class Picamera2:
         # By default we will create an event loop is there isn't one running already.
         if not self._preview:
             self.start_preview()
-        self.start_()
+        self._start()
 
     def _stop(self) -> None:
         """Stop the camera.
@@ -1181,8 +1184,8 @@ class Picamera2:
 
     def _switch_mode(self, camera_config):
         self._stop()
-        self.configure_(camera_config)
-        self.start_()
+        self._configure(camera_config)
+        self._start()
         return self.camera_config
 
     def switch_mode(self, camera_config):
@@ -1202,7 +1205,7 @@ class Picamera2:
         back to the initial camera mode.
         """
         return self._dispatch_with_temporary_mode(
-            partial(self._capture_file, file_output, name, format), camera_config
+            partial(self._capture_file, name, file_output, format), camera_config
         ).result()
 
     def _capture_request(self, request: CompletedRequest):
