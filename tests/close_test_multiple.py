@@ -4,7 +4,7 @@ import multiprocessing
 import threading
 import time
 
-from picamera2 import CameraInfo, Picamera2, Preview
+from picamera2 import CameraInfo, Picamera2
 
 
 def run_camera(idx):

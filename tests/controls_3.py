@@ -4,7 +4,7 @@
 
 import time
 
-from picamera2 import Picamera2, Preview
+from picamera2 import Picamera2
 from picamera2.controls import Controls
 
 picam2 = Picamera2()
