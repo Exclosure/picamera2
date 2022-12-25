@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 
 # Run the camera with a 180 degree rotation.
-import time
 import sys
+import time
+
 sys.path.append("/usr/lib/python3/dist-packages")
 
 import libcamera
