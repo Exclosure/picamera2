@@ -257,7 +257,7 @@ class Picamera2:
         self.stop_count = 0
         self.configure_count = 0
         self.frames = 0
-        self._job_list: Deque[Tuple[Callable, Future]] = deque()
+        self._task_deque: Deque[LoopTask] = deque()
         self.options = {}
         self._encoder = None
         self.post_callback = None
@@ -1049,25 +1049,30 @@ class Picamera2:
             return
         self.frames += len(requests)
 
-        for request in requests:
-            if self._job_list:
-                call, future = self._job_list.popleft()
-                _log.debug(f"Begin Execution: {call}")
-                try:
-                    result = call(request)
-                    future.set_result(result)
-                except Exception as e:
-                    _log.warning(f"Error in call {call}: {e}")
-                    future.set_exception(e)
-                _log.debug(f"End Execution: {call}")
+        req_idx = 0
+        while self._task_deque.count() and (req_idx < len(requests)):
+            task = self._task_deque.popleft()
 
-        if self.encode_stream_name in self.stream_map:
-            stream = self.stream_map[self.encode_stream_name]
+            _log.debug(f"Begin LoopTask Execution: {task.call}")
+            try:
+                if task.needs_request:
+                    req = requests[req_idx]
+                    req_idx += 1
+                    result = task.call(req)
+                else:
+                    result = task.call()
+            except Exception as e:
+                _log.warning(f"Error in LoopTask {task.call}: {e}")
+                task.future.set_exception(e)
+            _log.debug(f"End LoopTask Execution: {task.call}")
 
-        for req in requests:
-            if self._encoder is not None:
+            task.future.set_result(result)
+
+        if self._encoder is not None:
+            for req in requests:
+                stream = self.stream_map[self.encode_stream_name]
                 self._encoder.encode(stream, req)
-
+        for req in requests:
             req.release()
 
 
@@ -1078,20 +1083,17 @@ class Picamera2:
         loop to perform. The event loop will execute them in order, and return a list of
         futures which mature at the time the corresponding operation completes.
         """
-        with self.lock:
-            loop_tasks = []
-            for f in functions:
-                fut = Future()
-                fut.set_running_or_notify_cancel()
-                pairs.append((f, fut))
-            self._job_list.extend(pairs)
-        return [fut for _, fut in pairs]
+        loop_tasks = [LoopTask(f) for f in functions]
+        self._task_deque.extend(loop_tasks)
+        return [task.future for task in loop_tasks]
 
     def _dispatch(self, call: Callable[[CompletedRequest], Any]) -> Future:
         return self._dispatch_functions([call])[0]
 
     def _dispatch_no_request(self, call: Callable[[], Any]) -> Future:
-        return self._dispatch_functions([lambda r: call()])[0]
+        task = LoopTask(call, needs_request=False)
+        self._task_deque.append(task)
+        return task.future
 
     def _dispatch_mode_shift(self, config) -> Future:
         return self._dispatch_no_request(partial(self._switch_mode, config))

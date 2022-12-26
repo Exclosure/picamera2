@@ -173,3 +173,6 @@ class LoopTask:
     needs_request: bool = True
 
     future: Future = field(init=False, default_factory=Future)
+
+    def __post_init__(self):
+        self.future.set_running_or_notify_cancel()
