@@ -1,18 +1,16 @@
-import io
-import logging
+from __future__ import annotations
 import threading
-import time
+import mmap
+from dataclasses import dataclass, field
+from typing import Any, Callable
 
 import numpy as np
-from PIL import Image
 
 import picamera2.formats as formats
 from picamera2.controls import Controls
 from picamera2.helpers import Helpers
 from picamera2.lc_helpers import lc_unpack
-
-_log = logging.getLogger(__name__)
-
+from concurrent.futures import Future
 
 class _MappedBuffer:
     def __init__(self, request, stream):
@@ -20,8 +18,6 @@ class _MappedBuffer:
         self.__fb = request.request.buffers[stream]
 
     def __enter__(self):
-        import mmap
-
         # Check if the buffer is contiguous and find the total length.
         fd = self.__fb.planes[0].fd
         planes_metadata = self.__fb.metadata.planes
@@ -101,10 +97,9 @@ class MappedArray:
         return self.__array
 
 
+
 # TODO(meawoppl) - Make Completed Requests only exist inside of a context manager
 # This remove all the bizzare locking and reference counting we are doing here manually
-
-
 class CompletedRequest:
     def __init__(self, request, picam2):
         self.request = request
@@ -144,7 +139,7 @@ class CompletedRequest:
                     self.picam2.camera.queue_request(self.request)
                 self.request = None
 
-    def make_buffer(self, name):
+    def make_buffer(self, name: str):
         """Make a 1d numpy array from the named stream's buffer."""
         if self.picam2.stream_map.get(name, None) is None:
             raise RuntimeError(f'Stream "{name}" is not defined')
@@ -155,11 +150,11 @@ class CompletedRequest:
         """Fetch the metadata corresponding to this completed request."""
         return lc_unpack(self.request.metadata)
 
-    def make_array(self, name):
+    def make_array(self, name: str):
         """Make a 2d numpy array from the named stream's buffer."""
         return Helpers.make_array(self.make_buffer(name), self.config[name])
 
-    def make_image(self, name, width=None, height=None):
+    def make_image(self, name: str, width=None, height=None):
         """Make a PIL image from the named stream's buffer."""
         return Helpers.make_image(
             self.make_buffer(name), self.config[name], width, height
@@ -170,3 +165,11 @@ class CompletedRequest:
         return Helpers.save(
             self.picam2, self.make_image(name), self.get_metadata(), file_output, format
         )
+
+@dataclass
+class LoopTask:
+    call: Callable[[CompletedRequest], Any] | callable[[], Any]
+
+    needs_request: bool = True
+
+    future: Future = field(init=False, default_factory=Future)

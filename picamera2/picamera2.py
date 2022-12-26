@@ -11,7 +11,8 @@ import threading
 from concurrent.futures import Future
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Deque
+from collections import deque
 
 import libcamera
 import numpy as np
@@ -24,7 +25,7 @@ from picamera2.encoders import Encoder, Quality
 from picamera2.lc_helpers import lc_unpack, lc_unpack_controls
 from picamera2.outputs import FileOutput
 from picamera2.previews import NullPreview
-from picamera2.request import CompletedRequest
+from picamera2.request import CompletedRequest, LoopTask
 from picamera2.sensor_format import SensorFormat
 from picamera2.stream_config import (
     align_stream,
@@ -223,7 +224,7 @@ class Picamera2:
         self.notifymeread = os.fdopen(self.notifyme_r, "rb")
         self._cm.add(camera_num, self)
         self.camera_idx = camera_num
-        self._requestslock = threading.Lock()
+        self._request_lock = threading.Lock()
         self._requests = []
         self._reset_flags()
         try:
@@ -256,7 +257,7 @@ class Picamera2:
         self.stop_count = 0
         self.configure_count = 0
         self.frames = 0
-        self._job_list: List[Tuple[Callable, Future]] = []
+        self._job_list: Deque[Tuple[Callable, Future]] = deque()
         self.options = {}
         self._encoder = None
         self.post_callback = None
@@ -1015,7 +1016,7 @@ class Picamera2:
             # up when the camera is started the next time.
             self._cm.handle_request(self.camera_idx)
             self.started = False
-            with self._requestslock:
+            with self._request_lock:
                 self._requests = []
             self.completed_requests = []
             _log.info("Camera stopped")
@@ -1035,92 +1036,56 @@ class Picamera2:
         self.controls.set_controls(controls)
 
     def add_completed_request(self, request: CompletedRequest) -> None:
-        with self._requestslock:
+        with self._request_lock:
             self._requests.append(request)
 
-    # TODO(meawoppl) - This whole thing needs to be smashed to simpler
     def process_requests(self) -> None:
-        # This is the function that the event loop, which runs externally to us, must
-        # call.
+        # This is the function that the event loop, which runs externally to us, must call.
         requests = []
-        with self._requestslock:
+        with self._request_lock:
             requests = self._requests
             self._requests = []
         if requests == []:
             return
         self.frames += len(requests)
-        # It works like this:
-        # * The lock here protects the completed_requests list (because if it's non-empty, an
-        #   application can pop a request from it asynchronously), and the _job_list. If
-        #   we don't have a request immediately available, the application will queue a
-        #   "job" for us to execute here in order to accomplish what it wanted.
 
-        with self.lock:
-            # These new requests all have one "use" recorded, which is the one for
-            # being in this list.  Increase by one, so it cant't get discarded in
-            # self.functions block.
-            for req in requests:
-                req.acquire()
-            self.completed_requests += requests
+        for request in requests:
+            if self._job_list:
+                call, future = self._job_list.popleft()
+                _log.debug(f"Begin Execution: {call}")
+                try:
+                    result = call(request)
+                    future.set_result(result)
+                except Exception as e:
+                    _log.warning(f"Error in call {call}: {e}")
+                    future.set_exception(e)
+                _log.debug(f"End Execution: {call}")
 
-            # This is the request we'll hand back to be displayed. This counts as a "use" too.
-            display_request = self.completed_requests[-1]
-            display_request.acquire()
+        if self.encode_stream_name in self.stream_map:
+            stream = self.stream_map[self.encode_stream_name]
 
-            # See if we have a job to do. When executed, if it returns True then it's done and
-            # we can discard it. Otherwise it remains here to be tried again next time.
-            for request in requests:
-                if self._job_list:
-                    call, future = self._job_list.pop(0)
-                    _log.debug(f"Begin Execution: {call}")
-                    try:
-                        result = call(request)
-                        future.set_result(result)
-                    except Exception as e:
-                        _log.warning(f"Error in call {call}: {e}")
-                        future.set_exception(e)
-                    _log.debug(f"End Execution: {call}")
+        for req in requests:
+            if self._encoder is not None:
+                self._encoder.encode(stream, req)
 
-            if self.encode_stream_name in self.stream_map:
-                stream = self.stream_map[self.encode_stream_name]
+            req.release()
 
-            for req in requests:
-                if self._encoder is not None:
-                    self._encoder.encode(stream, req)
-
-                req.release()
-
-            # We hang on to the last completed request if we have been asked to.
-            while len(self.completed_requests) > self._max_queue_len:
-                self.completed_requests.pop(0).release()
-
-        # If one of the functions we ran reconfigured the camera since this request came out,
-        # then we don't want it going back to the application as the memory is not valid.
-        if display_request.configure_count != self.configure_count:
-            display_request.release()
-            display_request = None
-
-        return display_request
 
     def _dispatch_functions(
         self, functions: List[Callable[[CompletedRequest], Any]]
     ) -> List[Future]:
         """The main thread should use this to dispatch a number of operations for the event
-        loop to perform.
-
-        When there are multiple items each will be processed on a separate
-        trip round the event loop, meaning that a single operation could stop and restart the
-        camera and the next operation would receive a request from after the restart.
+        loop to perform. The event loop will execute them in order, and return a list of
+        futures which mature at the time the corresponding operation completes.
         """
-
         with self.lock:
-            futures = []
+            loop_tasks = []
             for f in functions:
                 fut = Future()
                 fut.set_running_or_notify_cancel()
-                self._job_list.append((f, fut))
-                futures.append(fut)
-        return futures
+                pairs.append((f, fut))
+            self._job_list.extend(pairs)
+        return [fut for _, fut in pairs]
 
     def _dispatch(self, call: Callable[[CompletedRequest], Any]) -> Future:
         return self._dispatch_functions([call])[0]
@@ -1172,9 +1137,7 @@ class Picamera2:
 
     def switch_mode(self, camera_config):
         """Switch the camera into another mode given by the camera_config."""
-        return self._dispatch_no_request(
-            partial(self._switch_mode, camera_config)
-        ).result()
+        return self._dispatch_mode_shift(camera_config).result()
 
     def switch_mode_and_capture_file(
         self,
@@ -1191,7 +1154,6 @@ class Picamera2:
         ).result()
 
     def _capture_request(self, request: CompletedRequest):
-        # The "use" of this request is transferred from the completed_requests list to the caller.
         request.acquire()
         return request
 
@@ -1203,7 +1165,7 @@ class Picamera2:
 
     def switch_mode_capture_request_and_stop(self, camera_config):
         """Switch the camera into a new (capture) mode, capture a request in the new mode and then stop the camera."""
-        self._dispatch_no_request(partial(self._switch_mode, camera_config))
+        self._dispatch_mode_shift(camera_config)
         request = self._dispatch(self._capture_request)
         self._dispatch_no_request(self._stop)
         return request.result()
