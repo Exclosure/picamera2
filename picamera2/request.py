@@ -1,6 +1,8 @@
 from __future__ import annotations
-import threading
+
 import mmap
+import threading
+from concurrent.futures import Future
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -10,7 +12,7 @@ import picamera2.formats as formats
 from picamera2.controls import Controls
 from picamera2.helpers import Helpers
 from picamera2.lc_helpers import lc_unpack
-from concurrent.futures import Future
+
 
 class _MappedBuffer:
     def __init__(self, request, stream):
@@ -97,7 +99,6 @@ class MappedArray:
         return self.__array
 
 
-
 # TODO(meawoppl) - Make Completed Requests only exist inside of a context manager
 # This remove all the bizzare locking and reference counting we are doing here manually
 class CompletedRequest:
@@ -165,6 +166,7 @@ class CompletedRequest:
         return Helpers.save(
             self.picam2, self.make_image(name), self.get_metadata(), file_output, format
         )
+
 
 @dataclass
 class LoopTask:

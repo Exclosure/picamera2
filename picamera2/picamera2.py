@@ -8,11 +8,11 @@ import os
 import selectors
 import tempfile
 import threading
+from collections import deque
 from concurrent.futures import Future
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Tuple, Deque
-from collections import deque
+from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 
 import libcamera
 import numpy as np
@@ -225,7 +225,7 @@ class Picamera2:
         self._cm.add(camera_num, self)
         self.camera_idx = camera_num
         self._request_lock = threading.Lock()
-        self._requests = []
+        self._requests = deque()
         self._reset_flags()
         try:
             self._open_camera()
@@ -1016,8 +1016,7 @@ class Picamera2:
             # up when the camera is started the next time.
             self._cm.handle_request(self.camera_idx)
             self.started = False
-            with self._request_lock:
-                self._requests = []
+            self._requests = deque()
             self.completed_requests = []
             _log.info("Camera stopped")
 
@@ -1040,13 +1039,10 @@ class Picamera2:
             self._requests.append(request)
 
     def process_requests(self) -> None:
-        # This is the function that the event loop, which runs externally to us, must call.
         requests = []
-        with self._request_lock:
-            requests = self._requests
-            self._requests = []
-        if requests == []:
-            return
+        for _ in range(len(self._requests)):
+            requests.append(self._requests.popleft())
+
         self.frames += len(requests)
 
         req_idx = 0
@@ -1074,7 +1070,6 @@ class Picamera2:
                 self._encoder.encode(stream, req)
         for req in requests:
             req.release()
-
 
     def _dispatch_functions(
         self, functions: List[Callable[[CompletedRequest], Any]]

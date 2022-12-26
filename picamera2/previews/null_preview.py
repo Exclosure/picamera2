@@ -60,7 +60,9 @@ class NullPreview:
         self.picam2 = picam2
         self._started.clear()
         self._abort.clear()
-        self.thread = threading.Thread(target=self.thread_func, daemon=True, args=(picam2,))
+        self.thread = threading.Thread(
+            target=self.thread_func, daemon=True, args=(picam2,)
+        )
         self.thread.start()
         self._started.wait()
 
