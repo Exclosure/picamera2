@@ -224,7 +224,6 @@ class Picamera2:
         self.notifymeread = os.fdopen(self.notifyme_r, "rb")
         self._cm.add(camera_num, self)
         self.camera_idx = camera_num
-        self._request_lock = threading.Lock()
         self._requests = deque()
         self._reset_flags()
         try:
@@ -261,10 +260,6 @@ class Picamera2:
         self.options = {}
         self._encoder = None
         self.post_callback = None
-        self.completed_requests: List[CompletedRequest] = []
-        self.lock = (
-            threading.Lock()
-        )  # protects the _job_list and completed_requests fields
         self.camera_properties_ = {}
         self.controls = Controls(self)
         self.sensor_modes_ = None
@@ -1017,7 +1012,6 @@ class Picamera2:
             self._cm.handle_request(self.camera_idx)
             self.started = False
             self._requests = deque()
-            self.completed_requests = []
             _log.info("Camera stopped")
 
     def stop(self) -> None:
@@ -1035,8 +1029,7 @@ class Picamera2:
         self.controls.set_controls(controls)
 
     def add_completed_request(self, request: CompletedRequest) -> None:
-        with self._request_lock:
-            self._requests.append(request)
+        self._requests.append(request)
 
     def process_requests(self) -> None:
         requests = []
