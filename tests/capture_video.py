@@ -10,7 +10,7 @@ camera.configure(video_config)
 
 encoder = JpegEncoder()
 
-camera.start_recording(encoder, "test.mjpeg")
+camera.start(encoder, "test.mjpeg")
 time.sleep(2)
-camera.stop_recording()
+camera.stop()
 camera.close()

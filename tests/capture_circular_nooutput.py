@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import time
+from unittest.mock import MagicMock
 
 from picamera2 import Picamera2
 from picamera2.encoders.jpeg_encoder import JpegEncoder
@@ -17,9 +18,16 @@ camera.configure(vconfig)
 encoder = JpegEncoder()
 output = CircularOutput(buffersize=int(fps * (dur + 0.2)), outputtofile=False)
 output.fileoutput = "file.mjpeg"
-camera.start_recording(encoder, output)
-time.sleep(dur)
-camera.stop_recording()
+
+mock = MagicMock()
+camera.add_request_callback(lambda r: mock())
+
+start_time = time.time()
+while (mock.call_count < 5) and (time.time() - start_time < 5):
+    time.sleep(0.1)
+
 output.stop()
 
 camera.close()
+
+assert mock.call_count > 0

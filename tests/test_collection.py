@@ -28,7 +28,6 @@ KNOWN_XFAIL = set(
         "capture_timelapse_video.py",
         "check_timestamps.py",
         "drm_multiple_test.py",
-        "encoder_start_stop.py",
         "multicamera_preview.py",
         "stack_raw.py",
     ]
