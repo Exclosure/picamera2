@@ -20,7 +20,7 @@ _log = getLogger(__name__)
 
 class _MappedBuffer:
     def __init__(self, request, stream):
-        stream = request.picam2.stream_map[stream]
+        stream = request.camera.stream_map[stream]
         self.__fb = request.request.buffers[stream]
 
     def __enter__(self):
@@ -60,7 +60,7 @@ class MappedArray:
         array = np.array(b, copy=False, dtype=np.uint8)
 
         if self.__reshape:
-            config = self.__request.picam2.camera_config[self.__stream]
+            config = self.__request.camera.camera_config[self.__stream]
             fmt = config["format"]
             w, h = config["size"]
             stride = config["stride"]
