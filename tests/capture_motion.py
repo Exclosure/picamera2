@@ -1,10 +1,6 @@
 #!/usr/bin/python3
-
-
 import numpy as np
-
 from picamera2 import Picamera2
-from picamera2.encoders.jpeg_encoder import JpegEncoder
 
 lsize = (320, 240)
 camera = Picamera2()

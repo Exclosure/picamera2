@@ -1,9 +1,6 @@
 #!/usr/bin/python3
 
 # Obtain the current camera control values in the image metadata.
-
-import time
-
 from picamera2 import Picamera2
 
 camera = Picamera2()

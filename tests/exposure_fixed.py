@@ -1,9 +1,5 @@
 #!/usr/bin/python3
-
 # Start camera with fixed exposure and gain.
-
-import time
-
 from picamera2 import Picamera2
 
 camera = Picamera2()

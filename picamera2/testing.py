@@ -1,10 +1,14 @@
 import time
-from unittest.mock import Mock
-from picamera2 import Picamera2
 from concurrent.futures import Future
 from threading import Thread
+from unittest.mock import Mock
 
-def mature_after_frames_or_timeout(camera: Picamera2, n_frames: int, timeout_seconds=5) -> Future:
+from picamera2 import Picamera2
+
+
+def mature_after_frames_or_timeout(
+    camera: Picamera2, n_frames: int, timeout_seconds=5
+) -> Future:
     """Return a future that will be mature after n_frames or 2 seconds."""
     future = Future()
     future.set_running_or_notify_cancel()

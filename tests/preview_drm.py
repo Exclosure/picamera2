@@ -1,9 +1,6 @@
 #!/usr/bin/python3
 
 # For use from the login console, when not running X Windows.
-
-import time
-
 from picamera2 import Picamera2
 
 camera = Picamera2()

@@ -1,7 +1,5 @@
 #!/usr/bin/python3
-
 import picamera2
-
 
 def takephoto(cam):
     camera = picamera2.Picamera2(camera_num=cam)

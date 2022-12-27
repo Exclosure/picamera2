@@ -1,8 +1,5 @@
 #!/usr/bin/python3
-
 # Capture a PNG while still running in the preview mode.
-
-import time
 
 from picamera2 import Picamera2
 

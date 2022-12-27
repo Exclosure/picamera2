@@ -1,9 +1,5 @@
 #!/usr/bin/python3
-
 # Capture a full resolution image to memory rather than to a file.
-
-import time
-
 from PIL import Image
 
 from picamera2 import Picamera2

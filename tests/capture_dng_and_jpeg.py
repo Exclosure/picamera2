@@ -1,7 +1,5 @@
 #!/usr/bin/python3
-
 # Capture a DNG and a JPEG made from the same raw data.
-
 from picamera2 import Picamera2
 from picamera2.testing import mature_after_frames_or_timeout
 

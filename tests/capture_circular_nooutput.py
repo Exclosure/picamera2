@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-import time
 from unittest.mock import MagicMock
 
 from picamera2 import Picamera2

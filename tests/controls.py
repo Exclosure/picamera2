@@ -2,9 +2,6 @@
 
 # Example of setting controls. Here, after one second, we fix the AGC/AEC
 # to the values it has reached whereafter it will no longer change.
-
-import time
-
 from picamera2 import Picamera2
 
 camera = Picamera2()

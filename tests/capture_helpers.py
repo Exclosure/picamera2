@@ -1,9 +1,5 @@
 #!/usr/bin/python3
-
 # Capture multiple representations of a captured frame.
-
-import time
-
 from picamera2 import Picamera2
 from picamera2.helpers import Helpers
 

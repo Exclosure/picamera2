@@ -5,7 +5,6 @@ from picamera2 import Picamera2
 
 def main():
     print("With context...")
-    time.sleep(1)
     with Picamera2() as camera:
         preview = camera.create_preview_configuration()
         camera.configure(preview)
@@ -14,7 +13,6 @@ def main():
         print(metadata)
 
     print("Without context...")
-    time.sleep(1)
     camera = Picamera2()
     preview = camera.create_preview_configuration()
     camera.configure(preview)

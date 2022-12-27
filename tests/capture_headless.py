@@ -1,5 +1,4 @@
-#!//usr/bin/python3
-
+#!/usr/bin/python3
 from picamera2 import Picamera2
 
 camera = Picamera2()
