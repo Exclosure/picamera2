@@ -1,9 +1,10 @@
 from __future__ import annotations
-from functools import partial
+
 import mmap
 import threading
 from concurrent.futures import Future
 from dataclasses import dataclass, field
+from functools import partial
 from typing import Any, Callable
 
 import numpy as np

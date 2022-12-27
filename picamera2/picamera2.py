@@ -1121,9 +1121,9 @@ class Picamera2:
         """Fetch the next completed request from the camera system. You will be holding a
         reference to this request so you must release it again to return it to the camera system.
         """
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_request)
-        )[0].result()
+        return self._dispatch_loop_tasks(LoopTask.with_request(self._capture_request))[
+            0
+        ].result()
 
     def switch_mode_capture_request_and_stop(self, camera_config):
         """Switch the camera into a new (capture) mode, capture a request in the new mode and then stop the camera."""
@@ -1142,18 +1142,18 @@ class Picamera2:
         return self.capture_metadata_async().result()
 
     def capture_metadata_async(self) -> Future:
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_metadata)
-        )[0]
+        return self._dispatch_loop_tasks(LoopTask.with_request(self._capture_metadata))[
+            0
+        ]
 
     def _capture_buffer(self, name: str, request: CompletedRequest):
         return request.make_buffer(name)
 
     def capture_buffer(self, name="main"):
         """Make a 1d numpy array from the next frame in the named stream."""
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_buffer)
-        )[0].result()
+        return self._dispatch_loop_tasks(LoopTask.with_request(self._capture_buffer))[
+            0
+        ].result()
 
     def _capture_buffers_and_metadata(
         self, names: List[str], request: CompletedRequest
@@ -1179,7 +1179,8 @@ class Picamera2:
         back to the initial camera mode.
         """
         return self._dispatch_with_temporary_mode(
-            LoopTask.with_request(self._capture_buffers_and_metadata, names), camera_config
+            LoopTask.with_request(self._capture_buffers_and_metadata, names),
+            camera_config,
         ).result()
 
     def _capture_array(self, name, request: CompletedRequest):
@@ -1206,15 +1207,15 @@ class Picamera2:
         """Switch the camera into a new (capture) mode, capture the image array data, then return
         back to the initial camera mode."""
         return self._dispatch_with_temporary_mode(
-            LoopTask.with_request(self._capture_array, name),
-            camera_config
+            LoopTask.with_request(self._capture_array, name), camera_config
         ).result()
 
     def switch_mode_and_capture_arrays(self, camera_config, names=["main"]):
         """Switch the camera into a new (capture) mode, capture the image arrays, then return
         back to the initial camera mode."""
         return self._dispatch_with_temporary_mode(
-            LoopTask.with_request(self._capture_arrays_and_metadata, names), camera_config
+            LoopTask.with_request(self._capture_arrays_and_metadata, names),
+            camera_config,
         ).result()
 
     def _capture_image(self, name: str, request: CompletedRequest) -> Image:
