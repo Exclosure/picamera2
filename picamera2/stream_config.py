@@ -100,7 +100,7 @@ def check_camera_config(camera_config: dict) -> None:
     if not isinstance(
         camera_config["colour_space"], libcamera._libcamera.ColorSpace
     ):
-        raise RuntimeError("Colour space has incorrect type")
+        raise RuntimeError("Color space has incorrect type")
     if not isinstance(camera_config["transform"], libcamera._libcamera.Transform):
         raise RuntimeError("Transform has incorrect type")
 
