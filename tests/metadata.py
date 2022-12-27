@@ -13,7 +13,6 @@ preview_config = camera.create_preview_configuration()
 camera.configure(preview_config)
 
 camera.start()
-time.sleep(2)
-
+camera.discard_frames(2)
 print(camera.capture_metadata())
 camera.close()

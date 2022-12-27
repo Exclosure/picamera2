@@ -1035,6 +1035,10 @@ class Picamera2:
     def _discard_request(self, request: CompletedRequest) -> None:
         pass
 
+    def discard_frames(self, n_frames: int) -> Future:
+        """Discard the next ``n_frames`` in the queue."""
+        self._dispatch_loop_tasks([LoopTask.with_request(self._discard_request) for _ in range(n_frames)])
+
     def _dispatch_with_temporary_mode(self, loop_task: LoopTask, config) -> Future:
         previous_config = self.camera_config
         # FIXME: the discarded request enough for test cases, but the correct

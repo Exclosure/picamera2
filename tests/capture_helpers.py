@@ -15,8 +15,7 @@ capture_config = camera.create_still_configuration(raw={})
 camera.configure(preview_config)
 
 camera.start()
-time.sleep(2)
-
+camera.discard_frames(2)
 buffers, metadata = camera.switch_mode_and_capture_buffers(capture_config, ["main"])
 
 arr = Helpers.make_array(buffers[0], capture_config["main"])

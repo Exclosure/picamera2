@@ -12,7 +12,7 @@ def main():
         camera.start()
         metadata = camera.capture_metadata()
         print(metadata)
-    time.sleep(5)
+
     print("Without context...")
     time.sleep(1)
     camera = Picamera2()

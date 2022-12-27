@@ -16,6 +16,5 @@ camera.start()
 time.sleep(1)
 
 camera.set_controls({"AwbEnable": 0, "AeEnable": 0})
-time.sleep(2)
-
+camera.discard_frames(2)
 camera.close()

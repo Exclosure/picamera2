@@ -3,6 +3,7 @@ import time
 from unittest.mock import MagicMock
 
 from picamera2 import Picamera2
+from picamera2.testing import mature_after_frames_or_timeout
 
 camera = Picamera2()
 fps = 30
@@ -17,12 +18,5 @@ camera.configure(video_cfg)
 mock = MagicMock()
 camera.add_request_callback(lambda r: mock())
 
-camera.start()
-for i in range(50):
-    if mock.call_count >= 5:
-        break
-    time.sleep(0.1)
-
-camera.close()
-
-assert mock.call_count > 0
+with camera:
+    mature_after_frames_or_timeout(camera, 5).result()

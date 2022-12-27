@@ -13,5 +13,5 @@ preview_config = camera.create_preview_configuration(controls=controls)
 camera.configure(preview_config)
 
 camera.start()
-time.sleep(5)
+camera.discard_frames(2)
 camera.close()
