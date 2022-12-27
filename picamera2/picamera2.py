@@ -1128,9 +1128,9 @@ class Picamera2:
 
     def capture_buffer(self, name="main"):
         """Make a 1d numpy array from the next frame in the named stream."""
-        return self._dispatch_loop_tasks(LoopTask.with_request(self._capture_buffer))[
-            0
-        ].result()
+        return self._dispatch_loop_tasks(
+            LoopTask.with_request(self._capture_buffer, name)
+        )[0].result()
 
     def _capture_buffers_and_metadata(
         self, names: List[str], request: CompletedRequest
