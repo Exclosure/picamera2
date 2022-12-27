@@ -4,32 +4,21 @@ import time
 import numpy as np
 
 from picamera2 import Picamera2
-from picamera2.encoders.jpeg_encoder import JpegEncoder
-from picamera2.outputs import Output
 
+camera = Picamera2()
+video_config = camera.create_video_configuration()
+camera.configure(video_config)
 
-class TimestampCollector(Output):
-    "Output class that doesn't output anything but collects frame timestamps"
-
-    def outputframe(self, frame, keyframe=True, timestamp=None):
-        if timestamp is not None:
-            timestamps.append(timestamp)
-
-
-picam2 = Picamera2()
-video_config = picam2.create_video_configuration()
-picam2.configure(video_config)
-
-encoder = JpegEncoder()
-output = TimestampCollector()
 timestamps = []
 
-picam2.start_recording(encoder, output)
+camera.add_request_callback(lambda r: timestamps.append(time.time() * 1e6))
+
+camera.start()
 time.sleep(2)
-picam2.stop_recording()
+camera.stop()
 
 # Now let's analyse all the timestamps
-diffs = np.array([next - now for now, next in zip(timestamps, timestamps[1:])])
+diffs = timestamps[:-1] - timestamps[1:]
 median = np.median(diffs)
 tol = median / 10
 hist, _ = np.histogram(
@@ -52,4 +41,4 @@ if hist[2] > 3:
     raise RuntimeError(f"Unexpectedly large number ({hist[2]}) of late frames")
 if hist[3] > 0:
     raise RuntimeError(f"{hist[3]} very late frames detected")
-picam2.close()
+camera.close()
