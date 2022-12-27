@@ -20,5 +20,4 @@ camera.still_configuration.raw.size = camera.sensor_resolution
 camera.start("preview")
 time.sleep(2)
 
-img = camera.switch_mode_and_capture_image("still")
-assert isinstance(img, Image)
+assert camera.switch_mode_and_capture_image("still")

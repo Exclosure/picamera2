@@ -1029,6 +1029,9 @@ class Picamera2:
 
     def _dispatch_with_temporary_mode(self, loop_task: LoopTask, config) -> Future:
         previous_config = self.camera_config
+        # FIXME: the discarded request enough for test cases, but the correct
+        # way to flag this is with the request.cookie, but that is currently
+        # used to route between cameras. Fixable, but independent issue for now.
         futures = self._dispatch_loop_tasks(
             LoopTask.without_request(self._switch_mode, config),
             LoopTask.with_request(self._discard_request),
