@@ -870,15 +870,6 @@ class Picamera2:
         )
         _log.debug(f"Streams: {self.stream_map}")
 
-        # Decide whether we are going to keep hold of the last completed request, or
-        # whether capture requests will always wait for the next frame. If there's only
-        # one buffer, never hang on to the request because it would stall the pipeline
-        # instantly.
-        if camera_config["queue"] and camera_config["buffer_count"] > 1:
-            self._max_queue_len = 1
-        else:
-            self._max_queue_len = 0
-
         # Allocate all the frame buffers.
         self.streams = [stream_config.stream for stream_config in libcamera_config]
 
@@ -1036,19 +1027,6 @@ class Picamera2:
         """
         self._task_deque.extend(args)
         return [task.future for task in args]
-
-    # def _dispatch(self, call: Callable[[CompletedRequest], Any]) -> Future:
-    #     return self._dispatch_functions([call])[0]
-
-    # def _dispatch_no_request(self, call: Callable[[], Any]) -> Future:
-    #     task = LoopTask(call, needs_request=False)
-    #     self._task_deque.append(task)
-    #     return task.future
-
-    # def _dispatch_mode_shift(self, config) -> Future:
-    #     return self._dispatch_loop_tasks(
-    #         LoopTask.with_args(self._switch_mode, config)
-    #     )
 
     def _dispatch_with_temporary_mode(self, loop_task: LoopTask, config) -> Future:
         previous_config = self.camera_config
@@ -1243,4 +1221,4 @@ class Picamera2:
         """
         return self._dispatch_with_temporary_mode(
             LoopTask.with_request(self._capture_image, name), camera_config
-        )[0].result()
+        ).result()
