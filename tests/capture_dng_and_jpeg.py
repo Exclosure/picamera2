@@ -10,7 +10,7 @@ camera = Picamera2()
 camera.start_preview()
 
 preview_config = camera.create_preview_configuration()
-capture_config = camera.create_still_configuration(raw={}, display=None)
+capture_config = camera.create_still_configuration(raw={})
 camera.configure(preview_config)
 
 camera.start()

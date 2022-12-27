@@ -973,7 +973,7 @@ class Picamera2:
             _log.debug("Camera was not started")
             return
         if self.asynchronous:
-            self._dispatch_no_request(self._stop).result()
+            self._dispatch_loop_tasks(LoopTask.without_request(self._stop))[0].result()
         else:
             self._stop()
 
