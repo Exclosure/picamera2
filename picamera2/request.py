@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from functools import partial
 import mmap
 import threading
 from concurrent.futures import Future
@@ -175,6 +175,14 @@ class LoopTask:
     needs_request: bool = True
 
     future: Future = field(init=False, default_factory=Future)
+
+    @classmethod
+    def with_request(cls, call, *args):
+        return cls(call=partial(call, *args), needs_request=True)
+
+    @classmethod
+    def without_request(cls, call, *args):
+        return cls(call=partial(call, *args), needs_request=False)
 
     def __post_init__(self):
         self.future.set_running_or_notify_cancel()
