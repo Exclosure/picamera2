@@ -5,18 +5,18 @@ import threading
 from concurrent.futures import Future
 from dataclasses import dataclass, field
 from functools import partial
-from typing import Any, Callable
 from logging import getLogger
+from typing import Any, Callable
 
-import numpy as np
 import libcamera
+import numpy as np
 
 import picamera2.formats as formats
 from picamera2.helpers import Helpers
 from picamera2.lc_helpers import lc_unpack
 
-
 _log = getLogger(__name__)
+
 
 class _MappedBuffer:
     def __init__(self, request, stream):
@@ -131,16 +131,18 @@ class CompletedRequest:
             self.ref_count -= 1
             if self.ref_count < 0:
                 raise RuntimeError("CompletedRequest: lock now has negative ref_count")
-            
+
             if self.ref_count > 0:
                 return
-            
+
             # If the camera has been stopped since this request was returned then we
             # can't recycle it.
             if self.camera.camera and self.stop_count == self.camera.stop_count:
-                self.camera.recycle_request(self.request)        
+                self.camera.recycle_request(self.request)
             else:
-                _log.warning("Camera stopped before request could be recycled (Discarding it)")
+                _log.warning(
+                    "Camera stopped before request could be recycled (Discarding it)"
+                )
             self.request = None
 
     def make_buffer(self, name: str):
