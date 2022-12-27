@@ -1087,7 +1087,8 @@ class Picamera2:
         back to the initial camera mode.
         """
         return self._dispatch_with_temporary_mode(
-            LoopTask.with_request(self._capture_file, name, file_output, format), camera_config
+            LoopTask.with_request(self._capture_file, name, file_output, format),
+            camera_config,
         ).result()
 
     def _capture_request(self, request: CompletedRequest):
