@@ -252,6 +252,14 @@ class Picamera2:
         """
         self._request_callbacks.append(callback)
 
+    def remove_request_callback(self, callback: Callable[[CompletedRequest], None]):
+        """Remove a callback previously added with add_request_callback.
+
+        :param callback: The callback to be removed
+        :type callback: Callable[[CompletedRequest], None]
+        """
+        self._request_callbacks.remove(callback)
+
     def _reset_flags(self) -> None:
         self.camera = None
         self.is_open = False
