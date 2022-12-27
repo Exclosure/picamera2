@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import numpy as np
+
 from picamera2 import Picamera2
 
 lsize = (320, 240)
