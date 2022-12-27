@@ -1035,7 +1035,7 @@ class Picamera2:
             loop_task,
             LoopTask.without_request(self._switch_mode, previous_config),
         )
-        return futures[1]
+        return futures[2]
 
     def _capture_file(
         self, name, file_output, format, request: CompletedRequest
