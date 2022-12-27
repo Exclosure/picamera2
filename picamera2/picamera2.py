@@ -263,7 +263,6 @@ class Picamera2:
         self.stream_map = None
         self.started = False
         self.stop_count = 0
-        self.configure_count = 0
         self.frames = 0
         self._task_deque: Deque[LoopTask] = deque()
         self.options = {}
@@ -893,7 +892,6 @@ class Picamera2:
             self.video_configuration.update(camera_config)
         # Set the controls directly so as to overwrite whatever is there.
         self.controls.set_controls(self.camera_config["controls"])
-        self.configure_count += 1
 
     def configure(self, camera_config="preview") -> None:
         """Configure the camera system with the given configuration."""
@@ -1026,10 +1024,14 @@ class Picamera2:
         self._task_deque.extend(args)
         return [task.future for task in args]
 
+    def _discard_request(self, request: CompletedRequest) -> None:
+        pass
+
     def _dispatch_with_temporary_mode(self, loop_task: LoopTask, config) -> Future:
         previous_config = self.camera_config
         futures = self._dispatch_loop_tasks(
             LoopTask.without_request(self._switch_mode, config),
+            LoopTask.with_request(self._discard_request)
             loop_task,
             LoopTask.without_request(self._switch_mode, previous_config),
         )

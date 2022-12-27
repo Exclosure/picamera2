@@ -109,7 +109,6 @@ class CompletedRequest:
         self.lock = threading.Lock()
         self.picam2 = picam2
         self.stop_count = picam2.stop_count
-        self.configure_count = picam2.configure_count
         self.config = self.picam2.camera_config.copy()
 
     def acquire(self):
