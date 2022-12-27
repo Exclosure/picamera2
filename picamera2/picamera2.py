@@ -11,7 +11,6 @@ import threading
 from collections import deque
 from concurrent.futures import Future
 from dataclasses import dataclass
-from functools import partial
 from typing import Any, Callable, Deque, Dict, List, Tuple
 
 import libcamera
@@ -994,7 +993,7 @@ class Picamera2:
         self.frames += len(requests)
 
         req_idx = 0
-        while self._task_deque.count() and (req_idx < len(requests)):
+        while len(self._task_deque) and (req_idx < len(requests)):
             task = self._task_deque.popleft()
             _log.debug(f"Begin LoopTask Execution: {task.call}")
             try:
@@ -1088,7 +1087,7 @@ class Picamera2:
         back to the initial camera mode.
         """
         return self._dispatch_with_temporary_mode(
-            partial(self._capture_file, name, file_output, format), camera_config
+            LoopTask.with_request(self._capture_file, name, file_output, format), camera_config
         ).result()
 
     def _capture_request(self, request: CompletedRequest):
