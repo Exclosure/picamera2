@@ -1000,13 +1000,12 @@ class Picamera2:
                 if task.needs_request:
                     req = requests[req_idx]
                     req_idx += 1
-                    result = task.call(req)
+                    task.future.set_result(task.call(req))
                 else:
-                    result = task.call()
+                    task.future.set_result(task.call())
             except Exception as e:
                 _log.warning(f"Error in LoopTask {task.call}: {e}")
                 task.future.set_exception(e)
-            task.future.set_result(result)
             _log.debug(f"End LoopTask Execution: {task.call}")
 
         for request in requests:
