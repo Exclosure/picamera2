@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from picamera2 import Picamera2
 from picamera2.request import CompletedRequest
+
 # Encode a VGA stream, and capture a higher resolution still image half way through.
 
 camera = Picamera2()
