@@ -26,8 +26,8 @@ from picamera2.request import CompletedRequest, LoopTask
 from picamera2.sensor_format import SensorFormat
 from picamera2.stream_config import (
     align_stream,
-    check_stream_config,
     make_initial_stream_config,
+    check_camera_config,
 )
 
 STILL = libcamera.StreamRole.StillCapture
@@ -669,33 +669,6 @@ class Picamera2:
         }
         return config
 
-    # TODO(meawoppl) - dataclass __post_init__ materials
-    def check_camera_config(self, camera_config: dict) -> None:
-        required_keys = ["colour_space", "transform", "main", "lores", "raw"]
-        for name in required_keys:
-            if name not in camera_config:
-                raise RuntimeError(f"'{name}' key expected in camera configuration")
-
-        # Check the entire camera configuration for errors.
-        if not isinstance(
-            camera_config["colour_space"], libcamera._libcamera.ColorSpace
-        ):
-            raise RuntimeError("Colour space has incorrect type")
-        if not isinstance(camera_config["transform"], libcamera._libcamera.Transform):
-            raise RuntimeError("Transform has incorrect type")
-
-        check_stream_config(camera_config["main"], "main")
-        if camera_config["lores"] is not None:
-            check_stream_config(camera_config["lores"], "lores")
-            main_w, main_h = camera_config["main"]["size"]
-            lores_w, lores_h = camera_config["lores"]["size"]
-            if lores_w > main_w or lores_h > main_h:
-                raise RuntimeError("lores stream dimensions may not exceed main stream")
-            if not formats.is_YUV(camera_config["lores"]["format"]):
-                raise RuntimeError("lores stream must be YUV")
-        if camera_config["raw"] is not None:
-            check_stream_config(camera_config["raw"], "raw")
-
     # TODO(meawoppl) - Obviated by dataclasses
     @staticmethod
     def _update_libcamera_stream_config(
@@ -842,7 +815,7 @@ class Picamera2:
         self.camera_config = None
 
         # Check the config and turn it into a libcamera config.
-        self.check_camera_config(camera_config)
+        check_camera_config(camera_config)
         libcamera_config = self._make_libcamera_config(camera_config)
 
         # Check that libcamera is happy with it.

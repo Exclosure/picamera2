@@ -1,3 +1,5 @@
+import libcamera
+
 from picamera2 import formats
 from picamera2.sensor_format import SensorFormat
 
@@ -86,3 +88,30 @@ def check_stream_config(stream_config, name) -> None:
         raise RuntimeError("size in " + name + " stream should be (width, height)")
     if size[0] % 2 or size[1] % 2:
         raise RuntimeError("width and height should be even")
+
+# TODO(meawoppl) - dataclass __post_init__ materials
+def check_camera_config(camera_config: dict) -> None:
+    required_keys = ["colour_space", "transform", "main", "lores", "raw"]
+    for name in required_keys:
+        if name not in camera_config:
+            raise RuntimeError(f"'{name}' key expected in camera configuration")
+
+    # Check the entire camera configuration for errors.
+    if not isinstance(
+        camera_config["colour_space"], libcamera._libcamera.ColorSpace
+    ):
+        raise RuntimeError("Colour space has incorrect type")
+    if not isinstance(camera_config["transform"], libcamera._libcamera.Transform):
+        raise RuntimeError("Transform has incorrect type")
+
+    check_stream_config(camera_config["main"], "main")
+    if camera_config["lores"] is not None:
+        check_stream_config(camera_config["lores"], "lores")
+        main_w, main_h = camera_config["main"]["size"]
+        lores_w, lores_h = camera_config["lores"]["size"]
+        if lores_w > main_w or lores_h > main_h:
+            raise RuntimeError("lores stream dimensions may not exceed main stream")
+        if not formats.is_YUV(camera_config["lores"]["format"]):
+            raise RuntimeError("lores stream must be YUV")
+    if camera_config["raw"] is not None:
+        check_stream_config(camera_config["raw"], "raw")
