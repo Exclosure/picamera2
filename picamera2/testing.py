@@ -4,6 +4,7 @@ from threading import Thread
 from unittest.mock import Mock
 
 from picamera2 import Picamera2
+from picamera2.request import CompletedRequest
 
 
 def mature_after_frames_or_timeout(
@@ -23,7 +24,7 @@ def mature_after_frames_or_timeout(
 
     Thread(target=timeout_thread, daemon=True).start()
 
-    def callback(request):
+    def callback(request: CompletedRequest):
         mock(request)
         if mock.call_count == n_frames:
             future.set_result(None)
