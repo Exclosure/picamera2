@@ -1031,7 +1031,7 @@ class Picamera2:
         previous_config = self.camera_config
         futures = self._dispatch_loop_tasks(
             LoopTask.without_request(self._switch_mode, config),
-            LoopTask.with_request(self._discard_request)
+            LoopTask.with_request(self._discard_request),
             loop_task,
             LoopTask.without_request(self._switch_mode, previous_config),
         )
