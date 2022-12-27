@@ -767,7 +767,7 @@ class Picamera2:
         for id, value in controls.items():
             request.set_control(id, value)
         self.controls = Controls(self)
-        self.camera.queue_request(self.request)
+        self.camera.queue_request(request)
 
     def _make_requests(self) -> List[libcamera.Request]:
         """Make libcamera request objects.
