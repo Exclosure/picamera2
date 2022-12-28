@@ -11,6 +11,7 @@ import threading
 from collections import deque
 from concurrent.futures import Future
 from dataclasses import dataclass
+from functools import partial
 from typing import Any, Callable, Deque, Dict, List, Tuple
 
 import libcamera
@@ -20,6 +21,7 @@ from PIL import Image
 import picamera2.formats as formats
 from picamera2.configuration import CameraConfiguration
 from picamera2.controls import Controls
+from picamera2.frame import CameraFrame
 from picamera2.lc_helpers import lc_unpack, lc_unpack_controls
 from picamera2.previews import NullPreview
 from picamera2.request import CompletedRequest, LoopTask
@@ -137,9 +139,17 @@ class CameraManager:
                     and req.cookie != flushid
                 ):
                     cams.add(req.cookie)
-
+                    camera_inst = self.cameras[req.cookie]
+                    cleanup_call = partial(
+                        camera_inst.recycle_request, camera_inst.stop_count, req
+                    )
                     self.cameras[req.cookie].add_completed_request(
-                        CompletedRequest(req, self.cameras[req.cookie])
+                        CompletedRequest(
+                            req,
+                            camera_inst.camera_config.copy(),
+                            camera_inst.stream_map,
+                            cleanup_call,
+                        )
                     )
             # OS based file pipes seem really overkill for this.
             # TODO(meawoppl) - Convert to queue primitive
@@ -757,12 +767,20 @@ class Picamera2:
 
         return libcamera_config
 
-    def recycle_request(self, request: libcamera.Request) -> None:
+    def recycle_request(self, stop_count: int, request: libcamera.Request) -> None:
         """Recycle a request.
 
         :param request: request
         :type request: libcamera.Request
         """
+        if not self.camera:
+            _log.warning("Can't recycle request, camera not open")
+            return
+
+        if stop_count != self.stop_count:
+            _log.warning("Can't recycle request, stop count mismatch")
+            return
+
         request.reuse()
         controls = self.controls.get_libcamera_controls()
         for id, value in controls.items():
@@ -1071,7 +1089,7 @@ class Picamera2:
     def _capture_file(
         self, name, file_output, format, request: CompletedRequest
     ) -> dict:
-        request.save(name, file_output, format=format)
+        request.make_image(name).convert("RGB").save(file_output, format=format)
         return request.get_metadata()
 
     def capture_file_async(
@@ -1151,7 +1169,7 @@ class Picamera2:
         ]
 
     def _capture_buffer(self, name: str, request: CompletedRequest):
-        return request.make_buffer(name)
+        return request.get_buffer(name)
 
     def capture_buffer(self, name="main"):
         """Make a 1d numpy array from the next frame in the named stream."""
@@ -1162,7 +1180,7 @@ class Picamera2:
     def _capture_buffers_and_metadata(
         self, names: List[str], request: CompletedRequest
     ) -> Tuple[List[np.ndarray], dict]:
-        return ([request.make_buffer(name) for name in names], request.get_metadata())
+        return ([request.get_buffer(name) for name in names], request.get_metadata())
 
     def capture_buffers_and_metadata(self, names=["main"]) -> Tuple[List[np.ndarray], dict]:
         """Make a 1d numpy array from the next frame for each of the named streams."""
@@ -1248,3 +1266,26 @@ class Picamera2:
         return self._dispatch_with_temporary_mode(
             LoopTask.with_request(self._capture_image, name), camera_config
         ).result()
+
+    def _capture_frame(self, name: str, request: CompletedRequest) -> CameraFrame:
+        return CameraFrame.from_request(name, request)
+
+    def capture_frame(self, name: str = "main") -> CameraFrame:
+        """Make a CameraFrame from the next frame in the named stream.
+
+        :param name: Stream name, defaults to "main"
+        :type name: str, optional
+        """
+        return self._dispatch_loop_tasks(
+            LoopTask.with_request(self._capture_frame, name)
+        )[0].result()
+
+    def capture_serial_frames_async(self, n_frames: int, name="main") -> List[Future]:
+        """Capture a number of frames from the named stream, returning a list of CameraFrames."""
+        return self._dispatch_loop_tasks(
+            *(LoopTask.with_request(self._capture_frame, name) for _ in range(n_frames))
+        )
+
+    def capture_serial_frames(self, n_frames: int, name="main") -> List[CameraFrame]:
+        """Capture a number of frames from the named stream, returning a list of CameraFrames."""
+        return [f.result() for f in self.capture_serial_frames_async(n_frames, name)]
