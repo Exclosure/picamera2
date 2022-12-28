@@ -1056,12 +1056,27 @@ class Picamera2:
         for req in requests:
             req.release()
 
-    def _dispatch_loop_tasks(self, *args: LoopTask, mode: Optional[dict]) -> List[Future]:
+    def _dispatch_loop_tasks(self, *args: LoopTask, config: Optional[dict]=None) -> List[Future]:
         """The main thread should use this to dispatch a number of operations for the event
         loop to perform. The event loop will execute them in order, and return a list of
         futures which mature at the time the corresponding operation completes.
         """
-        self._task_deque.extend(args)
+        
+        if config is None:
+            tasks = args
+        else:
+            previous_config = self.camera_config
+            # FIXME: the discarded request enough for test cases, but the correct
+            # way to flag this is with the request.cookie, but that is currently
+            # used to route between cameras. Fixable, but independent issue for now.
+            tasks = [
+                    LoopTask.without_request(self._switch_mode, config),
+                    LoopTask.with_request(self._discard_request)
+                ] + list(args) + [
+                    LoopTask.without_request(self._switch_mode, previous_config),
+                ]
+        self._task_deque.extend(tasks)
+        # Note that the below strips the config changes
         return [task.future for task in args]
 
     def _discard_request(self, request: CompletedRequest) -> None:
@@ -1071,48 +1086,7 @@ class Picamera2:
         """Discard the next ``n_frames`` in the queue."""
         self._dispatch_loop_tasks(
             *[LoopTask.with_request(self._discard_request) for _ in range(n_frames)]
-        )
-
-    def _dispatch_with_temporary_mode(self, loop_task: LoopTask, config) -> Future:
-        previous_config = self.camera_config
-        # FIXME: the discarded request enough for test cases, but the correct
-        # way to flag this is with the request.cookie, but that is currently
-        # used to route between cameras. Fixable, but independent issue for now.
-        futures = self._dispatch_loop_tasks(
-            LoopTask.without_request(self._switch_mode, config),
-            LoopTask.with_request(self._discard_request),
-            loop_task,
-            LoopTask.without_request(self._switch_mode, previous_config),
-        )
-        return futures[2]
-
-    def _capture_file(
-        self, name, file_output, format, request: CompletedRequest
-    ) -> dict:
-        request.make_image(name).convert("RGB").save(file_output, format=format)
-        return request.get_metadata()
-
-    def capture_file_async(
-        self,
-        file_output,
-        name: str = "main",
-        format=None,
-    ) -> TypedFuture[dict]:
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_file, name, file_output, format)
-        )[0]
-
-    def capture_file(
-        self,
-        file_output,
-        name: str = "main",
-        format=None,
-    ) -> dict:
-        """Capture an image to a file in the current camera mode.
-
-        Return the metadata for the frame captured.
-        """
-        return self.capture_file_async(file_output, name, format).result()
+        )[-1]
 
     def _switch_mode(self, camera_config):
         self._stop()
@@ -1120,130 +1094,93 @@ class Picamera2:
         self._start()
         return self.camera_config
 
-    def switch_mode_async(self, camera_config: dict) -> TypedFuture[dict]:
+    def switch_mode(self, camera_config: dict) -> TypedFuture[dict]:
         """Switch the camera into another mode given by the camera_config."""
         return self._dispatch_loop_tasks(
             LoopTask.without_request(self._switch_mode, camera_config)
         )[0]
 
-    def switch_mode(self, camera_config: dict) -> dict:
-        return self.switch_mode_async(self, camera_config: dict).result()
+    def _capture_file(
+        self, name, file_output, format, request: CompletedRequest
+    ) -> dict:
+        request.make_image(name).convert("RGB").save(file_output, format=format)
+        return request.get_metadata()
 
-    def switch_mode_and_capture_file(
+    def capture_file(
         self,
-        camera_config,
         file_output,
-        name="main",
+        name: str = "main",
         format=None,
-    ):
-        """Switch the camera into a new (capture) mode, capture an image to file, then return
-        back to the initial camera mode.
-        """
-        return self._dispatch_with_temporary_mode(
+        config=None
+    ) -> TypedFuture[dict]:
+        return self._dispatch_loop_tasks(
             LoopTask.with_request(self._capture_file, name, file_output, format),
-            camera_config,
-        ).result()
+            config=config
+        )[0]
 
     def _capture_request(self, request: CompletedRequest):
         request.acquire()
         return request
 
-    def capture_request(self):
+    def capture_request(self) -> TypedFuture[CompletedRequest]:
         """Fetch the next completed request from the camera system. You will be holding a
         reference to this request so you must release it again to return it to the camera system.
         """
-        return self._dispatch_loop_tasks(LoopTask.with_request(self._capture_request))[
-            0
-        ].result()
+        return self._dispatch_loop_tasks(LoopTask.with_request(self._capture_request))[0]
 
     def _capture_metadata(self, request: CompletedRequest):
         return request.get_metadata()
 
-    def capture_metadata(self) -> dict:
-        """Fetch the metadata from the next camera frame."""
-        return self.capture_metadata_async().result()
+    def capture_metadata(self, config: Optional[dict]=None) -> Future:
+        return self._dispatch_loop_tasks(LoopTask.with_request(self._capture_metadata), config=config)[0]
 
-    def capture_metadata_async(self) -> Future:
-        return self._dispatch_loop_tasks(LoopTask.with_request(self._capture_metadata))[
-            0
-        ]
-
+    # Buffer Capture Methods
     def _capture_buffer(self, name: str, request: CompletedRequest):
         return request.get_buffer(name)
 
-    def capture_buffer(self, name="main"):
+    def capture_buffer(self, name="main", config: dict=None) -> Future[np.ndarray]:
         """Make a 1d numpy array from the next frame in the named stream."""
         return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_buffer, name)
-        )[0].result()
+            LoopTask.with_request(self._capture_buffer, name), config=config
+        )[0]
 
+    # Buffers and metadata
     def _capture_buffers_and_metadata(
         self, names: List[str], request: CompletedRequest
     ) -> Tuple[List[np.ndarray], dict]:
         return ([request.get_buffer(name) for name in names], request.get_metadata())
 
-    def capture_buffers_and_metadata(self, names=["main"]) -> Tuple[List[np.ndarray], dict]:
+    def capture_buffers_and_metadata(self, names=["main"]) -> TypedFuture[Tuple[List[np.ndarray], dict]]:
         """Make a 1d numpy array from the next frame for each of the named streams."""
         return self._dispatch_loop_tasks(
             LoopTask.with_request(self._capture_buffers_and_metadata, names)
-        )[0].result()
+        )[0]
 
-    def switch_mode_and_capture_buffer(self, camera_config, name="main"):
-        """Switch the camera into a new (capture) mode, capture the first buffer, then return
-        back to the initial camera mode.
-        """
-        return self._dispatch_with_temporary_mode(
-            LoopTask.with_request(self._capture_buffer, name), camera_config
-        ).result()
-
-    def switch_mode_and_capture_buffers(self, camera_config, names=["main"]):
-        """Switch the camera into a new (capture) mode, capture the first buffers, then return
-        back to the initial camera mode.
-        """
-        return self._dispatch_with_temporary_mode(
-            LoopTask.with_request(self._capture_buffers_and_metadata, names),
-            camera_config,
-        ).result()
-
+    # Array Capture Methods
     def _capture_array(self, name, request: CompletedRequest):
         return request.make_array(name)
 
-    def capture_array(self, name="main"):
+    def capture_array(self, name="main", config: Optional[dict]=None) -> Future[np.ndarray]:
         """Make a 2d image from the next frame in the named stream."""
         return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_array, name)
-        )[0].result()
+            LoopTask.with_request(self._capture_array, name), config=config
+        )[0]
 
     def _capture_arrays_and_metadata(
         self, names, request: CompletedRequest
     ) -> Tuple[List[np.ndarray], Dict[str, Any]]:
         return ([request.make_array(name) for name in names], request.get_metadata())
 
-    def capture_arrays(self, names=["main"]):
+    def capture_arrays_and_metadata(self, names=["main"]) -> TypedFuture[Tuple[List[np.ndarray], Dict[str, Any]]]:
         """Make 2d image arrays from the next frames in the named streams."""
         return self._dispatch_loop_tasks(
             LoopTask.with_request(self._capture_arrays_and_metadata, names)
-        )[0].result()
+        )[0]
 
-    def switch_mode_and_capture_array(self, camera_config, name="main", mode: Optional[dict]=None):
-        """Switch the camera into a new (capture) mode, capture the image array data, then return
-        back to the initial camera mode."""
-        return self._dispatch_with_temporary_mode(
-            LoopTask.with_request(self._capture_array, name), camera_config
-        ).result()
-
-    def switch_mode_and_capture_arrays(self, camera_config, names=["main"]):
-        """Switch the camera into a new (capture) mode, capture the image arrays, then return
-        back to the initial camera mode."""
-        return self._dispatch_with_temporary_mode(
-            LoopTask.with_request(self._capture_arrays_and_metadata, names),
-            camera_config,
-        ).result()
-
-    def _capture_image(self, name: str, request: CompletedRequest) -> Image:
+    def _capture_image(self, name: str, request: CompletedRequest) -> Image.Image:
         return request.make_image(name)
 
-    def capture_image(self, name: str = "main") -> Image:
+    def capture_image(self, name: str = "main") -> TypedFuture[Image.Image]:
         """Make a PIL image from the next frame in the named stream.
 
         :param name: Stream name, defaults to "main"
@@ -1257,35 +1194,24 @@ class Picamera2:
         """
         return self._dispatch_loop_tasks(
             LoopTask.with_request(self._capture_image, name)
-        )[0].result()
-
-    def switch_mode_and_capture_image(self, camera_config, name: str = "main") -> Image:
-        """Switch the camera into a new (capture) mode, capture the image, then return
-        back to the initial camera mode.
-        """
-        return self._dispatch_with_temporary_mode(
-            LoopTask.with_request(self._capture_image, name), camera_config
-        ).result()
+        )[0]
 
     def _capture_frame(self, name: str, request: CompletedRequest) -> CameraFrame:
         return CameraFrame.from_request(name, request)
 
-    def capture_frame(self, name: str = "main") -> CameraFrame:
+    def capture_frame(self, name: str = "main", config=None) -> TypedFuture[CameraFrame]:
         """Make a CameraFrame from the next frame in the named stream.
 
         :param name: Stream name, defaults to "main"
         :type name: str, optional
         """
         return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_frame, name)
-        )[0].result()
+            LoopTask.with_request(self._capture_frame, name),
+            config=config
+        )[0]
 
-    def capture_serial_frames_async(self, n_frames: int, name="main") -> List[Future]:
+    def capture_serial_frames(self, n_frames: int, name="main") -> List[TypedFuture[CameraFrame]]:
         """Capture a number of frames from the named stream, returning a list of CameraFrames."""
         return self._dispatch_loop_tasks(
             *(LoopTask.with_request(self._capture_frame, name) for _ in range(n_frames))
         )
-
-    def capture_serial_frames(self, n_frames: int, name="main") -> List[CameraFrame]:
-        """Capture a number of frames from the named stream, returning a list of CameraFrames."""
-        return [f.result() for f in self.capture_serial_frames_async(n_frames, name)]
