@@ -1194,7 +1194,7 @@ class Picamera2:
     def _capture_image(self, name: str, request: CompletedRequest) -> Image.Image:
         return request.make_image(name)
 
-    def capture_image(self, name: str = "main") -> TypedFuture[Image.Image]:
+    def capture_image(self, name: str = "main", config: Optional[dict]=None) -> TypedFuture[Image.Image]:
         """Make a PIL image from the next frame in the named stream.
 
         :param name: Stream name, defaults to "main"
@@ -1207,7 +1207,8 @@ class Picamera2:
         :rtype: Image
         """
         return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_image, name)
+            LoopTask.with_request(self._capture_image, name),
+            config=config,
         )[0]
 
     def _capture_frame(self, name: str, request: CompletedRequest) -> CameraFrame:
