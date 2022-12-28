@@ -22,7 +22,7 @@ _log = getLogger(__name__)
 
 class MappedBuffer:
     def __init__(self, request, stream):
-        self.__fb = request.request.buffers[stream]
+        self.__fb = request.buffers[stream]
 
     def __enter__(self):
         # Check if the buffer is contiguous and find the total length.
