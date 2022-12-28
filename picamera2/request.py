@@ -22,7 +22,6 @@ _log = getLogger(__name__)
 
 class MappedBuffer:
     def __init__(self, request, stream):
-        stream = request.camera.stream_map[stream]
         self.__fb = request.request.buffers[stream]
 
     def __enter__(self):
@@ -45,64 +44,6 @@ class MappedBuffer:
     def __exit__(self, exc_type, exc_value, exc_traceback):
         if self.__mm is not None:
             self.__mm.close()
-
-
-# TODO (meawoppl) - Flatten into the above class using an np array view.
-# or at the very least actully use the context manager protocol it reps.
-class MappedArray:
-    def __init__(self, request, stream, reshape=True):
-        self.__request = request
-        self.__stream = stream
-        self.__buffer = MappedBuffer(request, stream)
-        self.__array = None
-        self.__reshape = reshape
-
-    def __enter__(self):
-        b = self.__buffer.__enter__()
-        array = np.array(b, copy=False, dtype=np.uint8)
-
-        if self.__reshape:
-            config = self.__request.camera.camera_config[self.__stream]
-            fmt = config["format"]
-            w, h = config["size"]
-            stride = config["stride"]
-
-            # Turning the 1d array into a 2d image-like array only works if the
-            # image stride (which is in bytes) is a whole number of pixels. Even
-            # then, if they don't match exactly you will get "padding" down the RHS.
-            # Working around this requires another expensive copy of all the data.
-            if fmt in ("BGR888", "RGB888"):
-                if stride != w * 3:
-                    array = array.reshape((h, stride))
-                    array = array[:, : w * 3]
-                array = array.reshape((h, w, 3))
-            elif fmt in ("XBGR8888", "XRGB8888"):
-                if stride != w * 4:
-                    array = array.reshape((h, stride))
-                    array = array[:, : w * 4]
-                array = array.reshape((h, w, 4))
-            elif fmt in ("YUV420", "YVU420"):
-                # Returning YUV420 as an image of 50% greater height (the extra bit continaing
-                # the U/V data) is useful because OpenCV can convert it to RGB for us quite
-                # efficiently. We leave any packing in there, however, as it would be easier
-                # to remove that after conversion to RGB (if that's what the caller does).
-                array = array.reshape((h * 3 // 2, stride))
-            elif formats.is_raw(fmt):
-                array = array.reshape((h, stride))
-            else:
-                raise RuntimeError("Format " + fmt + " not supported")
-
-        self.__array = array
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        if self.__array is not None:
-            del self.__array
-        self.__buffer.__exit__(exc_type, exc_value, exc_traceback)
-
-    @property
-    def array(self):
-        return self.__array
 
 
 class AbstractCompletedRequest(ABC):
@@ -165,8 +106,8 @@ class AbstractCompletedRequest(ABC):
         if fmt == "MJPEG":
             buffer = self.get_buffer(name)
             return Image.open(io.BytesIO(buffer))
-        else:
-            rgb = self.make_array(name)
+
+        rgb = self.make_array(name)
         mode_lookup = {
             "RGB888": "BGR",
             "BGR888": "RGB",
@@ -184,12 +125,13 @@ class AbstractCompletedRequest(ABC):
 # TODO(meawoppl) - Make Completed Requests only exist inside of a context manager
 # This remove all the bizzare locking and reference counting we are doing here manually
 class CompletedRequest(AbstractCompletedRequest):
-    def __init__(self, lc_request, config: dict, cleanup: Callable[[], None]):
+    def __init__(self, lc_request, config: dict, stream_map: Dict[str, Any], cleanup: Callable[[], None]):
         self.request = lc_request
         self.ref_count = 1
         self.lock = threading.Lock()
         self.config = config
         self.cleanup = cleanup
+        self.stream_map = stream_map
 
     def acquire(self):
         """Acquire a reference to this completed request, which stops it being recycled back to
@@ -221,7 +163,8 @@ class CompletedRequest(AbstractCompletedRequest):
 
     def get_buffer(self, name: str) -> np.ndarray:
         """Make a 1d numpy array from the named stream's buffer."""
-        with MappedBuffer(self, name) as b:
+        stream = self.stream_map[name]
+        with MappedBuffer(self, name, stream) as b:
             return np.array(b, dtype=np.uint8)
 
     def get_metadata(self) -> Dict[str, Any]:
