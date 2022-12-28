@@ -12,7 +12,7 @@ from collections import deque
 from concurrent.futures import Future
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Deque, Dict, List, Tuple, Optional
+from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 
 import libcamera
 import numpy as np

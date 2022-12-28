@@ -1,4 +1,5 @@
 from logging import getLogger
+
 import numpy as np
 
 from picamera2 import Picamera2
