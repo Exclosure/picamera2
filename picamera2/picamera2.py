@@ -145,6 +145,7 @@ class CameraManager:
                         CompletedRequest(
                             req,
                             camera_inst.camera_config.copy(),
+                            camera_inst.stream_map,
                             cleanup_call,
                         )
                     )
