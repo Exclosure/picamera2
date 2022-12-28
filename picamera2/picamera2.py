@@ -12,7 +12,7 @@ from collections import deque
 from concurrent.futures import Future
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Deque, Dict, List, Tuple
+from typing import Any, Callable, Deque, Dict, List, Tuple, Optional
 
 import libcamera
 import numpy as np
@@ -1056,7 +1056,7 @@ class Picamera2:
         for req in requests:
             req.release()
 
-    def _dispatch_loop_tasks(self, *args: LoopTask) -> List[Future]:
+    def _dispatch_loop_tasks(self, *args: LoopTask, mode: Optional[dict]) -> List[Future]:
         """The main thread should use this to dispatch a number of operations for the event
         loop to perform. The event loop will execute them in order, and return a list of
         futures which mature at the time the corresponding operation completes.
@@ -1225,7 +1225,7 @@ class Picamera2:
             LoopTask.with_request(self._capture_arrays_and_metadata, names)
         )[0].result()
 
-    def switch_mode_and_capture_array(self, camera_config, name="main"):
+    def switch_mode_and_capture_array(self, camera_config, name="main", mode: Optional[dict]=None):
         """Switch the camera into a new (capture) mode, capture the image array data, then return
         back to the initial camera mode."""
         return self._dispatch_with_temporary_mode(
