@@ -11,6 +11,7 @@ import threading
 from collections import deque
 from concurrent.futures import Future
 from dataclasses import dataclass
+from functools import partial
 from typing import Any, Callable, Deque, Dict, List, Tuple
 
 import libcamera
@@ -136,9 +137,16 @@ class CameraManager:
                     and req.cookie != flushid
                 ):
                     cams.add(req.cookie)
-
+                    camera_inst = self.cameras[req.cookie]
+                    cleanup_call = partial(
+                        camera_inst.recycle_request, camera_inst.stop_count, req
+                    )
                     self.cameras[req.cookie].add_completed_request(
-                        CompletedRequest(req, self.cameras[req.cookie])
+                        CompletedRequest(
+                            req,
+                            camera_inst.camera_config.copy(),
+                            cleanup_call,
+                        )
                     )
             # OS based file pipes seem really overkill for this.
             # TODO(meawoppl) - Convert to queue primitive
@@ -756,12 +764,20 @@ class Picamera2:
 
         return libcamera_config
 
-    def recycle_request(self, request: libcamera.Request) -> None:
+    def recycle_request(self, stop_count: int, request: libcamera.Request) -> None:
         """Recycle a request.
 
         :param request: request
         :type request: libcamera.Request
         """
+        if not self.camera:
+            _log.warning("Can't recycle request, camera not open")
+            return
+
+        if stop_count != self.stop_count:
+            _log.warning("Can't recycle request, stop count mismatch")
+            return
+
         request.reuse()
         controls = self.controls.get_libcamera_controls()
         for id, value in controls.items():
@@ -1070,7 +1086,7 @@ class Picamera2:
     def _capture_file(
         self, name, file_output, format, request: CompletedRequest
     ) -> dict:
-        request.save(name, file_output, format=format)
+        request.make_image(name).save(file_output, format=format)
         return request.get_metadata()
 
     def capture_file_async(

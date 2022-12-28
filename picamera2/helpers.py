@@ -1,4 +1,4 @@
-import time
+import io
 from logging import getLogger
 
 import numpy as np
@@ -6,15 +6,13 @@ from PIL import Image
 
 from picamera2 import formats
 
-_log = getLogger(__name__)
-
 
 class Helpers:
     """This class implements functionality required by the CompletedRequest methods, but
     in such a way that it can be usefully accessed even without a CompletedRequest object."""
 
     @staticmethod
-    def make_array(buffer, config):
+    def make_array(buffer: np.ndarray, config: dict):
         """Make a 2d numpy array from the named stream's buffer."""
         array = buffer
         fmt = config["format"]
@@ -54,7 +52,7 @@ class Helpers:
         return image
 
     @staticmethod
-    def make_image(buffer, config, width=None, height=None):
+    def make_image(buffer: np.ndarray, config: dict, width=None, height=None):
         """Make a PIL image from the named stream's buffer."""
         fmt = config["format"]
         if fmt == "MJPEG":
@@ -81,33 +79,3 @@ class Helpers:
             # This will be slow. Consider requesting camera images of this size in the first place!
             pil_img = pil_img.resize((width, height))
         return pil_img
-
-    @staticmethod
-    def save(picam2, img, metadata, file_output, format=None):
-        """Save a JPEG or PNG image of the named stream's buffer."""
-        # This is probably a hideously expensive way to do a capture.
-        start_time = time.monotonic()
-        exif = b""
-        if isinstance(format, str):
-            format_str = format.lower()
-        elif isinstance(file_output, str):
-            format_str = file_output.split(".")[-1].lower()
-        else:
-            raise RuntimeError("Cannot detemine format to save")
-        if format_str in ("jpg", "jpeg"):
-            if img.mode == "RGBA":
-                # Nasty hack. Qt doesn't understand RGBX so we have to use RGBA. But saving a JPEG
-                # doesn't like RGBA to we have to bodge that to RGBX.
-                img.mode = "RGBX"
-        # compress_level=1 saves pngs much faster, and still gets most of the compression.
-        png_compress_level = picam2.options.get("compress_level", 1)
-        jpeg_quality = picam2.options.get("quality", 90)
-        keywords = {
-            "compress_level": png_compress_level,
-            "quality": jpeg_quality,
-            "format": format,
-        }
-        img.save(file_output, **keywords)
-        end_time = time.monotonic()
-        _log.info(f"Saved to file: {file_output}.")
-        _log.info(f"Time taken for encode: {(end_time-start_time)*1000} ms.")

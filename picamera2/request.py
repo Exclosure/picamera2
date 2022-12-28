@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import mmap
 import threading
+from abc import ABC, abstractmethod
 from concurrent.futures import Future
 from dataclasses import dataclass, field
 from functools import partial
 from logging import getLogger
-from typing import Any, Callable
+from typing import Any, Callable, Dict
 
-import libcamera
 import numpy as np
+from PIL.Image import Image
 
 import picamera2.formats as formats
 from picamera2.helpers import Helpers
@@ -18,7 +19,7 @@ from picamera2.lc_helpers import lc_unpack
 _log = getLogger(__name__)
 
 
-class _MappedBuffer:
+class MappedBuffer:
     def __init__(self, request, stream):
         stream = request.camera.stream_map[stream]
         self.__fb = request.request.buffers[stream]
@@ -51,7 +52,7 @@ class MappedArray:
     def __init__(self, request, stream, reshape=True):
         self.__request = request
         self.__stream = stream
-        self.__buffer = _MappedBuffer(request, stream)
+        self.__buffer = MappedBuffer(request, stream)
         self.__array = None
         self.__reshape = reshape
 
@@ -103,16 +104,37 @@ class MappedArray:
         return self.__array
 
 
+class AbstractCompletedRequest(ABC):
+    @abstractmethod
+    def get_config(self, name: str) -> Dict[str, Any]:
+        pass
+
+    @abstractmethod
+    def make_buffer(self, name: str) -> np.ndarray:
+        pass
+
+    @abstractmethod
+    def make_metadata(self) -> Dict[str, Any]:
+        pass
+
+    def make_array(self, name: str) -> np.ndarray:
+        """Make a 2d numpy array from the named stream's buffer."""
+        return Helpers.make_array(self.make_buffer(name), self.get_config(name))
+
+    def make_image(self, name: str) -> Image:
+        """Make a PIL image from the named stream's buffer."""
+        return Helpers.make_image(self.make_buffer(name), self.get_config(name))
+
+
 # TODO(meawoppl) - Make Completed Requests only exist inside of a context manager
 # This remove all the bizzare locking and reference counting we are doing here manually
-class CompletedRequest:
-    def __init__(self, request, camera):
-        self.request = request
+class CompletedRequest(AbstractCompletedRequest):
+    def __init__(self, lc_request, config: dict, cleanup: Callable[[], None]):
+        self.request = lc_request
         self.ref_count = 1
         self.lock = threading.Lock()
-        self.camera = camera
-        self.stop_count = camera.stop_count
-        self.config = self.camera.camera_config.copy()
+        self.config = config
+        self.cleanup = cleanup
 
     def acquire(self):
         """Acquire a reference to this completed request, which stops it being recycled back to
@@ -135,42 +157,21 @@ class CompletedRequest:
             if self.ref_count > 0:
                 return
 
-            # If the camera has been stopped since this request was returned then we
-            # can't recycle it.
-            if self.camera.camera and self.stop_count == self.camera.stop_count:
-                self.camera.recycle_request(self.request)
-            else:
-                _log.warning(
-                    "Camera stopped before request could be recycled (Discarding it)"
-                )
+            self.cleanup()
             self.request = None
+
+    def get_config(self, name: str) -> Dict[str, Any]:
+        """Fetch the configuration for the named stream."""
+        return self.config[name]
 
     def make_buffer(self, name: str):
         """Make a 1d numpy array from the named stream's buffer."""
-        if self.camera.stream_map.get(name, None) is None:
-            raise RuntimeError(f'Stream "{name}" is not defined')
-        with _MappedBuffer(self, name) as b:
+        with MappedBuffer(self, name) as b:
             return np.array(b, dtype=np.uint8)
 
-    def get_metadata(self):
+    def get_metadata(self) -> Dict[str, Any]:
         """Fetch the metadata corresponding to this completed request."""
         return lc_unpack(self.request.metadata)
-
-    def make_array(self, name: str):
-        """Make a 2d numpy array from the named stream's buffer."""
-        return Helpers.make_array(self.make_buffer(name), self.config[name])
-
-    def make_image(self, name: str, width=None, height=None):
-        """Make a PIL image from the named stream's buffer."""
-        return Helpers.make_image(
-            self.make_buffer(name), self.config[name], width, height
-        )
-
-    def save(self, name, file_output, format=None):
-        """Save a JPEG or PNG image of the named stream's buffer."""
-        return Helpers.save(
-            self.camera, self.make_image(name), self.get_metadata(), file_output, format
-        )
 
 
 @dataclass

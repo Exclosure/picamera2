@@ -19,7 +19,4 @@ buffers, metadata = camera.switch_mode_and_capture_buffers(
     capture_config, ["main", "raw"]
 )
 
-Helpers.save(
-    camera, Helpers.make_image(buffers[0], capture_config["main"]), metadata, "full.jpg"
-)
-Helpers.save(camera, buffers[1], metadata, "full.jpeg")
+Helpers.make_image(buffers[0], capture_config["main"]).save("full.jpg")
