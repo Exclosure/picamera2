@@ -21,8 +21,8 @@ _log = getLogger(__name__)
 
 
 class MappedBuffer:
-    def __init__(self, request, stream):
-        self.__fb = request.buffers[stream]
+    def __init__(self, lc_buffer):
+        self.__fb = lc_buffer
 
     def __enter__(self):
         # Check if the buffer is contiguous and find the total length.
@@ -169,7 +169,8 @@ class CompletedRequest(AbstractCompletedRequest):
     def get_buffer(self, name: str) -> np.ndarray:
         """Make a 1d numpy array from the named stream's buffer."""
         stream = self.stream_map[name]
-        with MappedBuffer(self.request, stream) as b:
+        buffer = self.request.buffers[stream]
+        with MappedBuffer(buffer) as b:
             return np.array(b, dtype=np.uint8)
 
     def get_metadata(self) -> Dict[str, Any]:
