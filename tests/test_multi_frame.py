@@ -1,7 +1,7 @@
 from concurrent.futures import Future
+
 from picamera2 import Picamera2
 from picamera2.frame import CameraFrame
-
 
 camera = Picamera2()
 
