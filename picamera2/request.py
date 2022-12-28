@@ -61,7 +61,7 @@ class AbstractCompletedRequest(ABC):
 
     def make_array(self, name: str) -> np.ndarray:
         """Make a 2d numpy array from the named stream's buffer."""
-        config = self.get_config()
+        config = self.get_config(name)
         array = self.get_buffer(name)
         fmt = config["format"]
         w, h = config["size"]
