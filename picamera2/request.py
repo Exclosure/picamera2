@@ -111,17 +111,17 @@ class AbstractCompletedRequest(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def make_buffer(self, name: str) -> np.ndarray:
+    def get_buffer(self, name: str) -> np.ndarray:
         raise NotImplementedError()
 
     @abstractmethod
-    def make_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self) -> Dict[str, Any]:
         raise NotImplementedError()
 
     def make_array(self, name: str) -> np.ndarray:
         """Make a 2d numpy array from the named stream's buffer."""
         config = self.get_config()
-        array = self.make_buffer(name)
+        array = self.get_buffer(name)
         fmt = config["format"]
         w, h = config["size"]
         stride = config["stride"]
@@ -163,7 +163,7 @@ class AbstractCompletedRequest(ABC):
         config = self.get_config()
         fmt = config["format"]
         if fmt == "MJPEG":
-            buffer = self.make_buffer(name)
+            buffer = self.get_buffer(name)
             return Image.open(io.BytesIO(buffer))
         else:
             rgb = self.make_array(name)
@@ -227,7 +227,7 @@ class CompletedRequest(AbstractCompletedRequest):
         """Fetch the configuration for the named stream."""
         return self.config[name]
 
-    def make_buffer(self, name: str) -> np.ndarray:
+    def get_buffer(self, name: str) -> np.ndarray:
         """Make a 1d numpy array from the named stream's buffer."""
         with MappedBuffer(self, name) as b:
             return np.array(b, dtype=np.uint8)

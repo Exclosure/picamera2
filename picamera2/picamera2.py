@@ -1172,7 +1172,7 @@ class Picamera2:
         ]
 
     def _capture_buffer(self, name: str, request: CompletedRequest):
-        return request.make_buffer(name)
+        return request.get_buffer(name)
 
     def capture_buffer(self, name="main"):
         """Make a 1d numpy array from the next frame in the named stream."""
@@ -1183,7 +1183,7 @@ class Picamera2:
     def _capture_buffers_and_metadata(
         self, names: List[str], request: CompletedRequest
     ) -> Tuple[List[np.ndarray], dict]:
-        return ([request.make_buffer(name) for name in names], request.get_metadata())
+        return ([request.get_buffer(name) for name in names], request.get_metadata())
 
     def capture_buffers(self, names=["main"]):
         """Make a 1d numpy array from the next frame for each of the named streams."""
