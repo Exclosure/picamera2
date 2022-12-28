@@ -7,9 +7,9 @@ camera = Picamera2()
 camera.start_preview()
 
 preview_config = camera.create_preview_configuration()
-capture_config = camera.create_still_configuration(raw={
-    "size": (r // 4 for r in camera.sensor_resolution)
-})
+capture_config = camera.create_still_configuration(
+    raw={"size": (r // 4 for r in camera.sensor_resolution)}
+)
 camera.configure(preview_config)
 
 with camera:
