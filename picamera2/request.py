@@ -124,7 +124,13 @@ class AbstractCompletedRequest(ABC):
 # TODO(meawoppl) - Make Completed Requests only exist inside of a context manager
 # This remove all the bizzare locking and reference counting we are doing here manually
 class CompletedRequest(AbstractCompletedRequest):
-    def __init__(self, lc_request, config: dict, stream_map: Dict[str, Any], cleanup: Callable[[], None]):
+    def __init__(
+        self,
+        lc_request,
+        config: dict,
+        stream_map: Dict[str, Any],
+        cleanup: Callable[[], None],
+    ):
         self.request = lc_request
         self.ref_count = 1
         self.lock = threading.Lock()
