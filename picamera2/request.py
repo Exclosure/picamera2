@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import mmap
 import threading
 from abc import ABC, abstractmethod
@@ -10,9 +11,10 @@ from logging import getLogger
 from typing import Any, Callable, Dict
 
 import numpy as np
-from PIL.Image import Image
+from PIL import Image
 
 import picamera2.formats as formats
+from picamera2 import formats
 from picamera2.helpers import Helpers
 from picamera2.lc_helpers import lc_unpack
 
@@ -107,23 +109,85 @@ class MappedArray:
 class AbstractCompletedRequest(ABC):
     @abstractmethod
     def get_config(self, name: str) -> Dict[str, Any]:
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def make_buffer(self, name: str) -> np.ndarray:
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def make_metadata(self) -> Dict[str, Any]:
-        pass
+        raise NotImplementedError()
 
     def make_array(self, name: str) -> np.ndarray:
         """Make a 2d numpy array from the named stream's buffer."""
-        return Helpers.make_array(self.make_buffer(name), self.get_config(name))
+        config = self.get_config()
+        array = self.make_buffer(name)
+        fmt = config["format"]
+        w, h = config["size"]
+        stride = config["stride"]
 
-    def make_image(self, name: str) -> Image:
+        # Turning the 1d array into a 2d image-like array only works if the
+        # image stride (which is in bytes) is a whole number of pixels. Even
+        # then, if they don't match exactly you will get "padding" down the RHS.
+        # Working around this requires another expensive copy of all the data.
+        if fmt in ("BGR888", "RGB888"):
+            if stride != w * 3:
+                array = array.reshape((h, stride))
+                array = np.asarray(array[:, : w * 3], order="C")
+            image = array.reshape((h, w, 3))
+        elif fmt in ("XBGR8888", "XRGB8888"):
+            if stride != w * 4:
+                array = array.reshape((h, stride))
+                array = np.asarray(array[:, : w * 4], order="C")
+            image = array.reshape((h, w, 4))
+        elif fmt in ("YUV420", "YVU420"):
+            # Returning YUV420 as an image of 50% greater height (the extra bit continaing
+            # the U/V data) is useful because OpenCV can convert it to RGB for us quite
+            # efficiently. We leave any packing in there, however, as it would be easier
+            # to remove that after conversion to RGB (if that's what the caller does).
+            image = array.reshape((h * 3 // 2, stride))
+        elif fmt in ("YUYV", "YVYU", "UYVY", "VYUY"):
+            # These dimensions seem a bit strange, but mean that
+            # cv2.cvtColor(image, cv2.COLOR_YUV2BGR_YUYV) will convert directly to RGB.
+            image = array.reshape(h, stride // 2, 2)
+        elif fmt == "MJPEG":
+            image = np.array(Image.open(io.BytesIO(array)))
+        elif formats.is_raw(fmt):
+            image = array.reshape((h, stride))
+        else:
+            raise RuntimeError("Format " + fmt + " not supported")
+        return image
+
+    def make_image(self, name: str) -> Image.Image:
         """Make a PIL image from the named stream's buffer."""
-        return Helpers.make_image(self.make_buffer(name), self.get_config(name))
+        config = self.get_config()
+        fmt = config["format"]
+        if fmt == "MJPEG":
+            buffer = self.make_buffer(name)
+            return Image.open(io.BytesIO(buffer))
+        else:
+            rgb = self.make_array(name)
+        mode_lookup = {
+            "RGB888": "BGR",
+            "BGR888": "RGB",
+            "XBGR8888": "RGBA",
+            "XRGB8888": "BGRX",
+        }
+        if fmt not in mode_lookup:
+            raise RuntimeError(f"Stream format {fmt} not supported for PIL images")
+        mode = mode_lookup[fmt]
+        pil_img = Image.frombuffer(
+            "RGB", (rgb.shape[1], rgb.shape[0]), rgb, "raw", mode, 0, 1
+        )
+        if width is None:
+            width = rgb.shape[1]
+        if height is None:
+            height = rgb.shape[0]
+        if width != rgb.shape[1] or height != rgb.shape[0]:
+            # This will be slow. Consider requesting camera images of this size in the first place!
+            pil_img = pil_img.resize((width, height))
+        return pil_img
 
 
 # TODO(meawoppl) - Make Completed Requests only exist inside of a context manager
@@ -164,7 +228,7 @@ class CompletedRequest(AbstractCompletedRequest):
         """Fetch the configuration for the named stream."""
         return self.config[name]
 
-    def make_buffer(self, name: str):
+    def make_buffer(self, name: str) -> np.ndarray:
         """Make a 1d numpy array from the named stream's buffer."""
         with MappedBuffer(self, name) as b:
             return np.array(b, dtype=np.uint8)
