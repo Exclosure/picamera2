@@ -169,7 +169,7 @@ class CompletedRequest(AbstractCompletedRequest):
     def get_buffer(self, name: str) -> np.ndarray:
         """Make a 1d numpy array from the named stream's buffer."""
         stream = self.stream_map[name]
-        with MappedBuffer(self, name, stream) as b:
+        with MappedBuffer(self.request, stream) as b:
             return np.array(b, dtype=np.uint8)
 
     def get_metadata(self) -> Dict[str, Any]:
