@@ -1090,7 +1090,7 @@ class Picamera2:
 
     def discard_frames(self, n_frames: int) -> TypedFuture[None]:
         """Discard the next ``n_frames`` in the queue."""
-        self._dispatch_loop_tasks(
+        return self._dispatch_loop_tasks(
             *[LoopTask.with_request(self._discard_request) for _ in range(n_frames)]
         )[-1]
 
