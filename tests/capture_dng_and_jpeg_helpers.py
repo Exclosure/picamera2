@@ -14,10 +14,8 @@ camera.configure(preview_config)
 camera.start()
 
 mature_after_frames_or_timeout(camera, 2).result()
-
-buffers, metadata = camera.switch_mode_and_capture_buffers(
-    capture_config, ["main", "raw"]
-)
+camera.switch_mode_async(capture_config)
+buffers, metadata = camera.capture_buffers_async(["main", "raw"])
 
 Helpers.save(
     camera, Helpers.make_image(buffers[0], capture_config["main"]), metadata, "full.jpg"

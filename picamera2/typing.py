@@ -1,12 +1,12 @@
 from __future__ import annotations
-from concurrent.futures import Future
 
-from typing import Generic, TypeVar, Callable, Any
+from concurrent.futures import Future
+from typing import Any, Callable, Generic, TypeVar
 
 T = TypeVar('T')
 
 class TypedFuture(Future, Generic[T]):
-    def add_done_callback(self: TypedFuture, fn: Callable[[TypedFuture[T]], Any])
+    def add_done_callback(self: TypedFuture, fn: Callable[[TypedFuture[T]], Any]) -> None:
         ...
     def cancel(self: TypedFuture) -> bool:
         ...

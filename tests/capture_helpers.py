@@ -12,7 +12,8 @@ camera.configure(preview_config)
 
 camera.start()
 camera.discard_frames(2)
-buffers, metadata = camera.switch_mode_and_capture_buffers(capture_config, ["main"])
+camera.switch_mode_async(capture_config)
+buffers, metadata = camera.capture_buffers_and_metadata("main")
 
 arr = Helpers.make_array(buffers[0], capture_config["main"])
 image = Helpers.make_image(buffers[0], capture_config["main"])

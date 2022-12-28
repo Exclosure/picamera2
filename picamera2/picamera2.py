@@ -29,6 +29,7 @@ from picamera2.stream_config import (
     check_stream_config,
     make_initial_stream_config,
 )
+from picamera2.typing import TypedFuture
 
 STILL = libcamera.StreamRole.StillCapture
 RAW = libcamera.StreamRole.Raw
@@ -1048,7 +1049,7 @@ class Picamera2:
     def _discard_request(self, request: CompletedRequest) -> None:
         pass
 
-    def discard_frames(self, n_frames: int) -> Future:
+    def discard_frames(self, n_frames: int) -> TypedFuture[None]:
         """Discard the next ``n_frames`` in the queue."""
         self._dispatch_loop_tasks(
             *[LoopTask.with_request(self._discard_request) for _ in range(n_frames)]
@@ -1078,7 +1079,7 @@ class Picamera2:
         file_output,
         name: str = "main",
         format=None,
-    ) -> Future[dict]:
+    ) -> TypedFuture[dict]:
         return self._dispatch_loop_tasks(
             LoopTask.with_request(self._capture_file, name, file_output, format)
         )[0]
@@ -1101,11 +1102,14 @@ class Picamera2:
         self._start()
         return self.camera_config
 
-    def switch_mode(self, camera_config):
+    def switch_mode_async(self, camera_config: dict) -> TypedFuture[dict]:
         """Switch the camera into another mode given by the camera_config."""
         return self._dispatch_loop_tasks(
             LoopTask.without_request(self._switch_mode, camera_config)
-        )[0].result()
+        )[0]
+
+    def switch_mode(self, camera_config: dict) -> dict:
+        return self.switch_mode_async(self, camera_config: dict).result()
 
     def switch_mode_and_capture_file(
         self,
@@ -1134,15 +1138,6 @@ class Picamera2:
             0
         ].result()
 
-    def switch_mode_capture_request_and_stop(self, camera_config):
-        """Switch the camera into a new (capture) mode, capture a request in the new mode and then stop the camera."""
-        futures = self._dispatch_loop_tasks(
-            LoopTask.without_request(self._switch_mode, camera_config),
-            LoopTask.with_request(self._capture_request),
-            LoopTask.without_request(self._stop),
-        )
-        return futures[1].result()
-
     def _capture_metadata(self, request: CompletedRequest):
         return request.get_metadata()
 
@@ -1169,7 +1164,7 @@ class Picamera2:
     ) -> Tuple[List[np.ndarray], dict]:
         return ([request.make_buffer(name) for name in names], request.get_metadata())
 
-    def capture_buffers(self, names=["main"]):
+    def capture_buffers_and_metadata(self, names=["main"]) -> Tuple[List[np.ndarray], dict]:
         """Make a 1d numpy array from the next frame for each of the named streams."""
         return self._dispatch_loop_tasks(
             LoopTask.with_request(self._capture_buffers_and_metadata, names)
