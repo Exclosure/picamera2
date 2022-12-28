@@ -26,8 +26,8 @@ from picamera2.request import CompletedRequest, LoopTask
 from picamera2.sensor_format import SensorFormat
 from picamera2.stream_config import (
     align_stream,
-    make_initial_stream_config,
     check_camera_config,
+    make_initial_stream_config,
 )
 
 STILL = libcamera.StreamRole.StillCapture

@@ -89,6 +89,7 @@ def check_stream_config(stream_config, name) -> None:
     if size[0] % 2 or size[1] % 2:
         raise RuntimeError("width and height should be even")
 
+
 # TODO(meawoppl) - dataclass __post_init__ materials
 def check_camera_config(camera_config: dict) -> None:
     required_keys = ["colour_space", "transform", "main", "lores", "raw"]
@@ -97,9 +98,7 @@ def check_camera_config(camera_config: dict) -> None:
             raise RuntimeError(f"'{name}' key expected in camera configuration")
 
     # Check the entire camera configuration for errors.
-    if not isinstance(
-        camera_config["colour_space"], libcamera._libcamera.ColorSpace
-    ):
+    if not isinstance(camera_config["colour_space"], libcamera._libcamera.ColorSpace):
         raise RuntimeError("Color space has incorrect type")
     if not isinstance(camera_config["transform"], libcamera._libcamera.Transform):
         raise RuntimeError("Transform has incorrect type")
