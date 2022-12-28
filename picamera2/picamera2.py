@@ -1056,12 +1056,14 @@ class Picamera2:
         for req in requests:
             req.release()
 
-    def _dispatch_loop_tasks(self, *args: LoopTask, config: Optional[dict]=None) -> List[Future]:
+    def _dispatch_loop_tasks(
+        self, *args: LoopTask, config: Optional[dict] = None
+    ) -> List[Future]:
         """The main thread should use this to dispatch a number of operations for the event
         loop to perform. The event loop will execute them in order, and return a list of
         futures which mature at the time the corresponding operation completes.
         """
-        
+
         if config is None:
             tasks = args
         else:
@@ -1069,12 +1071,16 @@ class Picamera2:
             # FIXME: the discarded request enough for test cases, but the correct
             # way to flag this is with the request.cookie, but that is currently
             # used to route between cameras. Fixable, but independent issue for now.
-            tasks = [
+            tasks = (
+                [
                     LoopTask.without_request(self._switch_mode, config),
-                    LoopTask.with_request(self._discard_request)
-                ] + list(args) + [
+                    LoopTask.with_request(self._discard_request),
+                ]
+                + list(args)
+                + [
                     LoopTask.without_request(self._switch_mode, previous_config),
                 ]
+            )
         self._task_deque.extend(tasks)
         # Note that the below strips the config changes
         return [task.future for task in args]
@@ -1107,38 +1113,40 @@ class Picamera2:
         return request.get_metadata()
 
     def capture_file(
-        self,
-        file_output,
-        name: str = "main",
-        format=None,
-        config=None
+        self, file_output, name: str = "main", format=None, config=None
     ) -> TypedFuture[dict]:
         return self._dispatch_loop_tasks(
             LoopTask.with_request(self._capture_file, name, file_output, format),
-            config=config
+            config=config,
         )[0]
 
     def _capture_request(self, request: CompletedRequest):
         request.acquire()
         return request
 
-    def capture_request(self) -> TypedFuture[CompletedRequest]:
+    def capture_request(
+        self, config: Optional[dict] = None
+    ) -> TypedFuture[CompletedRequest]:
         """Fetch the next completed request from the camera system. You will be holding a
         reference to this request so you must release it again to return it to the camera system.
         """
-        return self._dispatch_loop_tasks(LoopTask.with_request(self._capture_request))[0]
+        return self._dispatch_loop_tasks(
+            LoopTask.with_request(self._capture_request), config=config
+        )[0]
 
     def _capture_metadata(self, request: CompletedRequest):
         return request.get_metadata()
 
-    def capture_metadata(self, config: Optional[dict]=None) -> Future:
-        return self._dispatch_loop_tasks(LoopTask.with_request(self._capture_metadata), config=config)[0]
+    def capture_metadata(self, config: Optional[dict] = None) -> Future:
+        return self._dispatch_loop_tasks(
+            LoopTask.with_request(self._capture_metadata), config=config
+        )[0]
 
     # Buffer Capture Methods
     def _capture_buffer(self, name: str, request: CompletedRequest):
         return request.get_buffer(name)
 
-    def capture_buffer(self, name="main", config: dict=None) -> Future[np.ndarray]:
+    def capture_buffer(self, name="main", config: dict = None) -> Future[np.ndarray]:
         """Make a 1d numpy array from the next frame in the named stream."""
         return self._dispatch_loop_tasks(
             LoopTask.with_request(self._capture_buffer, name), config=config
@@ -1150,7 +1158,9 @@ class Picamera2:
     ) -> Tuple[List[np.ndarray], dict]:
         return ([request.get_buffer(name) for name in names], request.get_metadata())
 
-    def capture_buffers_and_metadata(self, names=["main"]) -> TypedFuture[Tuple[List[np.ndarray], dict]]:
+    def capture_buffers_and_metadata(
+        self, names=["main"]
+    ) -> TypedFuture[Tuple[List[np.ndarray], dict]]:
         """Make a 1d numpy array from the next frame for each of the named streams."""
         return self._dispatch_loop_tasks(
             LoopTask.with_request(self._capture_buffers_and_metadata, names)
@@ -1160,7 +1170,9 @@ class Picamera2:
     def _capture_array(self, name, request: CompletedRequest):
         return request.make_array(name)
 
-    def capture_array(self, name="main", config: Optional[dict]=None) -> Future[np.ndarray]:
+    def capture_array(
+        self, name="main", config: Optional[dict] = None
+    ) -> Future[np.ndarray]:
         """Make a 2d image from the next frame in the named stream."""
         return self._dispatch_loop_tasks(
             LoopTask.with_request(self._capture_array, name), config=config
@@ -1171,7 +1183,9 @@ class Picamera2:
     ) -> Tuple[List[np.ndarray], Dict[str, Any]]:
         return ([request.make_array(name) for name in names], request.get_metadata())
 
-    def capture_arrays_and_metadata(self, names=["main"]) -> TypedFuture[Tuple[List[np.ndarray], Dict[str, Any]]]:
+    def capture_arrays_and_metadata(
+        self, names=["main"]
+    ) -> TypedFuture[Tuple[List[np.ndarray], Dict[str, Any]]]:
         """Make 2d image arrays from the next frames in the named streams."""
         return self._dispatch_loop_tasks(
             LoopTask.with_request(self._capture_arrays_and_metadata, names)
@@ -1199,18 +1213,21 @@ class Picamera2:
     def _capture_frame(self, name: str, request: CompletedRequest) -> CameraFrame:
         return CameraFrame.from_request(name, request)
 
-    def capture_frame(self, name: str = "main", config=None) -> TypedFuture[CameraFrame]:
+    def capture_frame(
+        self, name: str = "main", config=None
+    ) -> TypedFuture[CameraFrame]:
         """Make a CameraFrame from the next frame in the named stream.
 
         :param name: Stream name, defaults to "main"
         :type name: str, optional
         """
         return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_frame, name),
-            config=config
+            LoopTask.with_request(self._capture_frame, name), config=config
         )[0]
 
-    def capture_serial_frames(self, n_frames: int, name="main") -> List[TypedFuture[CameraFrame]]:
+    def capture_serial_frames(
+        self, n_frames: int, name="main"
+    ) -> List[TypedFuture[CameraFrame]]:
         """Capture a number of frames from the named stream, returning a list of CameraFrames."""
         return self._dispatch_loop_tasks(
             *(LoopTask.with_request(self._capture_frame, name) for _ in range(n_frames))

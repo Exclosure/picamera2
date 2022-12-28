@@ -18,7 +18,7 @@ camera.still_configuration.enable_raw()
 camera.still_configuration.raw.size = camera.sensor_resolution
 
 camera.start("preview")
-camera.discard_frames(2)
-assert camera.switch_mode_and_capture_image("still")
+camera.discard_frames(2).result()
+assert camera.capture_image(config="still")
 camera.stop()
 camera.close()

@@ -12,4 +12,4 @@ camera.configure(preview_config)
 
 with camera:
     camera.discard_frames(2)
-    camera.switch_mode_and_capture_file(capture_config, "full.dng", name="raw")
+    camera.capture_file("full.dng", name="raw", config=capture_config).result()
