@@ -1087,7 +1087,7 @@ class Picamera2:
     def _capture_file(
         self, name, file_output, format, request: CompletedRequest
     ) -> dict:
-        request.make_image(name).save(file_output, format=format)
+        request.make_image(name).convert("RGB").save(file_output, format=format)
         return request.get_metadata()
 
     def capture_file_async(
