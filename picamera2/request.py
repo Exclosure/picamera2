@@ -176,17 +176,9 @@ class AbstractCompletedRequest(ABC):
         if fmt not in mode_lookup:
             raise RuntimeError(f"Stream format {fmt} not supported for PIL images")
         mode = mode_lookup[fmt]
-        pil_img = Image.frombuffer(
+        return Image.frombuffer(
             "RGB", (rgb.shape[1], rgb.shape[0]), rgb, "raw", mode, 0, 1
         )
-        if width is None:
-            width = rgb.shape[1]
-        if height is None:
-            height = rgb.shape[0]
-        if width != rgb.shape[1] or height != rgb.shape[0]:
-            # This will be slow. Consider requesting camera images of this size in the first place!
-            pil_img = pil_img.resize((width, height))
-        return pil_img
 
 
 # TODO(meawoppl) - Make Completed Requests only exist inside of a context manager
