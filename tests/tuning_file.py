@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from picamera2 import CameraConfig, Picamera2
-from picamera2.tuning import load_tuning_file, find_tuning_algo
+from picamera2.tuning import find_tuning_algo, load_tuning_file
+
 # Here we load up the tuning for the HQ cam and alter the default exposure profile.
 # For more information on what can be changed, see chapter 5 in
 # https://datasheets.raspberrypi.com/camera/raspberry-pi-camera-guide.pdf

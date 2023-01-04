@@ -1,8 +1,8 @@
-import os
 import json
+import os
 import tempfile
-
 from contextlib import contextmanager
+
 
 def load_tuning_file(tuning_file: str, dir=None):
     """Load the named tuning file.
@@ -33,6 +33,7 @@ def load_tuning_file(tuning_file: str, dir=None):
                 return json.load(fp)
     raise RuntimeError("Tuning file not found")
 
+
 def find_tuning_algo(tuning: dict, name: str) -> dict:
     """
     Return the parameters for the named algorithm in the given camera tuning.
@@ -47,6 +48,7 @@ def find_tuning_algo(tuning: dict, name: str) -> dict:
     if version == 1:
         return tuning[name]
     return next(algo for algo in tuning["algorithms"] if name in algo)[name]
+
 
 class TuningContext:
     def __init__(self, tuning: Any):

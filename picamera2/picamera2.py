@@ -24,8 +24,8 @@ from picamera2.lc_helpers import lc_unpack, lc_unpack_controls
 from picamera2.previews import NullPreview
 from picamera2.request import CompletedRequest, LoopTask
 from picamera2.sensor_format import SensorFormat
-from picamera2.typing import TypedFuture
 from picamera2.tuning import TuningContext
+from picamera2.typing import TypedFuture
 
 STILL = libcamera.StreamRole.StillCapture
 RAW = libcamera.StreamRole.Raw

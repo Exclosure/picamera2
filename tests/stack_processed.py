@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image
 
 from picamera2 import CameraConfig, Picamera2
-from picamera2.tuning import load_tuning_file, find_tuning_algo
+from picamera2.tuning import find_tuning_algo, load_tuning_file
 
 exposure_time = 60000  # put your own numbers here
 num_frames = 6
