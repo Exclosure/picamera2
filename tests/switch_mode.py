@@ -2,19 +2,18 @@
 
 # Switch from preview to full resolution mode.
 
-import time
-
-from picamera2 import Picamera2
+from picamera2 import Picamera2, CameraConfiguration
 
 camera = Picamera2()
 camera.start_preview()
 
-preview_config = camera.create_preview_configuration()
+preview_config = CameraConfiguration.create_preview_configuration(camera)
 camera.configure(preview_config)
 
 camera.start()
 camera.discard_frames(4)
-other_config = camera.create_preview_configuration(
+other_config = CameraConfiguration.create_preview_configuration(
+    camera,
     main={"size": camera.sensor_resolution}, buffer_count=3
 )
 

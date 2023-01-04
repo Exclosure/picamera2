@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 import numpy as np
 
-from picamera2 import Picamera2
+from picamera2 import Picamera2, CameraConfiguration
 
 lsize = (320, 240)
 camera = Picamera2()
-video_config = camera.create_video_configuration(
+video_config = CameraConfiguration.create_video_configuration(
+    camera,
     main={"size": (1280, 720), "format": "RGB888"},
     lores={"size": lsize, "format": "YUV420"},
 )

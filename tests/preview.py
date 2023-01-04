@@ -5,12 +5,12 @@
 
 import time
 
-from picamera2 import Picamera2
+from picamera2 import Picamera2, CameraConfiguration
 
 camera = Picamera2()
 camera.start_preview()
 
-preview_config = camera.create_preview_configuration()
+preview_config = CameraConfiguration.create_preview_configuration(camera)
 camera.configure(preview_config)
 
 camera.start()

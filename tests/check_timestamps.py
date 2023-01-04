@@ -3,10 +3,10 @@ import time
 
 import numpy as np
 
-from picamera2 import Picamera2
+from picamera2 import Picamera2, CameraConfiguration
 
 camera = Picamera2()
-video_config = camera.create_video_configuration()
+video_config = CameraConfiguration.create_video_configuration(camera)
 camera.configure(video_config)
 
 timestamps = []
