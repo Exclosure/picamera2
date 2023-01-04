@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from logging import getLogger
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -19,6 +19,13 @@ def _assert_type(thing: Any, type_) -> None:
     if not isinstance(thing, type_):
         raise TypeError(f"{thing} should be a {type_} not {type(thing)}")
 
+_raw_stream_ignore_list = [
+    "bit_depth",
+    "crop_limits",
+    "exposure_limits",
+    "fps",
+    "unpacked",
+]
 
 @dataclass
 class StreamConfiguration:
@@ -186,3 +193,178 @@ class CameraConfiguration:
 
         if self.raw is not None:
             self.raw.check("raw")
+
+    # TODO(meawoppl) - These can likely be made static/hoisted
+    @classmethod
+    def create_preview_configuration(
+        cls,
+        camera: Picamera2,
+        main: dict = {},
+        lores=None,
+        raw=None,
+        transform=libcamera.Transform(),
+        colour_space=libcamera.ColorSpace.Sycc(),
+        buffer_count=4,
+        controls={},
+    ) -> CameraConfiguration:
+        """Make a configuration suitable for camera preview."""
+        camera.requires_camera()
+
+        main_stream = StreamConfiguration(format="XBGR8888", size=(640, 480))
+        main_stream = replace(main_stream, **main)
+        main_stream.align(optimal=False)
+
+        if lores is not None:
+            lores_stream = StreamConfiguration(format="YUV420", size=main_stream.size)
+            lores_stream = replace(lores_stream, **lores)
+            lores_stream.align(optimal=False)
+        else:
+            lores_stream = None
+
+        if raw is not None:
+            raw_stream = StreamConfiguration(
+                format=camera.sensor_format, size=camera.sensor_resolution
+            )
+            updates: dict = raw.copy()
+            for name in _raw_stream_ignore_list:
+                updates.pop(name, None)
+            raw_stream = replace(raw_stream, **updates)
+        else:
+            raw_stream = None
+        # Let the framerate vary from 12fps to as fast as possible.
+        if (
+            "NoiseReductionMode" in camera.camera_controls
+            and "FrameDurationLimits" in camera.camera_controls
+        ):
+            controls = {
+                "NoiseReductionMode": libcamera.controls.draft.NoiseReductionModeEnum.Minimal,
+                "FrameDurationLimits": (100, 83333),
+            } | controls
+        return cls(
+            camera=camera,
+            use_case="preview",
+            transform=transform,
+            colour_space=colour_space,
+            buffer_count=buffer_count,
+            controls=controls,
+            main=main_stream,
+            lores=lores_stream,
+            raw=raw_stream,
+        )
+
+    @classmethod
+    def create_still_configuration(
+        cls,
+        camera,
+        main={},
+        lores=None,
+        raw=None,
+        transform=libcamera.Transform(),
+        colour_space=libcamera.ColorSpace.Sycc(),
+        buffer_count=1,
+        controls={},
+    ) -> CameraConfiguration:
+        """Make a configuration suitable for still image capture. Default to 2 buffers, as the Gl preview would need them."""
+        camera.requires_camera()
+
+        main_stream = StreamConfiguration(format="BGR888", size=camera.sensor_resolution)
+        main_stream = replace(main_stream, **main)
+        main_stream.align(optimal=False)
+
+        if lores is not None:
+            lores_stream = StreamConfiguration(format="YUV420", size=main_stream.size)
+            lores_stream = replace(lores_stream, **lores)
+            lores_stream.align(optimal=False)
+        else:
+            lores_stream = None
+
+        if raw is not None:
+            raw_stream = StreamConfiguration(
+                format=camera.sensor_format, size=main_stream.size
+            )
+            raw_stream = replace(raw_stream, **raw)
+        else:
+            raw_stream = None
+        # Let the framerate span the entire possible range of the sensor.
+        if (
+            "NoiseReductionMode" in camera.camera_controls
+            and "FrameDurationLimits" in camera.camera_controls
+        ):
+            controls = {
+                "NoiseReductionMode": libcamera.controls.draft.NoiseReductionModeEnum.HighQuality,
+                "FrameDurationLimits": (100, 1000000 * 1000),
+            } | controls
+        return cls(
+            camera=camera,
+            use_case="still",
+            transform=transform,
+            colour_space=colour_space,
+            buffer_count=buffer_count,
+            controls=controls,
+            main=main_stream,
+            lores=lores_stream,
+            raw=raw_stream,
+        )
+
+    @classmethod
+    def create_video_configuration(
+        cls,
+        camera: Picamera2,
+        main={},
+        lores=None,
+        raw=None,
+        transform=libcamera.Transform(),
+        colour_space=None,
+        buffer_count=6,
+        controls={},
+    ) -> CameraConfiguration:
+        """Make a configuration suitable for video recording."""
+        camera.requires_camera()
+        main_stream = StreamConfiguration(format="XBGR8888", size=(1280, 720))
+        main_stream = replace(main_stream, **main)
+        main_stream.align(optimal=False)
+
+        if lores is not None:
+            lores_stream = StreamConfiguration(format="YUV420", size=main_stream.size)
+            lores_stream = replace(lores_stream, **lores)
+            lores_stream.align(optimal=False)
+        else:
+            lores_stream = None
+
+        if raw is not None:
+            raw_stream = StreamConfiguration(
+                format=camera.sensor_format, size=main_stream.size
+            )
+            raw_stream = replace(raw_stream, **raw)
+        else:
+            raw_stream = None
+
+        if colour_space is None:
+            # Choose default colour space according to the video resolution.
+            if formats.is_RGB(main_stream.format):
+                # There's a bug down in some driver where it won't accept anything other than
+                # sRGB or JPEG as the colour space for an RGB stream. So until that is fixed:
+                colour_space = libcamera.ColorSpace.Sycc()
+            elif main_stream.size[0] < 1280 or main_stream.size[1] < 720:
+                colour_space = libcamera.ColorSpace.Smpte170m()
+            else:
+                colour_space = libcamera.ColorSpace.Rec709()
+        if (
+            "NoiseReductionMode" in camera.camera_controls
+            and "FrameDurationLimits" in camera.camera_controls
+        ):
+            controls = {
+                "NoiseReductionMode": libcamera.controls.draft.NoiseReductionModeEnum.Fast,
+                "FrameDurationLimits": (33333, 33333),
+            } | controls
+        return cls(
+            camera=camera,
+            use_case="video",
+            transform=transform,
+            colour_space=colour_space,
+            buffer_count=buffer_count,
+            controls=controls,
+            main=main_stream,
+            lores=lores_stream,
+            raw=raw_stream,
+        )
