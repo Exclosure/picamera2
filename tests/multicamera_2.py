@@ -9,7 +9,7 @@ if CameraInfo.n_cameras() <= 1:
     quit()
 
 camera1 = Picamera2(0)
-config1 = CameraConfig.create_preview_configuration(camera1)
+config1 = CameraConfig.for_preview(camera1)
 camera1.configure(config1)
 camera1.start_preview()
 camera1.start()
@@ -18,7 +18,7 @@ time.sleep(2)
 camera1.capture_file("testa.jpg").result()
 
 camera2 = Picamera2(1)
-config2 = CameraConfig.create_preview_configuration(camera2)
+config2 = CameraConfig.for_preview(camera2)
 camera2.configure(config2)
 camera2.start()
 

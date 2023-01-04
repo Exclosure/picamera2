@@ -7,7 +7,7 @@ fps = 30
 dur = 5
 
 micro = int((1 / fps) * 1000000)
-video_cfg = CameraConfig.create_video_configuration(camera)
+video_cfg = CameraConfig.for_video(camera)
 video_cfg.controls.FrameDurationLimits = (micro, micro)
 camera.configure(video_cfg)
 

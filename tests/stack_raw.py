@@ -18,7 +18,7 @@ num_frames = 6
 camera = Picamera2()
 raw_format = SensorFormat(camera.sensor_format)
 raw_format.packing = None
-config = CameraConfig.create_still_configuration(
+config = CameraConfig.for_still(
     camera, raw={"format": raw_format.format}, buffer_count=2
 )
 camera.configure(config)

@@ -2,7 +2,7 @@
 from picamera2 import CameraConfig, Picamera2
 
 camera = Picamera2()
-config = CameraConfig.create_still_configuration(camera)
+config = CameraConfig.for_still(camera)
 camera.configure(config)
 
 camera.start()

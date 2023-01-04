@@ -6,7 +6,7 @@ import numpy as np
 from picamera2 import CameraConfig, Picamera2
 
 camera = Picamera2()
-video_config = CameraConfig.create_video_configuration(camera)
+video_config = CameraConfig.for_video(camera)
 camera.configure(video_config)
 
 timestamps = []

@@ -15,7 +15,7 @@ available_modes.sort(key=lambda x: x["fps"], reverse=True)
 [print(i) for i in available_modes]
 chosen_mode = available_modes[0]
 
-camera.video_configuration = CameraConfig.create_video_configuration(
+camera.video_configuration = CameraConfig.for_video(
     camera, raw={"size": chosen_mode["size"], "format": chosen_mode["format"].format}
 )
 camera.configure("video")

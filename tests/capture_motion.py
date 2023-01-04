@@ -5,7 +5,7 @@ from picamera2 import CameraConfig, Picamera2
 
 lsize = (320, 240)
 camera = Picamera2()
-video_config = CameraConfig.create_video_configuration(
+video_config = CameraConfig.for_video(
     camera,
     main={"size": (1280, 720), "format": "RGB888"},
     lores={"size": lsize, "format": "YUV420"},

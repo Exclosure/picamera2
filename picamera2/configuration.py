@@ -196,7 +196,7 @@ class CameraConfig:
 
     # TODO(meawoppl) - These can likely be made static/hoisted
     @classmethod
-    def create_preview_configuration(
+    def for_preview(
         cls,
         camera: Picamera2,
         main: dict = {},
@@ -208,8 +208,6 @@ class CameraConfig:
         controls={},
     ) -> CameraConfig:
         """Make a configuration suitable for camera preview."""
-        camera.requires_camera()
-
         main_stream = StreamConfig(format="XBGR8888", size=(640, 480))
         main_stream = replace(main_stream, **main)
         main_stream.align(optimal=False)
@@ -253,7 +251,7 @@ class CameraConfig:
         )
 
     @classmethod
-    def create_still_configuration(
+    def for_still(
         cls,
         camera,
         main={},
@@ -265,8 +263,6 @@ class CameraConfig:
         controls={},
     ) -> CameraConfig:
         """Make a configuration suitable for still image capture. Default to 2 buffers, as the Gl preview would need them."""
-        camera.requires_camera()
-
         main_stream = StreamConfig(format="BGR888", size=camera.sensor_resolution)
         main_stream = replace(main_stream, **main)
         main_stream.align(optimal=False)
@@ -307,7 +303,7 @@ class CameraConfig:
         )
 
     @classmethod
-    def create_video_configuration(
+    def for_video(
         cls,
         camera: Picamera2,
         main={},
@@ -319,7 +315,6 @@ class CameraConfig:
         controls={},
     ) -> CameraConfig:
         """Make a configuration suitable for video recording."""
-        camera.requires_camera()
         main_stream = StreamConfig(format="XBGR8888", size=(1280, 720))
         main_stream = replace(main_stream, **main)
         main_stream.align(optimal=False)

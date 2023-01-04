@@ -6,7 +6,7 @@ from picamera2 import CameraConfig, Picamera2
 camera = Picamera2()
 camera.start_preview()
 
-preview_config = CameraConfig.create_preview_configuration(camera)
+preview_config = CameraConfig.for_preview(camera)
 camera.configure(preview_config)
 
 camera.start()

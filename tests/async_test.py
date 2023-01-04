@@ -9,7 +9,7 @@ from picamera2 import Picamera2
 from picamera2.configuration import CameraConfig
 
 camera = Picamera2()
-config = CameraConfig.create_preview_configuration(camera)
+config = CameraConfig.for_preview(camera)
 camera.configure(config)
 camera.start()
 abort = False

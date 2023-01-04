@@ -6,7 +6,7 @@ from picamera2 import CameraConfig, Picamera2
 def main():
     print("With context...")
     with Picamera2() as camera:
-        config = CameraConfig.create_preview_configuration(camera)
+        config = CameraConfig.for_preview(camera)
         camera.configure(config)
         camera.start()
         metadata = camera.capture_metadata().result()
@@ -15,7 +15,7 @@ def main():
 
     print("Without context...")
     camera = Picamera2()
-    config = CameraConfig.create_preview_configuration(camera)
+    config = CameraConfig.for_preview(camera)
     camera.configure(config)
     camera.start()
     metadata = camera.capture_metadata().result()

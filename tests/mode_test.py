@@ -22,7 +22,7 @@ def check(raw_config, fps):
     if raw_config["size"][0] * raw_config["size"][1] > 5e6:
         print("Not checking", raw_config)
         return
-    camera.video_configuration = CameraConfig.create_video_configuration(
+    camera.video_configuration = CameraConfig.for_video(
         camera,
         raw=raw_config,
     )

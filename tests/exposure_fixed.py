@@ -5,7 +5,7 @@ from picamera2 import CameraConfig, Picamera2
 camera = Picamera2()
 camera.start_preview()
 controls = {"ExposureTime": 10000, "AnalogueGain": 1.0}
-preview_config = CameraConfig.create_preview_configuration(camera, controls=controls)
+preview_config = CameraConfig.for_preview(camera, controls=controls)
 camera.configure(preview_config)
 
 camera.start()

@@ -9,11 +9,11 @@ if CameraInfo.n_cameras() <= 1:
     quit()
 
 camera1 = Picamera2(0)
-camera1.configure(CameraConfig.create_preview_configuration(camera1))
+camera1.configure(CameraConfig.for_preview(camera1))
 camera1.start()
 
 camera2 = Picamera2(1)
-camera2.configure(CameraConfig.create_preview_configuration(camera2))
+camera2.configure(CameraConfig.for_preview(camera2))
 camera2.start()
 
 f1 = camera1.discard_frames(4)

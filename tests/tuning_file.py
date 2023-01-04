@@ -10,7 +10,7 @@ algo = Picamera2.find_tuning_algo(tuning, "rpi.agc")
 algo["exposure_modes"]["normal"] = {"shutter": [100, 66666], "gain": [1.0, 8.0]}
 
 camera = Picamera2(tuning=tuning)
-camera.configure(CameraConfig.create_preview_configuration(camera))
+camera.configure(CameraConfig.for_preview(camera))
 camera.start_preview()
 camera.start()
 camera.discard_frames(2).result()
