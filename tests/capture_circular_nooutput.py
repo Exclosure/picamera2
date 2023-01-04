@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from picamera2 import Picamera2, CameraConfiguration
+from picamera2 import CameraConfiguration, Picamera2
 from picamera2.testing import mature_after_frames_or_timeout
 
 camera = Picamera2()

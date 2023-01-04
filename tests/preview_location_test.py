@@ -1,6 +1,8 @@
 from logging import getLogger
+
 import numpy as np
-from picamera2 import Picamera2, CameraConfiguration
+
+from picamera2 import CameraConfiguration, Picamera2
 
 _log = getLogger(__name__)
 _log.info("Preview re-initialized after start.")

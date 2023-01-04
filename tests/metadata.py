@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # Obtain the current camera control values in the image metadata.
-from picamera2 import Picamera2, CameraConfiguration
+from picamera2 import CameraConfiguration, Picamera2
 
 camera = Picamera2()
 camera.start_preview()

@@ -6,7 +6,7 @@ import sys
 sys.path.append("/usr/lib/python3/dist-packages")
 import libcamera
 
-from picamera2 import Picamera2, CameraConfiguration
+from picamera2 import CameraConfiguration, Picamera2
 
 camera = Picamera2()
 camera.start_preview()

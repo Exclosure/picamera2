@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from picamera2 import Picamera2, CameraConfiguration
+from picamera2 import CameraConfiguration, Picamera2
 
 # Here we load up the tuning for the HQ cam and alter the default exposure profile.
 # For more information on what can be changed, see chapter 5 in

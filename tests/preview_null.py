@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from picamera2 import Picamera2, CameraConfiguration
+from picamera2 import CameraConfiguration, Picamera2
 
 camera = Picamera2()
 config = CameraConfiguration.create_preview_configuration(camera)

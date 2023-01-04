@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Another (simpler!) way to fix the AEC/AGC and AWB.
 
-from picamera2 import Picamera2, CameraConfiguration
+from picamera2 import CameraConfiguration, Picamera2
 
 camera = Picamera2()
 camera.start_preview()

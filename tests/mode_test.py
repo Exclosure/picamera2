@@ -11,7 +11,7 @@ sys.path.append("/usr/lib/python3/dist-packages")
 
 from libcamera import Transform
 
-from picamera2 import Picamera2, CameraConfiguration
+from picamera2 import CameraConfiguration, Picamera2
 from picamera2.sensor_format import SensorFormat
 
 camera = Picamera2()

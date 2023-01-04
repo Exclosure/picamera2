@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
-from picamera2 import CameraInfo, Picamera2, CameraConfiguration
-
 import concurrent.futures
+
+from picamera2 import CameraConfiguration, CameraInfo, Picamera2
 
 if CameraInfo.n_cameras() <= 1:
     print("SKIPPED (one camera)")

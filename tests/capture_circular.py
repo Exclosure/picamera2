@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import numpy as np
 
-from picamera2 import Picamera2, CameraConfiguration
+from picamera2 import CameraConfiguration, Picamera2
 
 lsize = (320, 240)
 camera = Picamera2()

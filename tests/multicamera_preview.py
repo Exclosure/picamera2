@@ -2,7 +2,7 @@
 
 import time
 
-from picamera2 import Picamera2, CameraConfiguration
+from picamera2 import CameraConfiguration, Picamera2
 
 camera1 = Picamera2(0)
 camera1.configure(CameraConfiguration.create_preview_configuration(camera1))

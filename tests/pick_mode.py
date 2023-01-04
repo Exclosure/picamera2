@@ -2,7 +2,7 @@
 
 # Example of reading the available modes, and picking one with
 # the highest framerate and a raw bit depth of at least 10
-from picamera2 import Picamera2, CameraConfiguration
+from picamera2 import CameraConfiguration, Picamera2
 
 camera = Picamera2()
 
@@ -16,8 +16,7 @@ available_modes.sort(key=lambda x: x["fps"], reverse=True)
 chosen_mode = available_modes[0]
 
 camera.video_configuration = CameraConfiguration.create_video_configuration(
-    camera,
-    raw={"size": chosen_mode["size"], "format": chosen_mode["format"].format}
+    camera, raw={"size": chosen_mode["size"], "format": chosen_mode["format"].format}
 )
 camera.configure("video")
 
