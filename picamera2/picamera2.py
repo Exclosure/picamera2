@@ -236,9 +236,15 @@ class Picamera2:
 
             # Configuration requires various bits of information from the camera
             # so we build the default configurations here
-            self.preview_configuration = CameraConfiguration.create_preview_configuration(self)
-            self.still_configuration = CameraConfiguration.create_still_configuration(self)
-            self.video_configuration = CameraConfiguration.create_video_configuration(self)
+            self.preview_configuration = (
+                CameraConfiguration.create_preview_configuration(self)
+            )
+            self.still_configuration = CameraConfiguration.create_still_configuration(
+                self
+            )
+            self.video_configuration = CameraConfiguration.create_video_configuration(
+                self
+            )
         except Exception as e:
             _log.error("Camera __init__ sequence did not complete.", exc_info=e)
             raise RuntimeError("Camera __init__ sequence did not complete.") from e
@@ -692,7 +698,9 @@ class Picamera2:
         camera_config = self._config_opts(config)
 
         if camera_config is None:
-            camera_config = CameraConfiguration.create_preview_configuration()
+            camera_config = CameraConfiguration.create_preview_configuration(
+                camera=self
+            )
 
         # Mark ourselves as unconfigured.
         self.libcamera_config = None

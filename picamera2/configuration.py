@@ -19,6 +19,7 @@ def _assert_type(thing: Any, type_) -> None:
     if not isinstance(thing, type_):
         raise TypeError(f"{thing} should be a {type_} not {type(thing)}")
 
+
 _raw_stream_ignore_list = [
     "bit_depth",
     "crop_limits",
@@ -26,6 +27,7 @@ _raw_stream_ignore_list = [
     "fps",
     "unpacked",
 ]
+
 
 @dataclass
 class StreamConfiguration:
@@ -267,7 +269,9 @@ class CameraConfiguration:
         """Make a configuration suitable for still image capture. Default to 2 buffers, as the Gl preview would need them."""
         camera.requires_camera()
 
-        main_stream = StreamConfiguration(format="BGR888", size=camera.sensor_resolution)
+        main_stream = StreamConfiguration(
+            format="BGR888", size=camera.sensor_resolution
+        )
         main_stream = replace(main_stream, **main)
         main_stream.align(optimal=False)
 
