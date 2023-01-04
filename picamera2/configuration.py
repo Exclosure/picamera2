@@ -76,7 +76,7 @@ class StreamConfiguration:
                 if not formats.is_raw(self.format):
                     raise RuntimeError("Unrecognized raw format " + self.format)
             else:
-                if not formats.is_valid(self.format):
+                if not formats.is_format_valid(self.format):
                     raise RuntimeError(
                         "Bad format " + self.format + " in stream " + name
                     )

@@ -4,8 +4,8 @@
 # into each mode and get the correct framerate
 
 import sys
-import time
 from math import isclose
+from pprint import pprint
 
 sys.path.append("/usr/lib/python3/dist-packages")
 
@@ -35,12 +35,14 @@ def check(raw_config, fps):
         set_format.format == raw_config["format"]
     ), f'{camera.camera_configuration().raw.format} != {raw_config["format"]}'
     camera.set_controls({"FrameRate": fps})
+    
     camera.start()
     camera.discard_frames(2)
     # Check we got roughly the right framerate
     metadata = camera.capture_metadata().result()
     framerate = 1000000 / metadata["FrameDuration"]
-    print(metadata)
+    print("Metadata:")
+    pprint(metadata)
     print(f"Framerate: {framerate:.2f}, requested: {fps:.2f}")
     assert isclose(framerate, fps, abs_tol=1.0)
     camera.stop()
