@@ -54,15 +54,15 @@ class TuningContext:
         self.tuning = tuning
 
     def __enter__(self):
-        tuning_file = None
+        self._tuning_file = None
         if self.tuning is not None:
             if isinstance(self.tuning, str):
                 os.environ["LIBCAMERA_RPI_TUNING_FILE"] = self.tuning
             else:
                 self._tuning_file = tempfile.NamedTemporaryFile("w")
-                json.dump(self.tuning, tuning_file)
-                tuning_file.flush()  # but leave it open as closing it will delete it
-                os.environ["LIBCAMERA_RPI_TUNING_FILE"] = tuning_file.name
+                json.dump(self.tuning, self._tuning_file)
+                self._tuning_file.flush()  # but leave it open as closing it will delete it
+                os.environ["LIBCAMERA_RPI_TUNING_FILE"] = self._tuning_file.name
         else:
             os.environ.pop("LIBCAMERA_RPI_TUNING_FILE", None)  # Use default tuning
 
