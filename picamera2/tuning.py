@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 import os
 import tempfile
-from typing import Any
+
 
 def load_tuning_file(tuning_file: str, dir=None):
     """Load the named tuning file.
@@ -50,21 +52,22 @@ def find_tuning_algo(tuning: dict, name: str) -> dict:
 
 
 class TuningContext:
-    def __init__(self, tuning: Any):
+    def __init__(self, tuning: str | dict | None):
         self.tuning = tuning
 
     def __enter__(self):
         self._tuning_file = None
-        if self.tuning is not None:
-            if isinstance(self.tuning, str):
-                os.environ["LIBCAMERA_RPI_TUNING_FILE"] = self.tuning
-            else:
-                self._tuning_file = tempfile.NamedTemporaryFile("w")
-                json.dump(self.tuning, self._tuning_file)
-                self._tuning_file.flush()  # but leave it open as closing it will delete it
-                os.environ["LIBCAMERA_RPI_TUNING_FILE"] = self._tuning_file.name
-        else:
+        if self.tuning is None:
             os.environ.pop("LIBCAMERA_RPI_TUNING_FILE", None)  # Use default tuning
+            return
+
+        if isinstance(self.tuning, str):
+            os.environ["LIBCAMERA_RPI_TUNING_FILE"] = self.tuning
+        else:
+            self._tuning_file = tempfile.NamedTemporaryFile("w")
+            json.dump(self.tuning, self._tuning_file)
+            self._tuning_file.flush()  # but leave it open as closing it will delete it
+            os.environ["LIBCAMERA_RPI_TUNING_FILE"] = self._tuning_file.name
 
     def __exit__(self, *args):
         if self._tuning_file is not None:
