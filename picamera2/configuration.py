@@ -76,12 +76,7 @@ class StreamConfiguration:
                 if not formats.is_raw(self.format):
                     raise RuntimeError("Unrecognized raw format " + self.format)
             else:
-                if not (
-                    formats.is_YUV(self.format)
-                    or formats.is_RGB(self.format)
-                    or self.format == "MJPEG"
-                    or self.format.endswith("_CSI2P")
-                ):
+                if not formats.is_valid(self.format):
                     raise RuntimeError(
                         "Bad format " + self.format + " in stream " + name
                     )
