@@ -559,7 +559,7 @@ class Picamera2:
 
         if raw is not None:
             raw_stream = StreamConfiguration(
-                format=self.sensor_format, size=main_stream.size
+                format=self.sensor_format, size=self.sensor_resolution
             )
             updates: dict = raw.copy()
             for name in self._raw_stream_ignore_list:
