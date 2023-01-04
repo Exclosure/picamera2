@@ -2,18 +2,18 @@
 
 import concurrent.futures
 
-from picamera2 import CameraConfiguration, CameraInfo, Picamera2
+from picamera2 import CameraConfig, CameraInfo, Picamera2
 
 if CameraInfo.n_cameras() <= 1:
     print("SKIPPED (one camera)")
     quit()
 
 camera1 = Picamera2(0)
-camera1.configure(CameraConfiguration.create_preview_configuration(camera1))
+camera1.configure(CameraConfig.create_preview_configuration(camera1))
 camera1.start()
 
 camera2 = Picamera2(1)
-camera2.configure(CameraConfiguration.create_preview_configuration(camera2))
+camera2.configure(CameraConfig.create_preview_configuration(camera2))
 camera2.start()
 
 f1 = camera1.discard_frames(4)

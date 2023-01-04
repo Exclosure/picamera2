@@ -30,7 +30,7 @@ _raw_stream_ignore_list = [
 
 
 @dataclass
-class StreamConfiguration:
+class StreamConfig:
     size: tuple[int, int]
     format: Optional[str] = None
     stride: Optional[int] = None
@@ -104,7 +104,7 @@ class StreamConfiguration:
 
 
 @dataclass
-class CameraConfiguration:
+class CameraConfig:
     camera: Picamera2
     use_case: str
     buffer_count: int
@@ -114,9 +114,9 @@ class CameraConfiguration:
     # The are allowed to be a dict when user input, but will
     # be transformed to the proper class by the __post_init__ method.
     controls: Controls | dict
-    main: StreamConfiguration | dict
-    lores: Optional[StreamConfiguration | dict] = None
-    raw: Optional[StreamConfiguration | dict] = None
+    main: StreamConfig | dict
+    lores: Optional[StreamConfig | dict] = None
+    raw: Optional[StreamConfig | dict] = None
 
     # TODO: Remove forward references.
     @property
@@ -137,14 +137,12 @@ class CameraConfiguration:
 
     def enable_lores(self, enable: bool = True) -> None:
         self.lores = (
-            StreamConfiguration(size=self.main.size, format="YUV420")
-            if enable
-            else None
+            StreamConfig(size=self.main.size, format="YUV420") if enable else None
         )
 
     def enable_raw(self, enable: bool = True) -> None:
         self.raw = (
-            StreamConfiguration(size=self.main.size, format=self.camera.sensor_format)
+            StreamConfig(size=self.main.size, format=self.camera.sensor_format)
             if enable
             else None
         )
@@ -155,7 +153,7 @@ class CameraConfiguration:
             self.lores.align(optimal)
         # No sense trying to align the raw stream.
 
-    def get_config(self, config_name: str) -> StreamConfiguration:
+    def get_config(self, config_name: str) -> StreamConfig:
         # TODO(meawoppl) - backcompat shim. remove me.
         if config_name == "main":
             return self.main
@@ -171,13 +169,13 @@ class CameraConfiguration:
             self.controls = Controls(self.camera, self.controls)
         if isinstance(self.main, dict):
             _log.warning("CameraConfiguration 'main' should be a StreamConfiguration")
-            self.main = StreamConfiguration(**self.main)
+            self.main = StreamConfig(**self.main)
         if isinstance(self.lores, dict):
             _log.warning("CameraConfiguration 'lores' should be a StreamConfiguration")
-            self.lores = StreamConfiguration(**self.lores)
+            self.lores = StreamConfig(**self.lores)
         if isinstance(self.raw, dict):
             _log.warning("CameraConfiguration 'raw' should be a StreamConfiguration")
-            self.raw = StreamConfiguration(**self.raw)
+            self.raw = StreamConfig(**self.raw)
 
         # Check the entire camera configuration for errors.
         _assert_type(self.colour_space, libcamera._libcamera.ColorSpace)
@@ -208,23 +206,23 @@ class CameraConfiguration:
         colour_space=libcamera.ColorSpace.Sycc(),
         buffer_count=4,
         controls={},
-    ) -> CameraConfiguration:
+    ) -> CameraConfig:
         """Make a configuration suitable for camera preview."""
         camera.requires_camera()
 
-        main_stream = StreamConfiguration(format="XBGR8888", size=(640, 480))
+        main_stream = StreamConfig(format="XBGR8888", size=(640, 480))
         main_stream = replace(main_stream, **main)
         main_stream.align(optimal=False)
 
         if lores is not None:
-            lores_stream = StreamConfiguration(format="YUV420", size=main_stream.size)
+            lores_stream = StreamConfig(format="YUV420", size=main_stream.size)
             lores_stream = replace(lores_stream, **lores)
             lores_stream.align(optimal=False)
         else:
             lores_stream = None
 
         if raw is not None:
-            raw_stream = StreamConfiguration(
+            raw_stream = StreamConfig(
                 format=camera.sensor_format, size=camera.sensor_resolution
             )
             updates: dict = raw.copy()
@@ -265,25 +263,23 @@ class CameraConfiguration:
         colour_space=libcamera.ColorSpace.Sycc(),
         buffer_count=1,
         controls={},
-    ) -> CameraConfiguration:
+    ) -> CameraConfig:
         """Make a configuration suitable for still image capture. Default to 2 buffers, as the Gl preview would need them."""
         camera.requires_camera()
 
-        main_stream = StreamConfiguration(
-            format="BGR888", size=camera.sensor_resolution
-        )
+        main_stream = StreamConfig(format="BGR888", size=camera.sensor_resolution)
         main_stream = replace(main_stream, **main)
         main_stream.align(optimal=False)
 
         if lores is not None:
-            lores_stream = StreamConfiguration(format="YUV420", size=main_stream.size)
+            lores_stream = StreamConfig(format="YUV420", size=main_stream.size)
             lores_stream = replace(lores_stream, **lores)
             lores_stream.align(optimal=False)
         else:
             lores_stream = None
 
         if raw is not None:
-            raw_stream = StreamConfiguration(
+            raw_stream = StreamConfig(
                 format=camera.sensor_format, size=main_stream.size
             )
             raw_stream = replace(raw_stream, **raw)
@@ -321,22 +317,22 @@ class CameraConfiguration:
         colour_space=None,
         buffer_count=6,
         controls={},
-    ) -> CameraConfiguration:
+    ) -> CameraConfig:
         """Make a configuration suitable for video recording."""
         camera.requires_camera()
-        main_stream = StreamConfiguration(format="XBGR8888", size=(1280, 720))
+        main_stream = StreamConfig(format="XBGR8888", size=(1280, 720))
         main_stream = replace(main_stream, **main)
         main_stream.align(optimal=False)
 
         if lores is not None:
-            lores_stream = StreamConfiguration(format="YUV420", size=main_stream.size)
+            lores_stream = StreamConfig(format="YUV420", size=main_stream.size)
             lores_stream = replace(lores_stream, **lores)
             lores_stream.align(optimal=False)
         else:
             lores_stream = None
 
         if raw is not None:
-            raw_stream = StreamConfiguration(
+            raw_stream = StreamConfig(
                 format=camera.sensor_format, size=main_stream.size
             )
             raw_stream = replace(raw_stream, **raw)

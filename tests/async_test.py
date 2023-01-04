@@ -6,10 +6,10 @@ from threading import Thread
 from typing import List
 
 from picamera2 import Picamera2
-from picamera2.configuration import CameraConfiguration
+from picamera2.configuration import CameraConfig
 
 camera = Picamera2()
-config = CameraConfiguration.create_preview_configuration(camera)
+config = CameraConfig.create_preview_configuration(camera)
 camera.configure(config)
 camera.start()
 abort = False

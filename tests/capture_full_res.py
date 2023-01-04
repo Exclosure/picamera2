@@ -1,13 +1,13 @@
 #!/usr/bin/python3
 # Capture a JPEG while still running in the preview mode.
-from picamera2 import CameraConfiguration, Picamera2
-from picamera2.configuration import CameraConfiguration
+from picamera2 import CameraConfig, Picamera2
+from picamera2.configuration import CameraConfig
 
 camera = Picamera2()
 camera.start_preview()
 
-preview_config = CameraConfiguration.create_preview_configuration(camera)
-capture_config = CameraConfiguration.create_still_configuration(camera)
+preview_config = CameraConfig.create_preview_configuration(camera)
+capture_config = CameraConfig.create_still_configuration(camera)
 camera.configure(preview_config)
 
 camera.start()

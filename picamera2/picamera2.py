@@ -19,7 +19,7 @@ import numpy as np
 from PIL import Image
 
 import picamera2.formats as formats
-from picamera2.configuration import CameraConfiguration, StreamConfiguration
+from picamera2.configuration import CameraConfig, StreamConfig
 from picamera2.controls import Controls
 from picamera2.frame import CameraFrame
 from picamera2.lc_helpers import lc_unpack, lc_unpack_controls
@@ -236,15 +236,9 @@ class Picamera2:
 
             # Configuration requires various bits of information from the camera
             # so we build the default configurations here
-            self.preview_configuration = (
-                CameraConfiguration.create_preview_configuration(self)
-            )
-            self.still_configuration = CameraConfiguration.create_still_configuration(
-                self
-            )
-            self.video_configuration = CameraConfiguration.create_video_configuration(
-                self
-            )
+            self.preview_configuration = CameraConfig.create_preview_configuration(self)
+            self.still_configuration = CameraConfig.create_still_configuration(self)
+            self.video_configuration = CameraConfig.create_video_configuration(self)
         except Exception as e:
             _log.error("Camera __init__ sequence did not complete.", exc_info=e)
             raise RuntimeError("Camera __init__ sequence did not complete.") from e
@@ -295,30 +289,30 @@ class Picamera2:
         self.sensor_modes_ = None
 
     @property
-    def preview_configuration(self) -> CameraConfiguration:
+    def preview_configuration(self) -> CameraConfig:
         return self.preview_configuration_
 
     @preview_configuration.setter
-    def preview_configuration(self, value: CameraConfiguration):
-        assert isinstance(value, CameraConfiguration)
+    def preview_configuration(self, value: CameraConfig):
+        assert isinstance(value, CameraConfig)
         self.preview_configuration_ = value
 
     @property
-    def still_configuration(self) -> CameraConfiguration:
+    def still_configuration(self) -> CameraConfig:
         return self.still_configuration_
 
     @still_configuration.setter
-    def still_configuration(self, value: CameraConfiguration):
-        assert isinstance(value, CameraConfiguration)
+    def still_configuration(self, value: CameraConfig):
+        assert isinstance(value, CameraConfig)
         self.still_configuration_ = value
 
     @property
-    def video_configuration(self) -> CameraConfiguration:
+    def video_configuration(self) -> CameraConfig:
         return self.video_configuration_
 
     @video_configuration.setter
-    def video_configuration(self, value: CameraConfiguration):
-        assert isinstance(value, CameraConfiguration)
+    def video_configuration(self, value: CameraConfig):
+        assert isinstance(value, CameraConfig)
         self.video_configuration_ = value
 
     @property
@@ -460,7 +454,7 @@ class Picamera2:
             for size in raw_formats.sizes(pix):
                 cam_mode = all_format.copy()
                 cam_mode["size"] = (size.width, size.height)
-                temp_config = CameraConfiguration.create_preview_configuration(
+                temp_config = CameraConfig.create_preview_configuration(
                     camera=self, raw={"format": str(pix), "size": cam_mode["size"]}
                 )
                 self.configure(temp_config)
@@ -532,7 +526,7 @@ class Picamera2:
     # TODO(meawoppl) - Obviated by dataclasses
     @staticmethod
     def _update_libcamera_stream_config(
-        libcamera_stream_config, stream_config: StreamConfiguration, buffer_count: int
+        libcamera_stream_config, stream_config: StreamConfig, buffer_count: int
     ) -> None:
         # Update the libcamera stream config with ours.
         libcamera_stream_config.size = libcamera.Size(*stream_config.size)
@@ -541,9 +535,7 @@ class Picamera2:
         )
         libcamera_stream_config.buffer_count = buffer_count
 
-    def _get_stream_indices(
-        self, camera_config: CameraConfiguration
-    ) -> Tuple[int, int, int]:
+    def _get_stream_indices(self, camera_config: CameraConfig) -> Tuple[int, int, int]:
         # Get the indices of the streams we want to use.
         index = 1
         main_index = 0
@@ -557,7 +549,7 @@ class Picamera2:
         return main_index, lores_index, raw_index
 
     # TODO(meawoppl) - Obviated by dataclasses
-    def _make_libcamera_config(self, camera_config: CameraConfiguration):
+    def _make_libcamera_config(self, camera_config: CameraConfig):
         # Make a libcamera configuration object from our Python configuration.
 
         # We will create each stream with the "viewfinder" role just to get the stream
@@ -641,7 +633,7 @@ class Picamera2:
         return requests
 
     def _update_camera_config(
-        self, camera_config: CameraConfiguration, libcamera_config
+        self, camera_config: CameraConfig, libcamera_config
     ) -> None:
         """Update our camera config from libcamera's.
 
@@ -652,21 +644,17 @@ class Picamera2:
         """
         camera_config.transform = libcamera_config.transform
         camera_config.colour_space = libcamera_config.at(0).color_space
-        camera_config.main = StreamConfiguration.from_lc_stream_config(
-            libcamera_config.at(0)
-        )
+        camera_config.main = StreamConfig.from_lc_stream_config(libcamera_config.at(0))
         if self.lores_index >= 0:
-            camera_config.lores = StreamConfiguration.from_lc_stream_config(
+            camera_config.lores = StreamConfig.from_lc_stream_config(
                 libcamera_config.at(self.lores_index)
             )
         if self.raw_index >= 0:
-            camera_config.raw = StreamConfiguration.from_lc_stream_config(
+            camera_config.raw = StreamConfig.from_lc_stream_config(
                 libcamera_config.at(self.raw_index)
             )
 
-    def _config_opts(
-        self, config: str | dict | CameraConfiguration
-    ) -> CameraConfiguration:
+    def _config_opts(self, config: str | dict | CameraConfig) -> CameraConfig:
         if isinstance(config, str):
             config_name_to_camera_config = {
                 "preview": self.preview_configuration,
@@ -678,15 +666,15 @@ class Picamera2:
             _log.warning("Using old-style camera config, please update")
             config = config.copy()
             config["camera"] = self
-            camera_config = CameraConfiguration(**config)
-        elif isinstance(config, CameraConfiguration):
+            camera_config = CameraConfig(**config)
+        elif isinstance(config, CameraConfig):
             # We expect values to have been set for any lores/raw streams.
             camera_config = config
         else:
             raise RuntimeError(f"Don't know how to make a config from {config}")
         return camera_config
 
-    def _configure(self, config: str | dict | CameraConfiguration = "preview") -> None:
+    def _configure(self, config: str | dict | CameraConfig = "preview") -> None:
         """Configure the camera system with the given configuration.
 
         :param camera_config: Configuration, defaults to the 'preview' configuration
@@ -698,9 +686,7 @@ class Picamera2:
         camera_config = self._config_opts(config)
 
         if camera_config is None:
-            camera_config = CameraConfiguration.create_preview_configuration(
-                camera=self
-            )
+            camera_config = CameraConfig.create_preview_configuration(camera=self)
 
         # Mark ourselves as unconfigured.
         self.libcamera_config = None
@@ -766,7 +752,7 @@ class Picamera2:
         """Configure the camera system with the given configuration."""
         self._configure(camera_config)
 
-    def camera_configuration(self) -> CameraConfiguration:
+    def camera_configuration(self) -> CameraConfig:
         """Return the camera configuration."""
         return self.camera_config
 

@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 import io
 
-from picamera2 import CameraConfiguration, Picamera2
+from picamera2 import CameraConfig, Picamera2
 
 camera = Picamera2()
-camera.configure(CameraConfiguration.create_preview_configuration(camera))
+camera.configure(CameraConfig.create_preview_configuration(camera))
 camera.start()
 
 for i in range(2):
