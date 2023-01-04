@@ -35,7 +35,7 @@ def check(raw_config, fps):
         set_format.format == raw_config["format"]
     ), f'{camera.camera_configuration().raw.format} != {raw_config["format"]}'
     camera.set_controls({"FrameRate": fps})
-    
+
     camera.start()
     camera.discard_frames(2)
     # Check we got roughly the right framerate

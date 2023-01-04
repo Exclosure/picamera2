@@ -9,8 +9,9 @@ camera.start_preview()
 preview_config = camera.create_preview_configuration(
     raw={"size": camera.sensor_resolution, "format": camera.sensor_format}
 )
-camera.configure(preview_config)
+print(preview_config)
 
+camera.configure(preview_config)
 camera.start()
 camera.discard_frames(10)
 raw = camera.capture_array("raw").result()
