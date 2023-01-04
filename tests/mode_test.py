@@ -27,12 +27,12 @@ def check(raw_config, fps):
     )
     camera.configure("video")
     # Check we got the correct raw format
-    assert camera.camera_configuration()["raw"]["size"] == raw_config["size"]
-    set_format = SensorFormat(camera.camera_configuration()["raw"]["format"])
+    assert camera.camera_configuration().raw.size == raw_config["size"]
+    set_format = SensorFormat(camera.camera_configuration().raw.format)
     set_format.transform(Transform(rotation=camera.camera_properties["Rotation"]))
     assert (
         set_format.format == raw_config["format"]
-    ), f'{camera.camera_configuration()["raw"]["format"]} != {raw_config["format"]}'
+    ), f'{camera.camera_configuration().raw.format} != {raw_config["format"]}'
     camera.set_controls({"FrameRate": fps})
     camera.start()
     camera.discard_frames(2)
