@@ -2,7 +2,7 @@
 
 # Test that we can successfully close a QtGlPreview window and open a new one.
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 print("First preview...")
 camera = Camera()

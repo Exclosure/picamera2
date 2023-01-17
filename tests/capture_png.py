@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Capture a PNG while still running in the preview mode.
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 camera.start_preview()

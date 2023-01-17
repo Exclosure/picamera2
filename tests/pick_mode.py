@@ -2,7 +2,7 @@
 
 # Example of reading the available modes, and picking one with
 # the highest framerate and a raw bit depth of at least 10
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 

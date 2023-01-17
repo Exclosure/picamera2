@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Capture a DNG and a JPEG made from the same raw data.
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 from scicamera.configuration import CameraConfig
 from scicamera.testing import mature_after_frames_or_timeout
 

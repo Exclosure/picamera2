@@ -1,6 +1,6 @@
 import time
 
-from scicamera import CameraInfo, Camera
+from scicamera import Camera, CameraInfo
 
 if CameraInfo.n_cameras < 2:
     print("SKIPPED (one camera)")

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Start camera with fixed exposure and gain.
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 camera.start_preview()

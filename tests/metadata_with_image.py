@@ -2,7 +2,7 @@
 
 # Obtain an image from the camera along with the exact metadata that
 # that describes that image.
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 camera.start_preview()

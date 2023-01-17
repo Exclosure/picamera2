@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # Switch from preview to full resolution mode (alternative method).
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 camera.start_preview()

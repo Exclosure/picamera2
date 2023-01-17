@@ -1,4 +1,4 @@
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 
 def main():

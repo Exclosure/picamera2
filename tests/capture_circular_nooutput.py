@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 from scicamera.testing import mature_after_frames_or_timeout
 
 camera = Camera()

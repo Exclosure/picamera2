@@ -4,7 +4,7 @@ import multiprocessing
 import threading
 import time
 
-from scicamera import CameraInfo, Camera
+from scicamera import Camera, CameraInfo
 
 
 def run_camera(idx):

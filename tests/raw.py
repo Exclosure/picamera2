@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # Configure a raw stream and capture an image from it.
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 camera.start_preview()

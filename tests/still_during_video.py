@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 from scicamera.request import CompletedRequest
 
 # Encode a VGA stream, and capture a higher resolution still image half way through.

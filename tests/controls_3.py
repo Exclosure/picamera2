@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Example of setting controls using the "direct" attribute method.
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 from scicamera.controls import Controls
 
 camera = Camera()

@@ -2,7 +2,7 @@
 
 # How to do digital zoom using the "ScalerCrop" control.
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 camera.start_preview()

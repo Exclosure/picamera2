@@ -3,7 +3,7 @@
 # Normally the QtGlPreview implementation is recommended as it benefits
 # from GPU hardware acceleration.
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 camera.start_preview()

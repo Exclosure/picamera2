@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # Obtain the current camera control values in the image metadata.
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 camera.start_preview()

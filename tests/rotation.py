@@ -6,7 +6,7 @@ import sys
 sys.path.append("/usr/lib/python3/dist-packages")
 import libcamera
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 camera.start_preview()

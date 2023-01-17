@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Another (simpler!) way to fix the AEC/AGC and AWB.
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 camera.start_preview()

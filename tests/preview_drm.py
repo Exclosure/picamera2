@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # For use from the login console, when not running X Windows.
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 camera.start_preview()

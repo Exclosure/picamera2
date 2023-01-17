@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 config = CameraConfig.for_still(camera)

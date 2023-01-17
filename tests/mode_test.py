@@ -11,7 +11,7 @@ sys.path.append("/usr/lib/python3/dist-packages")
 
 from libcamera import Transform
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 from scicamera.sensor_format import SensorFormat
 
 camera = Camera()

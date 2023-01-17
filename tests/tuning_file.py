@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 from scicamera.tuning import find_tuning_algo, load_tuning_file
 
 # Here we load up the tuning for the HQ cam and alter the default exposure profile.

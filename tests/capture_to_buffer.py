@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import io
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 camera.configure(CameraConfig.for_preview(camera))

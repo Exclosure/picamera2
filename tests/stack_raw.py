@@ -8,7 +8,7 @@
 import numpy as np
 from PIL import Image
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 from scicamera.sensor_format import SensorFormat
 
 exposure_time = 60000

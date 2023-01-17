@@ -2,7 +2,7 @@
 # Capture a full resolution image to memory rather than to a file.
 from PIL import Image
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 from scicamera.testing import mature_after_frames_or_timeout
 
 camera = Camera()

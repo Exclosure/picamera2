@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Capture a JPEG while still running in the preview mode.
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 from scicamera.configuration import CameraConfig
 
 camera = Camera()

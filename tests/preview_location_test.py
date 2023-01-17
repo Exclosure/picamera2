@@ -2,7 +2,7 @@ from logging import getLogger
 
 import numpy as np
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 _log = getLogger(__name__)
 _log.info("Preview re-initialized after start.")

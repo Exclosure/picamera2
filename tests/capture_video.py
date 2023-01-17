@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 video_config = CameraConfig.for_video(camera)

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import numpy as np
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 lsize = (320, 240)
 camera = Camera()

@@ -2,7 +2,7 @@
 
 import time
 
-from scicamera import CameraConfig, Camera
+from scicamera import Camera, CameraConfig
 
 camera1 = Camera(0)
 camera1.configure(CameraConfig.for_preview(camera1))
