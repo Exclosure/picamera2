@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
-from picamera2 import CameraConfig, Picamera2
+from scicamera import CameraConfig, Camera
 
-camera = Picamera2()
+camera = Camera()
 config = CameraConfig.for_preview(camera)
 camera.configure(config)
 

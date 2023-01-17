@@ -3,6 +3,11 @@ import selectors
 import threading
 from logging import getLogger
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from scicamera.picamera2 import Camera
+
 _log = getLogger(__name__)
 
 
@@ -64,11 +69,11 @@ class NullPreview:
         self.thread.start()
         self._started.wait()
 
-    def handle_request(self, picam2):
+    def handle_request(self, picam2: Camera):
         """Handle requests
 
-        :param picam2: picamera2 object
-        :type picam2: Picamera2
+        :param picam2: Camera object
+        :type picam2: Camera
         """
         try:
             picam2.process_requests()
