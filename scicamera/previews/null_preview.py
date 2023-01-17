@@ -1,7 +1,6 @@
 """Null preview"""
 import threading
 from logging import getLogger
-from typing import TYPE_CHECKING
 
 _log = getLogger(__name__)
 
@@ -44,7 +43,6 @@ class NullPreview:
         # be a drop-in replacement for the Qt/DRM previews.
         self.size = (width, height)
         self._abort = threading.Event()
-        self._started = threading.Event()
         self.camera = None
 
     def start(self, camera):
