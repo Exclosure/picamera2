@@ -47,15 +47,15 @@ class NullPreview:
         self.size = (width, height)
         self._abort = threading.Event()
         self._started = threading.Event()
-        self.picam2 = None
+        self.camera = None
 
-    def start(self, camera: Camera):
+    def start(self, camera):
         """Starts null preview
 
         :param camera: Camera object
         :type camera: Camera
         """
-        self.picam2 = camera
+        self.camera = camera
         self._started.clear()
         self._abort.clear()
         self.thread = threading.Thread(
@@ -64,14 +64,14 @@ class NullPreview:
         self.thread.start()
         self._started.wait()
 
-    def handle_request(self, picam2: Camera):
+    def handle_request(self, camera):
         """Handle requests
 
-        :param picam2: Camera object
-        :type picam2: Camera
+        :param camera: Camera object
+        :type camera: Camera
         """
         try:
-            picam2.process_requests()
+            camera.process_requests()
         except Exception as e:
             _log.exception("Exception during process_requests()", exc_info=e)
             raise
@@ -80,4 +80,4 @@ class NullPreview:
         """Stop preview"""
         self._abort.set()
         self.thread.join()
-        self.picam2 = None
+        self.camera = None
