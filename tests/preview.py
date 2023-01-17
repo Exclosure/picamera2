@@ -3,8 +3,6 @@
 # Normally the QtGlPreview implementation is recommended as it benefits
 # from GPU hardware acceleration.
 
-import time
-
 from scicamera import CameraConfig, Camera
 
 camera = Camera()

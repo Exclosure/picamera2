@@ -21,7 +21,7 @@ class NullPreview:
         :type camera: Camera
         """
         sel = selectors.DefaultSelector()
-        sel.register(camera: Camera.notifyme_r, selectors.EVENT_READ, self.handle_request)
+        sel.register(camera.notifyme_r, selectors.EVENT_READ, self.handle_request)
         self._started.set()
 
         # TODO(meawoppl) - abort flag and select can be polled in parallel
@@ -29,9 +29,9 @@ class NullPreview:
         while not self._abort.is_set():
             events = sel.select(0.2)
             for key, _ in events:
-                camera: Camera.notifymeread.read()
+                camera.notifymeread.read()
                 callback = key.data
-                callback(camera: Camera)
+                callback(camera)
 
     def __init__(self, x=None, y=None, width=None, height=None, transform=None):
         """Initialise null preview
