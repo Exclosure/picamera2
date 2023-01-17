@@ -7,7 +7,7 @@ from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.converters import YUV420_to_RGB
 from scicamera.lc_helpers import libcamera_color_spaces_eq, libcamera_transforms_eq
-from scicamera.picamera2 import CameraInfo, Camera
+from scicamera.camera import CameraInfo, Camera
 from scicamera.request import CompletedRequest
 
 # NOTE(meawoppl) - ugleeee monkey patch. Kill the below VV

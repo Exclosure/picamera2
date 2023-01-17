@@ -6,7 +6,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from scicamera.picamera2 import Camera
+    from scicamera.camera import Camera
 
 _log = getLogger(__name__)
 
@@ -14,14 +14,14 @@ _log = getLogger(__name__)
 class NullPreview:
     """Null Preview"""
 
-    def thread_func(self, picam2):
+    def thread_func(self, camera: Camera):
         """Thread function
 
-        :param picam2: picamera2 object
-        :type picam2: Picamera2
+        :param camera: Camera object
+        :type camera: Camera
         """
         sel = selectors.DefaultSelector()
-        sel.register(picam2.notifyme_r, selectors.EVENT_READ, self.handle_request)
+        sel.register(camera: Camera.notifyme_r, selectors.EVENT_READ, self.handle_request)
         self._started.set()
 
         # TODO(meawoppl) - abort flag and select can be polled in parallel
@@ -29,9 +29,9 @@ class NullPreview:
         while not self._abort.is_set():
             events = sel.select(0.2)
             for key, _ in events:
-                picam2.notifymeread.read()
+                camera: Camera.notifymeread.read()
                 callback = key.data
-                callback(picam2)
+                callback(camera: Camera)
 
     def __init__(self, x=None, y=None, width=None, height=None, transform=None):
         """Initialise null preview
@@ -54,17 +54,17 @@ class NullPreview:
         self._started = threading.Event()
         self.picam2 = None
 
-    def start(self, picam2):
+    def start(self, camera: Camera):
         """Starts null preview
 
-        :param picam2: Picamera2 object
-        :type picam2: Picamera2
+        :param camera: Camera object
+        :type camera: Camera
         """
-        self.picam2 = picam2
+        self.picam2 = camera
         self._started.clear()
         self._abort.clear()
         self.thread = threading.Thread(
-            target=self.thread_func, daemon=True, args=(picam2,)
+            target=self.thread_func, daemon=True, args=(camera,)
         )
         self.thread.start()
         self._started.wait()

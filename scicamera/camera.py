@@ -284,7 +284,7 @@ class Camera:
         """Used for allowing use with context manager
 
         :return: self
-        :rtype: Picamera2
+        :rtype: Camera
         """
         return self
 

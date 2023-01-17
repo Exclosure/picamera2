@@ -9,7 +9,7 @@ Additonally, we use modern dev practices, established tools for test/lint.
 
 _scicamera_ is predominantly supported on Raspberry Pi OS Bullseye (or later) images, both 32 and 64-bit. Limited support is available on Ubuntu and other
 debian flavors, but will require `libcamera` to be built with the python
-package enables.
+package enabled.
 
 
 ## Contributing

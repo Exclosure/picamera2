@@ -10,7 +10,7 @@ from scicamera import formats
 from scicamera.controls import Controls
 
 if TYPE_CHECKING:
-    from scicamera.picamera2 import Camera
+    from scicamera.camera import Camera
 
 _log = getLogger(__name__)
 
