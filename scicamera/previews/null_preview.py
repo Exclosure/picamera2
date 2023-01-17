@@ -1,12 +1,7 @@
 """Null preview"""
 import threading
 from logging import getLogger
-
 from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from scicamera.camera import Camera
-
 
 _log = getLogger(__name__)
 
@@ -14,17 +9,22 @@ _log = getLogger(__name__)
 class NullPreview:
     """Null Preview"""
 
-    def thread_func(self, camera: Camera):
+    def thread_func(self):
         """Thread function
 
         :param camera: Camera object
         :type camera: Camera
         """
         while not self._abort.is_set():
-            if not camera.has_requests():
+            if not self.camera.has_requests():
                 self._abort.wait(0.01)
                 continue
-            self.handle_request(camera)
+
+            try:
+                self.camera.process_requests()
+            except Exception as e:
+                _log.exception("Exception during process_requests()", exc_info=e)
+                raise
 
     def __init__(self, x=None, y=None, width=None, height=None, transform=None):
         """Initialise null preview
@@ -47,7 +47,7 @@ class NullPreview:
         self._started = threading.Event()
         self.camera = None
 
-    def start(self, camera: Camera):
+    def start(self, camera):
         """Starts null preview
 
         :param camera: Camera object
@@ -55,22 +55,8 @@ class NullPreview:
         """
         self.camera = camera
         self._abort.clear()
-        self.thread = threading.Thread(
-            target=self.thread_func, daemon=True, args=(camera,)
-        )
+        self.thread = threading.Thread(target=self.thread_func, daemon=True)
         self.thread.start()
-
-    def handle_request(self, camera):
-        """Handle requests
-
-        :param camera: Camera object
-        :type camera: Camera
-        """
-        try:
-            camera.process_requests()
-        except Exception as e:
-            _log.exception("Exception during process_requests()", exc_info=e)
-            raise
 
     def stop(self):
         """Stop preview"""
