@@ -2,10 +2,6 @@
 import selectors
 import threading
 from logging import getLogger
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from scicamera.camera import Camera
 
 _log = getLogger(__name__)
 
@@ -13,7 +9,7 @@ _log = getLogger(__name__)
 class NullPreview:
     """Null Preview"""
 
-    def thread_func(self, camera: Camera):
+    def thread_func(self, camera):
         """Thread function
 
         :param camera: Camera object
