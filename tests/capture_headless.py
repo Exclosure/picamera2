@@ -1,15 +1,14 @@
-#!//usr/bin/python3
-
-from picamera2 import Picamera2
+#!/usr/bin/python3
+from picamera2 import CameraConfig, Picamera2
 
 camera = Picamera2()
-config = camera.create_still_configuration()
+config = CameraConfig.for_still(camera)
 camera.configure(config)
 
 camera.start()
 
 np_array = camera.capture_array()
-print(np_array)
-camera.capture_file("demo.jpg")
+camera.discard_frames(2)
+camera.capture_file("demo.jpg").result()
 camera.stop()
 camera.close()

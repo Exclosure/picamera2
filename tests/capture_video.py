@@ -1,13 +1,11 @@
 #!/usr/bin/python3
-import time
-
-from picamera2 import Picamera2
+from picamera2 import CameraConfig, Picamera2
 
 camera = Picamera2()
-video_config = camera.create_video_configuration()
+video_config = CameraConfig.for_video(camera)
 camera.configure(video_config)
 
 camera.start()
-time.sleep(2)
+camera.discard_frames(2).result()
 camera.stop()
 camera.close()

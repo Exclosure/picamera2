@@ -1,19 +1,15 @@
 #!/usr/bin/python3
 
 # Obtain the current camera control values in the image metadata.
-
-import time
-
-from picamera2 import Picamera2
+from picamera2 import CameraConfig, Picamera2
 
 camera = Picamera2()
 camera.start_preview()
 
-preview_config = camera.create_preview_configuration()
+preview_config = CameraConfig.for_preview(camera)
 camera.configure(preview_config)
 
 camera.start()
-time.sleep(2)
-
-print(camera.capture_metadata())
+camera.discard_frames(2)
+print(camera.capture_metadata().result())
 camera.close()

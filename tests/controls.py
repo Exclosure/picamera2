@@ -2,25 +2,21 @@
 
 # Example of setting controls. Here, after one second, we fix the AGC/AEC
 # to the values it has reached whereafter it will no longer change.
-
-import time
-
-from picamera2 import Picamera2
+from picamera2 import CameraConfig, Picamera2
 
 camera = Picamera2()
 camera.start_preview()
 
-preview_config = camera.create_preview_configuration()
+preview_config = CameraConfig.for_preview(camera)
 camera.configure(preview_config)
 
 camera.start()
-time.sleep(1)
-
-metadata = camera.capture_metadata()
+camera.discard_frames(2)
+metadata = camera.capture_metadata().result()
 controls = {c: metadata[c] for c in ["ExposureTime", "AnalogueGain", "ColourGains"]}
 print(controls)
 
 camera.set_controls(controls)
-time.sleep(5)
+camera.discard_frames(2)
 
 camera.close()

@@ -3,10 +3,10 @@ import time
 
 import numpy as np
 
-from picamera2 import Picamera2
+from picamera2 import CameraConfig, Picamera2
 
 camera = Picamera2()
-video_config = camera.create_video_configuration()
+video_config = CameraConfig.for_video(camera)
 camera.configure(video_config)
 
 timestamps = []
@@ -14,7 +14,7 @@ timestamps = []
 camera.add_request_callback(lambda r: timestamps.append(time.time() * 1e6))
 
 camera.start()
-time.sleep(2)
+camera.discard_frames(10).result()
 camera.stop()
 
 # Now let's analyse all the timestamps
