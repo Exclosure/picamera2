@@ -1,7 +1,12 @@
 """Null preview"""
-import selectors
 import threading
 from logging import getLogger
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from scicamera.camera import Camera
+
 
 _log = getLogger(__name__)
 
@@ -9,24 +14,17 @@ _log = getLogger(__name__)
 class NullPreview:
     """Null Preview"""
 
-    def thread_func(self, camera):
+    def thread_func(self, camera: Camera):
         """Thread function
 
         :param camera: Camera object
         :type camera: Camera
         """
-        sel = selectors.DefaultSelector()
-        sel.register(camera.notifyme_r, selectors.EVENT_READ, self.handle_request)
-        self._started.set()
-
-        # TODO(meawoppl) - abort flag and select can be polled in parallel
-        # which will make startup/shutdown faster
         while not self._abort.is_set():
-            events = sel.select(0.2)
-            for key, _ in events:
-                camera.notifymeread.read()
-                callback = key.data
-                callback(camera)
+            if not camera.has_requests():
+                self._abort.wait(0.01)
+                continue
+            self.handle_request(camera)
 
     def __init__(self, x=None, y=None, width=None, height=None, transform=None):
         """Initialise null preview
@@ -49,20 +47,18 @@ class NullPreview:
         self._started = threading.Event()
         self.camera = None
 
-    def start(self, camera):
+    def start(self, camera: Camera):
         """Starts null preview
 
         :param camera: Camera object
         :type camera: Camera
         """
         self.camera = camera
-        self._started.clear()
         self._abort.clear()
         self.thread = threading.Thread(
             target=self.thread_func, daemon=True, args=(camera,)
         )
         self.thread.start()
-        self._started.wait()
 
     def handle_request(self, camera):
         """Handle requests
