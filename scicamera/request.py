@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 import io
 import mmap
 import threading
@@ -139,6 +140,7 @@ class CompletedRequest(AbstractCompletedRequest):
         self.config = config
         self.cleanup = cleanup
         self.stream_map = stream_map
+        self.completion_time = datetime.utcnow()
 
     def acquire(self):
         """Acquire a reference to this completed request, which stops it being recycled back to
