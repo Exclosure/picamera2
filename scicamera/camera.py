@@ -45,8 +45,8 @@ class CameraManager:
         self._lock = threading.Lock()
         self.cms = libcamera.CameraManager.singleton()
 
-    def get_camera(self, idx: int) -> Camera:
-        """Get the camera with the given index or id"""
+    def get_camera(self, idx: int):
+        """Get the (lc) camera with the given index"""
         return self.cms.cameras[idx]
 
     def setup(self):
@@ -81,7 +81,6 @@ class CameraManager:
                 callback()
 
         sel.unregister(self.cms.event_fd)
-        self.cms = None
 
     def handle_request(self, flushid=None):
         """Handle requests"""
