@@ -30,6 +30,5 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
     offset = np.mean(deltas, dtype=np.uint64)
     stdev = np.std(deltas, dtype=np.uint64)
 
-    _log.info(f"Camera offset: {offset} +/-{stdev}")
-
+    _log.warning(f"Camera offset: {offset} +/-{stdev}")
     return offset.item()
