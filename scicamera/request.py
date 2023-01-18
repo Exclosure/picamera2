@@ -3,10 +3,10 @@ from __future__ import annotations
 import io
 import mmap
 import threading
+import time
 from abc import ABC, abstractmethod
 from concurrent.futures import Future
 from dataclasses import dataclass, field
-import time
 from functools import partial
 from logging import getLogger
 from typing import Any, Callable, Dict
