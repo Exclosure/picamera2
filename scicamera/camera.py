@@ -19,8 +19,8 @@ from PIL import Image
 import scicamera.formats as formats
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
-from scicamera.info import CameraInfo
 from scicamera.frame import CameraFrame
+from scicamera.info import CameraInfo
 from scicamera.lc_helpers import lc_unpack, lc_unpack_controls
 from scicamera.previews import NullPreview
 from scicamera.request import CompletedRequest, LoopTask
@@ -45,7 +45,7 @@ class CameraManager:
         self._lock = threading.Lock()
         self.cms = libcamera.CameraManager.singleton()
 
-    def get_camera(self, idx: int):
+    def get_camera(self, idx: int) -> Camera:
         """Get the camera with the given index or id"""
         return self.cms.cameras[idx]
 
@@ -69,7 +69,6 @@ class CameraManager:
                 flag = True
         if flag:
             self.thread.join()
-            self.cms = None
 
     def listen(self):
         sel = selectors.DefaultSelector()
@@ -117,7 +116,7 @@ class Camera:
 
     _cm = CameraManager()
 
-    def __init__(self, camera_num: int=0, tuning=None):
+    def __init__(self, camera_num: int = 0, tuning=None):
         """Initialise camera system and open the camera for use.
 
         :param camera_num: Camera index, defaults to 0
@@ -265,7 +264,6 @@ class Camera:
         """Without this libcamera will complain if we shut down without closing the camera."""
         _log.warning(f"__del__ call responsible for cleanup of {self}")
         self.close()
-
 
     def requires_camera(self):
         if self.camera is None:

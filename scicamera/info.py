@@ -3,9 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from logging import getLogger
 from typing import List
+
 import libcamera
 
 _log = getLogger(__name__)
+
 
 @dataclass
 class CameraInfo:
@@ -46,7 +48,7 @@ class CameraInfo:
 
     def requires_camera(needed: int = 1) -> None:
         """Require a minimum number of cameras to be attached.
-        
+
         Raises: RuntimeError if not enough cameras are found.
         """
         found = CameraInfo.n_cameras()
