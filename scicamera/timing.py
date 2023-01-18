@@ -9,7 +9,7 @@ _log = getLogger(__name__)
 
 
 def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
-    """Calibrate the ``SensorTimestamp``.
+    """Calibrate the ``SensorTimestamp`` wrt to the epoch time.
 
     Returns the number of integer nanoseconds you should add to
     the camera ``SensorTimestamp`` to get the epoch time in nanoseconds.
@@ -18,7 +18,7 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
 
     def _capture_dt_callback(request: CompletedRequest):
         # This is the time the request was handed to python
-        epoch_nanos = int(request.completion_time.timestamp() * 1e9)
+        epoch_nanos = int(request.completion_time * 1e9)
         sensor_nanos = request.get_metadata()["SensorTimestamp"]
         deltas.append(epoch_nanos - sensor_nanos)
 

@@ -6,7 +6,7 @@ import threading
 from abc import ABC, abstractmethod
 from concurrent.futures import Future
 from dataclasses import dataclass, field
-from datetime import datetime
+import time
 from functools import partial
 from logging import getLogger
 from typing import Any, Callable, Dict
@@ -140,7 +140,7 @@ class CompletedRequest(AbstractCompletedRequest):
         self.config = config
         self.cleanup = cleanup
         self.stream_map = stream_map
-        self.completion_time = datetime.utcnow()
+        self.completion_time = time.time()
 
     def acquire(self):
         """Acquire a reference to this completed request, which stops it being recycled back to
