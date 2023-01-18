@@ -13,7 +13,9 @@ offset = calibrate_camera_offset(camera, 20)
 
 ts = camera.capture_metadata().result()["SensorTimestamp"]
 exposure_time = datetime.fromtimestamp((ts + offset) / 1e9)
-assert abs(exposure_time - datetime.now()).total_seconds() < 1
+time_offset = abs(exposure_time - datetime.now()).total_seconds()
+
+assert time_offset < 1, time_offset
 
 camera.stop()
 camera.close()
