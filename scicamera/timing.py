@@ -1,4 +1,5 @@
 from logging import getLogger
+
 import numpy as np
 
 from scicamera.camera import Camera
@@ -6,9 +7,10 @@ from scicamera.request import CompletedRequest
 
 _log = getLogger(__name__)
 
+
 def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
     """Calibrate the ``SensorTimestamp``.
-    
+
     Returns the number of integer nanoseconds you should add to
     the camera ``SensorTimestamp`` to get the epoch time in nanoseconds.
     """

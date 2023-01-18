@@ -70,6 +70,3 @@ def test_file(test_file_name):
 
     if not success:
         pytest.fail(f"Test failed: {test_file_name}", pytrace=False)
-
-
-

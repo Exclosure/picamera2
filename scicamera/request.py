@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime
 import io
 import mmap
 import threading
 from abc import ABC, abstractmethod
 from concurrent.futures import Future
 from dataclasses import dataclass, field
+from datetime import datetime
 from functools import partial
 from logging import getLogger
 from typing import Any, Callable, Dict
