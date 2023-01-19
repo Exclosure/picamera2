@@ -134,13 +134,13 @@ class CompletedRequest(AbstractCompletedRequest):
         stream_map: Dict[str, Any],
         cleanup: Callable[[], None],
     ):
+        self.completion_time = time.time()
         self.request = lc_request
         self.ref_count = 1
         self.lock = threading.Lock()
         self.config = config
         self.cleanup = cleanup
         self.stream_map = stream_map
-        self.completion_time = time.time()
 
     def acquire(self):
         """Acquire a reference to this completed request, which stops it being recycled back to
