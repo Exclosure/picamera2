@@ -12,8 +12,8 @@ camera.start()
 offset = calibrate_camera_offset(camera, 20)
 
 sensor_timestamp = camera.capture_metadata().result()["SensorTimestamp"]
-print("Timestamp: ", sensor_timestamp)
-print("Offset: ", offset)
+print(f"SensorTimestamp: {sensor_timestamp} ({len(str(sensor_timestamp))})")
+print(f"Offset: {offset} ({len(str(offset))}))")
 exposure_time = datetime.fromtimestamp((sensor_timestamp + offset) / 1e9)
 time_offset = abs(exposure_time - datetime.now()).total_seconds()
 
