@@ -22,8 +22,8 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
         # Note casting takes place to minimize precision loss to float32 math
         epoch_nanos = int(request.completion_time * 1_000_000_000)
         sensor_nanos = request.get_metadata()["SensorTimestamp"]
-        delta = epoch_nanos - sensor_nanos / 1000
-        print(f"Epoch Nanos: {epoch_nanos} Sensor Nanos: {sensor_nanos} Delta: {delta}")
+        delta = epoch_nanos - sensor_nanos
+        print(f"Epoch Nanos: {epoch_nanos} ({len(str(epoch_nanos))}) Sensor Nanos: {sensor_nanos}({len(str(sensor_nanos))}) Delta: {delta}")
         deltas.append(delta)
 
     camera.add_request_callback(_capture_dt_callback)
