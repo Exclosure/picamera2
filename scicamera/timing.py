@@ -24,7 +24,7 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
         sensor_nanos = request.get_metadata()["SensorTimestamp"]
         delta = epoch_nanos - sensor_nanos
         print(
-            f"Time: {time.time():.04} CT: {request.completion_time:.04} Sensor Nanos: {sensor_nanos} Delta: {delta}"
+            f"Time: {time.time():.4f} CT: {request.completion_time:.4f} Sensor Nanos: {sensor_nanos} Delta: {delta}"
         )
         deltas.append(delta)
 
@@ -32,8 +32,9 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
     camera.discard_frames(n_frames).result()
     camera.remove_request_callback(_capture_dt_callback)
 
+    print(deltas)
     deltas = np.array(deltas, dtype=np.int64)
-
+    print(deltas)
     offset = np.mean(deltas, dtype=np.int64)
     stdev = np.std(deltas, dtype=np.int64)
 
