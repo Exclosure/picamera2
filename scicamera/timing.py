@@ -36,7 +36,7 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
     offset = sum(deltas) / len(deltas)
 
     diffs = sum([(d - offset) ** 2 for d in deltas])
-    stdev = math.sqrt(diffs / (len(diffs) - 1))
+    stdev = math.sqrt(diffs / (len(deltas) - 1))
 
     _log.warning(f"Camera offset: {offset} +/-{stdev}")
     return offset
