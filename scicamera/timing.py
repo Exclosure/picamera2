@@ -1,8 +1,6 @@
 import math
 from logging import getLogger
 
-import numpy as np
-
 from scicamera.camera import Camera
 from scicamera.request import CompletedRequest
 
@@ -17,24 +15,20 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
     """
     deltas = []
 
-    def _capture_dt_callback(request: CompletedRequest):
+    def _capture_timing_callback(request: CompletedRequest):
         # This is the time the request was handed to python
-        # Note casting takes place to minimize precision loss to float32 math
         epoch_nanos = int(request.completion_time * 1_000_000_000)
+        # This is the time the "sensor" reports `ktime_get_ns()` in the kernel
         sensor_nanos = request.get_metadata()["SensorTimestamp"]
-        delta = epoch_nanos - sensor_nanos
-        print(
-            f"Epoch Nanos: {epoch_nanos} ({len(str(epoch_nanos))}) Sensor Nanos: {sensor_nanos}({len(str(sensor_nanos))}) Delta: {delta}"
-        )
-        deltas.append(delta)
+        deltas.append(epoch_nanos - sensor_nanos)
 
-    camera.add_request_callback(_capture_dt_callback)
+    # Make sure the above callback happens at least `n_frames` times
+    camera.add_request_callback(_capture_timing_callback)
     camera.discard_frames(n_frames).result()
-    camera.remove_request_callback(_capture_dt_callback)
+    camera.remove_request_callback(_capture_timing_callback)
 
-    print(deltas)
+    # NB: This segment relies on python's integer size growth
     offset = sum(deltas) / len(deltas)
-
     diffs = sum([(d - offset) ** 2 for d in deltas])
     stdev = math.sqrt(diffs / (len(deltas) - 1))
 
