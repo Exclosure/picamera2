@@ -1,4 +1,4 @@
-import time
+import math
 from logging import getLogger
 
 import numpy as np
@@ -23,7 +23,9 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
         epoch_nanos = int(request.completion_time * 1_000_000_000)
         sensor_nanos = request.get_metadata()["SensorTimestamp"]
         delta = epoch_nanos - sensor_nanos
-        print(f"Epoch Nanos: {epoch_nanos} ({len(str(epoch_nanos))}) Sensor Nanos: {sensor_nanos}({len(str(sensor_nanos))}) Delta: {delta}")
+        print(
+            f"Epoch Nanos: {epoch_nanos} ({len(str(epoch_nanos))}) Sensor Nanos: {sensor_nanos}({len(str(sensor_nanos))}) Delta: {delta}"
+        )
         deltas.append(delta)
 
     camera.add_request_callback(_capture_dt_callback)
@@ -33,8 +35,10 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
     print(deltas)
     deltas = np.array(deltas, dtype=np.float256)
     print(deltas)
-    offset = np.mean(deltas, dtype=np.float256)
-    stdev = np.std(deltas, dtype=np.float256)
+    offset = sum(deltas) / len(deltas)
+
+    diffs = sum([(d - offset) ** 2 for d in deltas])
+    stdev = math.sqrt(diffs / (len(diffs) - 1))
 
     _log.warning(f"Camera offset: {offset} +/-{stdev}")
-    return offset.item()
+    return offset
