@@ -1,3 +1,4 @@
+import time
 from logging import getLogger
 
 import numpy as np
@@ -21,7 +22,7 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
         # Note casting takes place to minimize precision loss to float32 math
         epoch_nanos = int(request.completion_time * 1_000_000_000)
         sensor_nanos = request.get_metadata()["SensorTimestamp"]
-        print("Sensor Nanos: ", sensor_nanos)
+        print(f"Time: {time.time()} Sensor Nanos: {sensor_nanos}")
         deltas.append(epoch_nanos - sensor_nanos)
 
     camera.add_request_callback(_capture_dt_callback)
