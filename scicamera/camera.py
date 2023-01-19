@@ -885,7 +885,7 @@ class Camera:
             LoopTask.with_request(self._capture_request), config=config
         )[0]
 
-    def _capture_metadata(self, request: CompletedRequest):
+    def _capture_metadata(self, request: CompletedRequest) -> Dict[str, Any]:
         return request.get_metadata()
 
     def capture_metadata(self, config: Optional[dict] = None) -> Future:
