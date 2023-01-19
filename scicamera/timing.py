@@ -33,8 +33,6 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
     camera.remove_request_callback(_capture_dt_callback)
 
     print(deltas)
-    deltas = np.array(deltas, dtype=np.float256)
-    print(deltas)
     offset = sum(deltas) / len(deltas)
 
     diffs = sum([(d - offset) ** 2 for d in deltas])
