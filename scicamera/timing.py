@@ -31,10 +31,10 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
     camera.remove_request_callback(_capture_dt_callback)
 
     print(deltas)
-    deltas = np.array(deltas, dtype=np.int128)
+    deltas = np.array(deltas, dtype=np.float256)
     print(deltas)
-    offset = np.mean(deltas, dtype=np.int128)
-    stdev = np.std(deltas, dtype=np.int128)
+    offset = np.mean(deltas, dtype=np.float256)
+    stdev = np.std(deltas, dtype=np.float256)
 
     _log.warning(f"Camera offset: {offset} +/-{stdev}")
     return offset.item()
