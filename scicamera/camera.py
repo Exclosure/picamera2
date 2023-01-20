@@ -181,7 +181,7 @@ class Camera:
 
         self._runloop_cond = threading.Condition()
         self._runloop_abort = threading.Event()
-        self._runloop_thread = threading.Thread(target=lambda:0, daemon=True)
+        self._runloop_thread = threading.Thread(target=lambda: 0, daemon=True)
         self._runloop_thread.start()
         self._runloop_thread.join()
 
