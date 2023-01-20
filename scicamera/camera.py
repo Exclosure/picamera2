@@ -394,7 +394,9 @@ class Camera:
 
     def _runloop(self) -> None:
         while True:
-            self._runloop_cond.wait(timeout=0.05)
+            with self._runloop_cond:
+                self._runloop_cond.wait(timeout=0.05)
+                
             if self._runloop_abort.is_set():
                 break
 
@@ -418,7 +420,8 @@ class Camera:
         :raises RuntimeError: Unable to stop preview
         """
         self._runloop_abort.set()
-        self._runloop_cond.notify()
+        with self._runloop_cond:
+            self._runloop_cond.notify()
         self._runloop_thread.join()
 
     def close(self) -> None:
@@ -761,7 +764,8 @@ class Camera:
 
     def add_completed_request(self, request: CompletedRequest) -> None:
         self._requests.append(request)
-        self._runloop_cond.notify()
+        with self._runloop_cond:
+            self._runloop_cond.notify()
 
     def process_requests(self) -> None:
         # Safe copy and pop off all requests
