@@ -3,7 +3,6 @@
 from scicamera import Camera, CameraConfig
 
 camera = Camera()
-camera.start_runloop()
 controls = {"ExposureTime": 10000, "AnalogueGain": 1.0}
 preview_config = CameraConfig.for_preview(camera, controls=controls)
 camera.configure(preview_config)

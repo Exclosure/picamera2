@@ -10,6 +10,7 @@ from collections import deque
 from concurrent.futures import Future
 from dataclasses import dataclass, replace
 from functools import partial
+from pprint import pformat
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 
 import libcamera
@@ -643,7 +644,7 @@ class Camera:
                 -errno.EINVAL: "Invalid configuration",
             }[config_return]
             raise RuntimeError(
-                f"Configuration failed Code: {config_return} ({description}) Configuration: {camera_config}"
+                f"Camera configuration failed code {config_return} ({description}) Configuration: {camera_config}"
             )
         _log.info("Configuration successful!")
         _log.debug(f"Final configuration: {camera_config}")
