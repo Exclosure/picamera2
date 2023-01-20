@@ -212,7 +212,6 @@ class Camera:
         self.camera = None
         self.is_open = False
         self.camera_ctrl_info = {}
-        self._preview = None
         self.camera_config = None
         self.libcamera_config = None
         self.streams = None
@@ -399,7 +398,7 @@ class Camera:
             if self._runloop_abort.is_set():
                 break
 
-            if self.has_requests():
+            if len(self._requests) > 0:
                 self.process_requests()
 
     def start_runloop(self) -> None:
@@ -725,8 +724,7 @@ class Camera:
         if self.camera_config is None:
             raise RuntimeError("Camera has not been configured")
         # By default we will create an event loop is there isn't one running already.
-        if not self._preview:
-            self.start_runloop()
+        self.start_runloop()
         self._start()
 
     def _stop(self) -> None:
@@ -764,9 +762,6 @@ class Camera:
     def add_completed_request(self, request: CompletedRequest) -> None:
         self._requests.append(request)
         self._runloop_cond.notify()
-
-    def has_requests(self) -> bool:
-        return len(self._requests) > 0
 
     def process_requests(self) -> None:
         # Safe copy and pop off all requests
