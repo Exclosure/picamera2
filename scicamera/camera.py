@@ -21,7 +21,6 @@ from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.frame import CameraFrame
 from scicamera.lc_helpers import lc_unpack, lc_unpack_controls
-from scicamera.runloop import RunLoop
 from scicamera.request import CompletedRequest, LoopTask
 from scicamera.sensor_format import SensorFormat
 from scicamera.tuning import TuningContext
@@ -152,7 +151,9 @@ class Camera:
 
     _cm = CameraManager()
 
+    _runloop_cond: threading.Condition
     _runloop_thread: threading.Thread
+    _runloop_abort: threading.Event
 
     def __init__(self, camera_num=0, tuning=None):
         """Initialise camera system and open the camera for use.
@@ -178,6 +179,7 @@ class Camera:
         self.still_configuration = CameraConfig.for_still(self)
         self.video_configuration = CameraConfig.for_video(self)
 
+        self._runloop_cond = threading.Condition()
         self._runloop_abort = threading.Event()
         self._runloop_thread = threading.Thread(target=lambda:0, daemon=True)
         self._runloop_thread.start()
@@ -392,23 +394,20 @@ class Camera:
         return self.sensor_modes_
 
     def _runloop(self) -> None:
-        while not self._runloop_abort.is_set():
-            if not self.has_requests():
-                self._runloop_abort.wait(0.01)
-                continue
+        while True:
+            self._runloop_cond.wait(timeout=0.05)
+            if self._runloop_abort.is_set():
+                break
 
-            try:
+            if self.has_requests():
                 self.process_requests()
-            except Exception as e:
-                _log.exception("Exception during process_requests()", exc_info=e)
-                raise
 
     def start_runloop(self) -> None:
         """
         Start the preview loop.
         """
-        if self._preview:
-            raise RuntimeError("An event loop is already running")
+        if self._runloop_thread.is_alive():
+            raise RuntimeError("Runloop thread already running?")
 
         self._runloop_abort.clear()
         self._runloop_thread = threading.Thread(target=self._runloop, daemon=True)
@@ -420,6 +419,7 @@ class Camera:
         :raises RuntimeError: Unable to stop preview
         """
         self._runloop_abort.set()
+        self._runloop_cond.notify()
         self._runloop_thread.join()
 
     def close(self) -> None:
@@ -427,7 +427,7 @@ class Camera:
 
         :raises RuntimeError: Closing failed
         """
-        if self._preview:
+        if self._runloop_thread.is_alive():
             self.stop_runloop()
         if not self.is_open:
             return
@@ -763,6 +763,7 @@ class Camera:
 
     def add_completed_request(self, request: CompletedRequest) -> None:
         self._requests.append(request)
+        self._runloop_cond.notify()
 
     def has_requests(self) -> bool:
         return len(self._requests) > 0

@@ -9,7 +9,6 @@ from scicamera import Camera, CameraInfo
 
 def run_camera(idx):
     camera = Camera(idx)
-    camera.start_runloop()
     camera.start()
     camera.discard_frames(10)
     camera.stop()
@@ -35,7 +34,6 @@ if __name__ == "__main__":
 
     print("Test camera in main process")
     camera = Camera(0)
-    camera.start_runloop()
     camera.start()
     time.sleep(3)
     camera.stop()
@@ -48,7 +46,6 @@ if __name__ == "__main__":
 
     print("Test camera in main process and subprocess")
     camera = Camera(0)
-    camera.start_runloop()
     camera.start()
     p = multiprocessing.Process(target=run_camera, args=(1,))
     p.start()
@@ -67,7 +64,6 @@ if __name__ == "__main__":
 
     print("Test camera in main process and thread")
     camera = Camera(0)
-    camera.start_runloop()
     camera.start()
     thread = threading.Thread(target=run_camera, args=(1,), daemon=True)
     thread.start()
