@@ -2,8 +2,8 @@
 """scicamera main classes"""
 from __future__ import annotations
 
+import errno
 import logging
-import os
 import selectors
 import threading
 from collections import deque
@@ -122,16 +122,14 @@ class CameraManager:
         sel.unregister(self.cms.event_fd)
         self.cms = None
 
-    def handle_request(self, flushid=None):
+    def handle_request(self, flushid: int = None):
         """Handle requests"""
         with self._lock:
-            cams = set()
             for req in self.cms.get_ready_requests():
-                if (
-                    req.status == libcamera.Request.Status.Complete
-                    and req.cookie != flushid
-                ):
-                    cams.add(req.cookie)
+                if req.status == libcamera.Request.Status.Complete:
+                    if req.cookie == flushid:
+                        _log.warning("Flushing request %s", req)
+                        continue
                     camera_inst = self.cameras[req.cookie]
                     cleanup_call = partial(
                         camera_inst.recycle_request, camera_inst.stop_count, req
@@ -637,8 +635,16 @@ class Camera:
             _log.info("Camera configuration has been adjusted!")
 
         # Configure libcamera.
-        if self.camera.configure(libcamera_config):
-            raise RuntimeError("Configuration failed: {}".format(camera_config))
+        config_return = self.camera.configure(libcamera_config)
+        if config_return:
+            description = {
+                -errno.ENODEV: "Disconnected",
+                -errno.EACCES: "Not in a configurable state",
+                -errno.EINVAL: "Invalid configuration",
+            }[config_return]
+            raise RuntimeError(
+                f"Configuration failed Code: {config_return} ({description}) Configuration: {camera_config}"
+            )
         _log.info("Configuration successful!")
         _log.debug(f"Final configuration: {camera_config}")
 
