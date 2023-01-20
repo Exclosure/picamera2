@@ -11,7 +11,7 @@ video_config = CameraConfig.for_video(
     lores={"size": lsize, "format": "YUV420"},
 )
 camera.configure(video_config)
-camera.start_preview()
+camera.start_runloop()
 camera.start()
 camera.discard_frames(10)
 

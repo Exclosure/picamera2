@@ -6,7 +6,7 @@ camera = Camera()
 video_config = CameraConfig.for_video(camera, main={"size": (1920, 1080)})
 camera.configure(video_config)
 
-camera.start_preview()
+camera.start_runloop()
 
 camera.start()
 mature_after_frames_or_timeout(camera, 5).result()

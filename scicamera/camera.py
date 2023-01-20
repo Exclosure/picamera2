@@ -21,7 +21,7 @@ from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.frame import CameraFrame
 from scicamera.lc_helpers import lc_unpack, lc_unpack_controls
-from scicamera.previews import NullPreview
+from scicamera.runloop import RunLoop
 from scicamera.request import CompletedRequest, LoopTask
 from scicamera.sensor_format import SensorFormat
 from scicamera.tuning import TuningContext
@@ -152,6 +152,8 @@ class Camera:
 
     _cm = CameraManager()
 
+    _runloop_thread: threading.Thread
+
     def __init__(self, camera_num=0, tuning=None):
         """Initialise camera system and open the camera for use.
 
@@ -175,6 +177,11 @@ class Camera:
         self.preview_configuration = CameraConfig.for_preview(self)
         self.still_configuration = CameraConfig.for_still(self)
         self.video_configuration = CameraConfig.for_video(self)
+
+        self._runloop_abort = threading.Event()
+        self._runloop_thread = threading.Thread(target=lambda:0, daemon=True)
+        self._runloop_thread.start()
+        self._runloop_thread.join()
 
     @property
     def camera_manager(self):
@@ -244,19 +251,6 @@ class Camera:
     def video_configuration(self, value: CameraConfig):
         assert isinstance(value, CameraConfig)
         self.video_configuration_ = value
-
-    @property
-    def asynchronous(self) -> bool:
-        """True if there is threaded operation
-
-        :return: Thread operation state
-        :rtype: bool
-        """
-        return (
-            self._preview is not None
-            and getattr(self._preview, "thread", None) is not None
-            and self._preview.thread.is_alive()
-        )
 
     @property
     def camera_properties(self) -> dict:
@@ -397,31 +391,36 @@ class Camera:
                 self.sensor_modes_.append(cam_mode)
         return self.sensor_modes_
 
-    # TODO(meawoppl) we don't really support previews, so change the language here
-    def start_preview(self) -> None:
+    def _runloop(self) -> None:
+        while not self._runloop_abort.is_set():
+            if not self.has_requests():
+                self._runloop_abort.wait(0.01)
+                continue
+
+            try:
+                self.process_requests()
+            except Exception as e:
+                _log.exception("Exception during process_requests()", exc_info=e)
+                raise
+
+    def start_runloop(self) -> None:
         """
         Start the preview loop.
         """
         if self._preview:
             raise RuntimeError("An event loop is already running")
 
-        preview = NullPreview()
-        preview.start(self)
-        self._preview = preview
+        self._runloop_abort.clear()
+        self._runloop_thread = threading.Thread(target=self._runloop, daemon=True)
+        self._runloop_thread.start()
 
-    def stop_preview(self) -> None:
+    def stop_runloop(self) -> None:
         """Stop preview
 
         :raises RuntimeError: Unable to stop preview
         """
-        if not self._preview:
-            raise RuntimeError("No preview specified.")
-
-        try:
-            self._preview.stop()
-            self._preview = None
-        except Exception:
-            raise RuntimeError("Unable to stop preview.")
+        self._runloop_abort.set()
+        self._runloop_thread.join()
 
     def close(self) -> None:
         """Close camera
@@ -429,7 +428,7 @@ class Camera:
         :raises RuntimeError: Closing failed
         """
         if self._preview:
-            self.stop_preview()
+            self.stop_runloop()
         if not self.is_open:
             return
 
@@ -727,7 +726,7 @@ class Camera:
             raise RuntimeError("Camera has not been configured")
         # By default we will create an event loop is there isn't one running already.
         if not self._preview:
-            self.start_preview()
+            self.start_runloop()
         self._start()
 
     def _stop(self) -> None:
@@ -753,7 +752,7 @@ class Camera:
         if not self.started:
             _log.debug("Camera was not started")
             return
-        if self.asynchronous:
+        if self._runloop_thread.is_alive():
             self._dispatch_loop_tasks(LoopTask.without_request(self._stop))[0].result()
         else:
             self._stop()

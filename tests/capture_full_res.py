@@ -4,7 +4,7 @@ from scicamera import Camera, CameraConfig
 from scicamera.configuration import CameraConfig
 
 camera = Camera()
-camera.start_preview()
+camera.start_runloop()
 
 preview_config = CameraConfig.for_preview(camera)
 capture_config = CameraConfig.for_still(camera)

@@ -11,7 +11,7 @@ if CameraInfo.n_cameras() <= 1:
 camera1 = Camera(0)
 config1 = CameraConfig.for_preview(camera1)
 camera1.configure(config1)
-camera1.start_preview()
+camera1.start_runloop()
 camera1.start()
 
 time.sleep(2)

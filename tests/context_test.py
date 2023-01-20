@@ -18,7 +18,7 @@ def main():
     camera.start()
     metadata = camera.capture_metadata().result()
     print(metadata)
-    camera.stop_preview()
+    camera.stop_runloop()
     camera.close()
 
 

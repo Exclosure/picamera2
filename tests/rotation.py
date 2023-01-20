@@ -9,7 +9,7 @@ import libcamera
 from scicamera import Camera, CameraConfig
 
 camera = Camera()
-camera.start_preview()
+camera.start_runloop()
 
 preview_config = CameraConfig.for_preview(camera)
 preview_config.transform = libcamera.Transform(hflip=1, vflip=1)

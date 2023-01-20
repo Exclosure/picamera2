@@ -5,7 +5,7 @@ from scicamera.configuration import CameraConfig
 from scicamera.testing import mature_after_frames_or_timeout
 
 camera = Camera()
-camera.start_preview()
+camera.start_runloop()
 
 preview_config = CameraConfig.for_preview(camera)
 capture_config = CameraConfig.for_still(camera, raw={})
