@@ -396,7 +396,7 @@ class Camera:
         while True:
             with self._runloop_cond:
                 self._runloop_cond.wait(timeout=0.05)
-                
+
             if self._runloop_abort.is_set():
                 break
 
