@@ -727,7 +727,8 @@ class Camera:
         if self.camera_config is None:
             raise RuntimeError("Camera has not been configured")
         # By default we will create an event loop is there isn't one running already.
-        self.start_runloop()
+        if not self._runloop_thread.is_alive():
+            self.start_runloop()
         self._start()
 
     def _stop(self) -> None:
