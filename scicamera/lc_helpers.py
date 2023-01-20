@@ -1,3 +1,4 @@
+import errno
 from typing import Any, Dict
 
 import libcamera
@@ -43,3 +44,9 @@ def libcamera_color_spaces_eq(c1, c2) -> bool:
         and c1.ycbcrEncoding == c2.ycbcrEncoding
         and c1.range == c2.range
     )
+
+
+def lc_return_code_helper(return_code: int, method: str) -> None:
+    if return_code < 0:
+        error_name = errno.errorcode[-return_code]
+        raise RuntimeError(f"Error calling {method}: {return_code} ({error_name})")

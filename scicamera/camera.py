@@ -2,7 +2,6 @@
 """scicamera main classes"""
 from __future__ import annotations
 
-import errno
 import logging
 import selectors
 import threading
@@ -10,7 +9,6 @@ from collections import deque
 from concurrent.futures import Future
 from dataclasses import dataclass, replace
 from functools import partial
-from pprint import pformat
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 
 import libcamera
@@ -21,7 +19,7 @@ import scicamera.formats as formats
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.frame import CameraFrame
-from scicamera.lc_helpers import lc_unpack, lc_unpack_controls
+from scicamera.lc_helpers import lc_return_code_helper, lc_unpack, lc_unpack_controls
 from scicamera.request import CompletedRequest, LoopTask
 from scicamera.sensor_format import SensorFormat
 from scicamera.tuning import TuningContext
@@ -343,9 +341,8 @@ class Camera:
         """
         self._initialize_camera()
 
-        acq_code = self.camera.acquire()
-        if acq_code != 0:
-            raise RuntimeError(f"camera.acquire() returned unexpected code: {acq_code}")
+        return_code = self.camera.acquire()
+        lc_return_code_helper(return_code, "camera.acquire()")
 
         self.is_open = True
         _log.info("Camera now open.")
@@ -435,8 +432,8 @@ class Camera:
 
         self.stop()
         release_code = self.camera.release()
-        if release_code < 0:
-            raise RuntimeError(f"Failed to release camera ({release_code})")
+        lc_return_code_helper(release_code, "camera.release()")
+
         self._cm.cleanup(self.camera_idx)
         self.is_open = False
         self.streams = None
@@ -637,15 +634,8 @@ class Camera:
 
         # Configure libcamera.
         config_return = self.camera.configure(libcamera_config)
-        if config_return:
-            description = {
-                -errno.ENODEV: "Disconnected",
-                -errno.EACCES: "Not in a configurable state",
-                -errno.EINVAL: "Invalid configuration",
-            }[config_return]
-            raise RuntimeError(
-                f"Camera configuration failed code {config_return} ({description}) Configuration: {camera_config}"
-            )
+        lc_return_code_helper(config_return, "camera.configure")
+
         _log.info("Configuration successful!")
         _log.debug(f"Final configuration: {camera_config}")
 
@@ -706,10 +696,7 @@ class Camera:
         self.controls = Controls(self)
 
         return_code = self.camera.start(controls)
-        if return_code < 0:
-            msg = f"Camera did not start properly. ({return_code})"
-            _log.error(msg)
-            raise RuntimeError(msg)
+        lc_return_code_helper(return_code, "camera.start()")
 
         for request in self._make_requests():
             self.camera.queue_request(request)
@@ -746,7 +733,8 @@ class Camera:
         """
         if self.started:
             self.stop_count += 1
-            self.camera.stop()
+            return_code = self.camera.stop()
+            lc_return_code_helper(return_code, "camera.stop()")
 
             # Flush Requests from the event queue.
             # This is needed to prevent old completed Requests from showing
