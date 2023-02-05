@@ -636,8 +636,11 @@ class Camera:
             _log.info("Camera configuration has been adjusted!")
 
         # Configure libcamera.
-        if self.camera.configure(libcamera_config):
-            raise RuntimeError("Configuration failed: {}".format(camera_config))
+        config_call_code = self.camera.configure(libcamera_config)
+        if config_call_code:
+            raise RuntimeError(
+                "Configuration failed ({config_call_code}): {camera_config}"
+            )
         _log.info("Configuration successful!")
         _log.debug(f"Final configuration: {camera_config}")
 
