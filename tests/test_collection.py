@@ -46,6 +46,7 @@ def test_file(test_file_name):
     try:
         subprocess.run(
             ["python", test_file_name],
+            env={"LIBCAMERA_LOG_LEVELS": "*:DEBUG"}
             cwd=this_folder,
             timeout=20,
             capture_output=True,
