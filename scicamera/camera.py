@@ -463,18 +463,6 @@ class Camera:
         )
         libcamera_stream_config.buffer_count = buffer_count
 
-    def _get_stream_indices(self, camera_config: CameraConfig) -> Tuple[int, int, int]:
-        # Get the indices of the streams we want to use.
-        index = 1
-        main_index = 0
-        lores_index = -1
-        raw_index = -1
-        if camera_config.lores is not None:
-            lores_index = index
-            index += 1
-        if camera_config.raw is not None:
-            raw_index = index
-        return main_index, lores_index, raw_index
 
     # TODO(meawoppl) - Obviated by dataclasses
     def _make_libcamera_config(self, camera_config: CameraConfig):
@@ -484,7 +472,7 @@ class Camera:
         # configuration objects, and note the positions our named streams will have in
         # libcamera's stream list.
         roles = [VIEWFINDER]
-        main_index, lores_index, raw_index = self._get_stream_indices(camera_config)
+        main_index, lores_index, raw_index = camera_config.get_stream_indices()
         if camera_config.lores is not None:
             roles += [VIEWFINDER]
         if camera_config.raw is not None:
@@ -621,9 +609,6 @@ class Camera:
         self.camera_config = None
 
         # Check the config and turn it into a libcamera config.
-        self.main_index, self.lores_index, self.raw_index = self._get_stream_indices(
-            camera_config
-        )
         libcamera_config = self._make_libcamera_config(camera_config)
 
         # Check that libcamera is happy with it.
@@ -638,6 +623,9 @@ class Camera:
         # Configure libcamera.
         config_call_code = self.camera.configure(libcamera_config)
         if config_call_code:
+            from pprint import pprint
+            unpacked = lc_unpack(libcamera_config)
+            print(unpacked)
             raise RuntimeError(
                 f"Configuration failed ({config_call_code}): {camera_config}"
             )
