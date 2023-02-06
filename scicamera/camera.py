@@ -623,12 +623,8 @@ class Camera:
         # Configure libcamera.
         config_call_code = self.camera.configure(libcamera_config)
         if config_call_code:
-            from pprint import pformat, pprint
-
-            unpacked = pformat(lc_unpack(libcamera_config))
-
             raise RuntimeError(
-                f"Configuration failed ({config_call_code}): {camera_config} {unpacked}"
+                f"Configuration failed ({config_call_code}): {camera_config}\n{libcamera_config}"
             )
         _log.info("Configuration successful!")
         _log.debug(f"Final configuration: {camera_config}")
