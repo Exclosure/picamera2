@@ -557,14 +557,15 @@ class Camera:
         :param libcamera_config: libcamera configuration
         :type libcamera_config: dict
         """
+        _, lores_index, raw_index = camera_config.get_stream_indices()
         camera_config.transform = libcamera_config.transform
         camera_config.color_space = libcamera_config.at(0).color_space
         camera_config.main = StreamConfig.from_lc_stream_config(libcamera_config.at(0))
-        if self.lores_index >= 0:
+        if lores_index >= 0:
             camera_config.lores = StreamConfig.from_lc_stream_config(
                 libcamera_config.at(self.lores_index)
             )
-        if self.raw_index >= 0:
+        if raw_index >= 0:
             camera_config.raw = StreamConfig.from_lc_stream_config(
                 libcamera_config.at(self.raw_index)
             )
