@@ -633,15 +633,12 @@ class Camera:
         self.camera_ctrl_info = lc_unpack_controls(self.camera.controls)
         self.camera_properties_ = lc_unpack(self.camera.properties)
 
-        _, lores_index, raw_index = camera_config.get_stream_indices()
+        indices = camera_config.get_stream_indices()
+        self.stream_map = {}
+        for idx, name in zip(indices, ("main", "lores", "raw")):
+            if idx >= 0:
+                self.stream_map[name] = libcamera_config.at(idx).stream
         # Record which libcamera stream goes with which of our names.
-        self.stream_map = {"main": libcamera_config.at(0).stream}
-        self.stream_map["lores"] = (
-            libcamera_config.at(lores_index).stream if lores_index >= 0 else None
-        )
-        self.stream_map["raw"] = (
-            libcamera_config.at(raw_index).stream if raw_index >= 0 else None
-        )
         _log.debug(f"Streams: {self.stream_map}")
 
         # Allocate all the frame buffers.
