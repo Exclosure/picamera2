@@ -165,7 +165,7 @@ class CameraConfig:
 
     def get_stream_indices(self) -> Tuple[int, int, int]:
         """Get the main, lores, and raw stream indices.
-        
+
         These indices will be -1 if unset.
         """
         # Get the indices of the streams we want to use.
@@ -179,7 +179,6 @@ class CameraConfig:
         if self.raw is not None:
             raw_index = index
         return main_index, lores_index, raw_index
-
 
     def __post_init__(self) -> None:
         if isinstance(self.controls, dict):

@@ -463,7 +463,6 @@ class Camera:
         )
         libcamera_stream_config.buffer_count = buffer_count
 
-
     # TODO(meawoppl) - Obviated by dataclasses
     def _make_libcamera_config(self, camera_config: CameraConfig):
         # Make a libcamera configuration object from our Python configuration.
@@ -623,9 +622,10 @@ class Camera:
         # Configure libcamera.
         config_call_code = self.camera.configure(libcamera_config)
         if config_call_code:
-            from pprint import pprint, pformat
+            from pprint import pformat, pprint
+
             unpacked = pformat(lc_unpack(libcamera_config))
-            
+
             raise RuntimeError(
                 f"Configuration failed ({config_call_code}): {camera_config} {unpacked}"
             )
@@ -640,9 +640,7 @@ class Camera:
         # Record which libcamera stream goes with which of our names.
         self.stream_map = {"main": libcamera_config.at(0).stream}
         self.stream_map["lores"] = (
-            libcamera_config.at(lores_index).stream
-            if lores_index >= 0
-            else None
+            libcamera_config.at(lores_index).stream if lores_index >= 0 else None
         )
         self.stream_map["raw"] = (
             libcamera_config.at(self.raw_index).stream if self.raw_index >= 0 else None
