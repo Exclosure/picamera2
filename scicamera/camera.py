@@ -558,11 +558,11 @@ class Camera:
         camera_config.transform = libcamera_config.transform
         camera_config.color_space = libcamera_config.at(0).color_space
         camera_config.main = StreamConfig.from_lc_stream_config(libcamera_config.at(0))
-        if lores_index >= 0:
+        if lores_index is not None:
             camera_config.lores = StreamConfig.from_lc_stream_config(
                 libcamera_config.at(lores_index)
             )
-        if raw_index >= 0:
+        if raw_index is not None:
             camera_config.raw = StreamConfig.from_lc_stream_config(
                 libcamera_config.at(raw_index)
             )
@@ -631,8 +631,11 @@ class Camera:
         indices = camera_config.get_stream_indices()
         self.stream_map = {}
         for idx, name in zip(indices, ("main", "lores", "raw")):
-            if idx >= 0:
+            if idx is not None:
                 self.stream_map[name] = libcamera_config.at(idx).stream
+            else:
+                self.stream_map[name] = None
+
         # Record which libcamera stream goes with which of our names.
         _log.debug(f"Streams: {self.stream_map}")
 

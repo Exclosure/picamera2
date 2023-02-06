@@ -163,7 +163,7 @@ class CameraConfig:
             return self.raw
         raise ValueError("Unknown config name " + config_name)
 
-    def get_stream_indices(self) -> Tuple[int, int, int]:
+    def get_stream_indices(self) -> Tuple[int, int | None, int | None]:
         """Get the main, lores, and raw stream indices.
 
         These indices will be -1 if unset.
@@ -171,8 +171,8 @@ class CameraConfig:
         # Get the indices of the streams we want to use.
         index = 1
         main_index = 0
-        lores_index = -1
-        raw_index = -1
+        lores_index = None
+        raw_index = None
         if self.lores is not None:
             lores_index = index
             index += 1
