@@ -563,11 +563,11 @@ class Camera:
         camera_config.main = StreamConfig.from_lc_stream_config(libcamera_config.at(0))
         if lores_index >= 0:
             camera_config.lores = StreamConfig.from_lc_stream_config(
-                libcamera_config.at(self.lores_index)
+                libcamera_config.at(lores_index)
             )
         if raw_index >= 0:
             camera_config.raw = StreamConfig.from_lc_stream_config(
-                libcamera_config.at(self.raw_index)
+                libcamera_config.at(raw_index)
             )
 
     def _config_opts(self, config: str | dict | CameraConfig) -> CameraConfig:
