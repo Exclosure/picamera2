@@ -48,7 +48,7 @@ def libcamera_color_spaces_eq(c1, c2) -> bool:
 
 def lc_return_code_helper(return_code: int, method: str) -> None:
     """Decode and process a libcamera return code.
-    
+
     These are generally encoded as negative numbers which map to
     errno values. This function raises a RuntimeError if the return
     code is negative, and tries to make the result more ledgible.
