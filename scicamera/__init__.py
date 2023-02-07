@@ -1,4 +1,5 @@
 import sys
+import importlib.metadata
 
 sys.path.append("/usr/lib/python3/dist-packages")
 import libcamera
@@ -27,3 +28,5 @@ __all__ = [
     "CameraInfo",
     "CompletedRequest",
 ]
+
+__version__ = importlib.metadata.version(__package__ or __name__)
