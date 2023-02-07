@@ -1,12 +1,12 @@
 # SciCamera
 
 ---
-Consistent and reliable still-imaging performance for scientific applications.
+Consistent and reliable imaging for scientific applications.
 
 
 ## Why _SciCamera_?
 
-Scientific camera applications often require minimal post-processing pipelines, 
+Scientific imaging applications often require minimal post-processing pipelines, 
 precise capture timing, near-gapless sequential frames, and easily 
 configurable settings like gain, resolution, bit-depth, and exposure 
 length. 
@@ -18,9 +18,9 @@ with a focus on _performance, reliability, code quality, and maintainability_.
 
 ### Why not _SciCamera_?
 
-SciCamera currently focuses on high-quality, timing-sensitive _still images_. 
-Low-bandwidth, real-time image and video streaming is not a priority. For that, 
-we recommend the [`picamera2`][picamera2] library.
+SciCamera currently focuses on high-quality, timing-sensitive, minimally-processed
+_still images_. For low-bandwidth, real-time image and video streaming, we recommend 
+the [`picamera2`][picamera2] library.
 
 
 ## Platform support
