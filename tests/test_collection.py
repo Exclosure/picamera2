@@ -38,15 +38,17 @@ def test_xfail_list():
         ), f"XFAIL {xfail_name} not in test_file_names (remove it from KNOWN_XFAIL)"
 
 
-# @pytest.mark.xfail(reason="Not validated to be working")
 @pytest.mark.parametrize("test_file_name", test_file_names)
 def test_file(test_file_name):
-    print(sys.path)
     success = False
+    process_env = os.environ.copy()
+    process_env["LIBCAMERA_LOG_LEVELS"] = "*:DEBUG"
+
     try:
         subprocess.run(
             ["python", test_file_name],
             cwd=this_folder,
+            env=process_env,
             timeout=20,
             capture_output=True,
             check=True,
