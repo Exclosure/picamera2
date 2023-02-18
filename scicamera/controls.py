@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 from __future__ import annotations
+
 import threading
 from typing import Set
+
 from libcamera import ControlType, Rectangle, Size
 
 

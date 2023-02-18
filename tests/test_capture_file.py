@@ -3,9 +3,9 @@
 # capture to a file, the return value is the metadata for that image.
 
 import os
-from scicamera import Camera, CameraConfig
 from tempfile import TemporaryDirectory
 
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 

@@ -2,6 +2,7 @@
 # Capture a JPEG while still running in the preview mode.
 import os
 from tempfile import TemporaryDirectory
+
 from scicamera import Camera, CameraConfig
 from scicamera.configuration import CameraConfig
 
