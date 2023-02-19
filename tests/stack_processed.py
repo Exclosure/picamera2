@@ -37,7 +37,9 @@ images = []
 # NOTE(meawoppl) pytest.skip here
 available = camera.controls.available_control_names()
 if {"ExposureTime", "AnalogueGain"}.issubset(available):
-    camera.set_controls({"ExposureTime": exposure_time // num_frames, "AnalogueGain": 1.0})
+    camera.set_controls(
+        {"ExposureTime": exposure_time // num_frames, "AnalogueGain": 1.0}
+    )
 camera.start()
 
 for i in range(num_frames):
