@@ -12,15 +12,12 @@ camera.configure(preview_config)
 camera.start()
 camera.discard_frames(2)
 
-with camera.controls as ctrl:
-    ctrl.AnalogueGain = 6.0
-    ctrl.ExposureTime = 60000
+controls = Controls(camera)
+if "AnalogueGain" in controls.available_control_names():
+    controls.AnalogueGain = 1.0
+if "ExposureTime" in controls.available_control_names():
+    controls.ExposureTime = 10000
 
-camera.discard_frames(2)
-
-ctrls = Controls(camera)
-ctrls.AnalogueGain = 1.0
-ctrls.ExposureTime = 10000
-camera.set_controls(ctrls)
+camera.set_controls(controls)
 camera.discard_frames(2).result()
 camera.close()
