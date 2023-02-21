@@ -1,11 +1,11 @@
+import sys
 from concurrent.futures import Future
 from threading import Thread
-from unittest.mock import Mock
 from typing import Iterable
+from unittest.mock import Mock
 
 from scicamera import Camera
 from scicamera.request import CompletedRequest
-import sys
 
 
 def mature_after_frames_or_timeout(
@@ -34,6 +34,7 @@ def mature_after_frames_or_timeout(
     camera.add_request_callback(callback)
 
     return future
+
 
 def requires_controls(camera: Camera, controls: Iterable[str]):
     """Decorator to skip tests if the camera does not support the given controls."""

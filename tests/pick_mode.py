@@ -2,9 +2,10 @@
 
 # Example of reading the available modes, and picking one with
 # the highest framerate and a raw bit depth of at least 10
-from scicamera import Camera, CameraConfig
-from pprint import pprint
 import sys
+from pprint import pprint
+
+from scicamera import Camera, CameraConfig
 
 camera = Camera()
 

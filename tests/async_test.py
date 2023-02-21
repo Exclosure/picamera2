@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from concurrent.futures import Future, wait
-from threading import Thread, Event
+from threading import Event, Thread
 from typing import List
 
 from scicamera import Camera
@@ -21,6 +21,7 @@ def thread_func():
         n += 1
         started.set()
     print("Thread received", n, "frames")
+
 
 threads = [Thread(target=thread_func, args=()) for _ in range(3)]
 

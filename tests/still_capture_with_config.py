@@ -2,6 +2,7 @@
 # Use the configuration structure method to do a full res capture.
 from scicamera import Camera
 from scicamera.testing import mature_after_frames_or_timeout
+
 camera = Camera()
 
 # We don't really need to change anything, but let's mess around just as a test.
