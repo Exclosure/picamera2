@@ -1,24 +1,17 @@
 #!/usr/bin/python3
-
 # How to do digital zoom using the "ScalerCrop" control.
-import sys
-
 from scicamera import Camera, CameraConfig
+from scicamera.testing import requires_controls
 
 camera = Camera()
+requires_controls(camera, ("ScalerCrop",))
+
 camera.start_preview()
 
 preview_config = CameraConfig.for_preview(camera)
 camera.configure(preview_config)
 
 camera.start()
-
-
-# NOTE(meawoppl) pytest.skip here
-if "ScalerCrop" not in camera.controls.available_control_names():
-    camera.stop()
-    camera.close()
-    sys.exit(0)
 
 metadata = camera.capture_metadata().result()
 size = metadata["ScalerCrop"][2:]
