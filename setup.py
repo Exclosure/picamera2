@@ -35,6 +35,7 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python :: 3.9",
+        "Topic :: Scientific/Engineering :: Astronomy",
         "Topic :: Multimedia :: Graphics :: Capture :: Digital Camera",
     ],
     packages=["scicamera"],
