@@ -1,22 +1,18 @@
-#!/usr/bin/python3
-
-# Obtain an image from the camera along with the exact metadata that
-# that describes that image.
 from scicamera import Camera, CameraConfig
 
-camera = Camera()
-camera.start_preview()
 
-preview_config = CameraConfig.for_preview(camera)
-camera.configure(preview_config)
+def test_get_image_and_meta(camera: Camera):
+    camera.start_preview()
 
-camera.start()
-camera.discard_frames(2)
+    preview_config = CameraConfig.for_preview(camera)
+    camera.configure(preview_config)
 
-request = camera.capture_request().result()
-image = request.make_image("main")  # image from the "main" stream
-metadata = request.get_metadata()
-request.release()  # requests must always be returned to libcamera
+    camera.start()
+    camera.discard_frames(2)
 
-print(metadata)
-camera.close()
+    request = camera.capture_request().result()
+    request.make_image("main")  # image from the "main" stream
+    metadata = request.get_metadata()
+    request.release()  # requests must always be returned to libcamera
+
+    print(metadata)

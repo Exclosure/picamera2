@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 
 from scicamera import Camera, CameraConfig
+from scicamera.testing import requires_controls
 from scicamera.tuning import find_tuning_algo, load_tuning_file
 
 exposure_time = 60000  # put your own numbers here
@@ -29,26 +30,24 @@ gamma_lut = np.interp(range(num_frames * 255 + 1), gamma_x, gamma_y, right=255).
     np.uint8
 )
 
-camera = Camera(tuning=tuning)
-config = CameraConfig.for_still(camera, {"format": "RGB888"}, buffer_count=2)
-camera.configure(config)
-images = []
 
-# NOTE(meawoppl) pytest.skip here
-available = camera.controls.available_control_names()
-if {"ExposureTime", "AnalogueGain"}.issubset(available):
-    camera.set_controls(
-        {"ExposureTime": exposure_time // num_frames, "AnalogueGain": 1.0}
-    )
-camera.start()
+def test_load_tuning():
+    requires_controls(camera, ("ExposureTime", "AnalogueGain"))
 
-for i in range(num_frames):
-    images.append(camera.capture_array().result())
+    camera = Camera(tuning=tuning)
+    config = CameraConfig.for_still(camera, {"format": "RGB888"}, buffer_count=2)
+    camera.configure(config)
+    images = []
 
-# Add the images up, apply the gamma transform and we're done.
-accumulated = images.pop(0).astype(np.uint16)
-for image in images:
-    accumulated += image
-accumulated = gamma_lut[accumulated]
+    camera.start()
 
-Image.fromarray(accumulated).save("accumulated.jpg")
+    for _ in range(num_frames):
+        images.append(camera.capture_array().result())
+
+    # Add the images up, apply the gamma transform and we're done.
+    accumulated = images.pop(0).astype(np.uint16)
+    for image in images:
+        accumulated += image
+    accumulated = gamma_lut[accumulated]
+
+    Image.fromarray(accumulated).save("accumulated.jpg")

@@ -1,8 +1,8 @@
-#!/usr/bin/python3
-
 import multiprocessing
 import threading
 import time
+
+import pytest
 
 from scicamera import Camera, CameraInfo
 
@@ -16,12 +16,8 @@ def run_camera(idx):
     camera.close()
 
 
-if __name__ == "__main__":
-
-    if CameraInfo.n_cameras() <= 1:
-        print("SKIPPED (one camera)")
-        quit()
-
+@pytest.mark.skipif(CameraInfo.n_cameras() <= 1, reason="Test requires two cameras")
+def test_multiprocess_multiple_cameras():
     multiprocessing.set_start_method("spawn")
 
     print("Test two processes")

@@ -197,7 +197,8 @@ class Camera:
         :param callback: The callback to be removed
         :type callback: Callable[[CompletedRequest], None]
         """
-        self._request_callbacks.remove(callback)
+        if callback in self._request_callbacks:
+            self._request_callbacks.remove(callback)
 
     def _reset_flags(self) -> None:
         self.camera = None

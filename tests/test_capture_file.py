@@ -7,21 +7,20 @@ from tempfile import TemporaryDirectory
 
 from scicamera import Camera, CameraConfig
 
-camera = Camera()
 
-preview_config = CameraConfig.for_preview(camera, main={"size": (800, 600)})
-camera.configure(preview_config)
+def test_capture_file(camera: Camera):
+    preview_config = CameraConfig.for_preview(camera, main={"size": (800, 600)})
+    camera.configure(preview_config)
 
-camera.start_preview()
+    camera.start_preview()
 
-camera.start()
-camera.discard_frames(2)
-with TemporaryDirectory() as tmpdir:
-    for extension in ["jpg", "png"]:
-        filepath = f"{tmpdir}/test.{extension}"
-        metadata = camera.capture_file(filepath).result()
-        assert os.path.isfile(filepath)
+    camera.start()
+    camera.discard_frames(2)
+    with TemporaryDirectory() as tmpdir:
+        for extension in ["jpg", "png"]:
+            filepath = f"{tmpdir}/test.{extension}"
+            metadata = camera.capture_file(filepath).result()
+            assert os.path.isfile(filepath)
 
-print(metadata)
-
-camera.close()
+    print(metadata)
+    camera.stop()

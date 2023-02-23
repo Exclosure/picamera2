@@ -44,6 +44,14 @@ def requires_controls(camera: Camera, controls: Iterable[str]):
     available_controls = camera.controls.available_control_names()
     missing_controls = set(controls) - available_controls
 
-    if missing_controls:
-        print("Skipping test, missing controls:", missing_controls)
+    if not missing_controls:
+        return
+
+    message = f"Skipping test, missing controls: {missing_controls}"
+    try:
+        import pytest
+
+        pytest.skip(reason=message)
+    except ImportError:
+        print(message, file=sys.stderr)
         sys.exit(0)

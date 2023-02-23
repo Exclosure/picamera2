@@ -1,18 +1,17 @@
-#!/usr/bin/python3
-# Another (simpler!) way to fix the AEC/AGC and AWB.
-
 from scicamera import Camera, CameraConfig
+from scicamera.testing import requires_controls
 
-camera = Camera()
-camera.start_preview()
 
-preview_config = CameraConfig.for_preview(camera)
-camera.configure(preview_config)
+def test_set_aec_agc(camera: Camera):
+    requires_controls(camera, {"AwbEnable", "AeEnable"})
+    camera.start_preview()
 
-camera.start()
-camera.discard_frames(2)
+    preview_config = CameraConfig.for_preview(camera)
+    camera.configure(preview_config)
 
-if {"AwbEnable", "AeEnable"} <= camera.controls.available_control_names():
+    camera.start()
+    camera.discard_frames(2)
+
     camera.set_controls({"AwbEnable": 0, "AeEnable": 0})
-camera.discard_frames(2).result()
-camera.close()
+    camera.discard_frames(2).result()
+    camera.close()

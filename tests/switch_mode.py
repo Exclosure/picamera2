@@ -4,19 +4,19 @@
 
 from scicamera import Camera, CameraConfig
 
-camera = Camera()
-camera.start_preview()
 
-preview_config = CameraConfig.for_preview(camera)
-camera.configure(preview_config)
+def test_switch_mode(camera: Camera):
+    camera.start_preview()
 
-camera.start()
-camera.discard_frames(4)
-other_config = CameraConfig.for_preview(
-    camera, main={"size": camera.sensor_resolution}, buffer_count=3
-)
+    preview_config = CameraConfig.for_preview(camera)
+    camera.configure(preview_config)
 
-camera.switch_mode(other_config)
-camera.discard_frames(4).result()
-camera.stop()
-camera.close()
+    camera.start()
+    camera.discard_frames(4)
+    other_config = CameraConfig.for_preview(
+        camera, main={"size": camera.sensor_resolution}, buffer_count=3
+    )
+
+    camera.switch_mode(other_config)
+    camera.discard_frames(4).result()
+    camera.stop()

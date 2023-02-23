@@ -1,7 +1,7 @@
 from scicamera import Camera, CameraConfig
 
 
-def main():
+def test_context_manager():
     print("With context...")
     with Camera() as camera:
         config = CameraConfig.for_preview(camera)
@@ -20,7 +20,3 @@ def main():
     print(metadata)
     camera.stop_preview()
     camera.close()
-
-
-if __name__ == "__main__":
-    main()
