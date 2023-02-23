@@ -4,8 +4,10 @@
 # Copyright (c) 2021-2022 Raspberry Pi & Raspberry Pi Foundation
 # SPDX-License-Identifier: BSD-2-Clause
 
-from setuptools import setup
 import configparser
+
+from setuptools import setup
+
 parser = configparser.ConfigParser()
 parser.read("pyproject.toml")
 version = parser["tool.poetry"]["version"]
