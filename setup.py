@@ -5,13 +5,18 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
 from setuptools import setup
+import configparser
+parser = configparser.ConfigParser()
+parser.read("pyproject.toml")
+version = parser["tool.poetry"]["version"]
+
 
 with open("README.md") as readme:
     long_description = readme.read()
 
 setup(
     name="scicamera",
-    version="1.0.0",
+    version=version,
     description="The libcamera-based Python interface to Raspberry Pi cameras, based on the original Picamera library",
     long_description=long_description,
     long_description_content_type="text/markdown",
