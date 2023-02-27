@@ -46,6 +46,6 @@ accumulated = accumulated.view(np.uint8)
 metadata["ExposureTime"] = exposure_time
 
 with tempfile.TemporaryDirectory() as tmpdir:
-    path = os.path.join(tmpdir, "accumulated.dng")
+    path = os.path.join(tmpdir, "accumulated.jpeg")
     Image.fromarray(accumulated).save(path)
     assert os.path.isfile(path)
