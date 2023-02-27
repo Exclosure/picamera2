@@ -1,8 +1,9 @@
 from collections import deque
 from concurrent.futures import Future
 from logging import getLogger
+from threading import Condition, Event, Thread
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
-from threading import Thread, Condition, Event
+
 import numpy as np
 from PIL import Image
 
@@ -19,7 +20,6 @@ class RequestMachinery:
     _runloop_cond: Condition
     _runloop_thread: Thread
     _runloop_abort: Event
-
 
     def __init__(self) -> None:
         self._requests = deque()
@@ -91,7 +91,6 @@ class RequestMachinery:
         with self._runloop_cond:
             self._runloop_cond.notify()
         self._runloop_thread.join()
-
 
     def has_requests(self) -> bool:
         return len(self._requests) > 0
