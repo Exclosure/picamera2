@@ -16,14 +16,9 @@ _log = getLogger(__name__)
 
 class RequestMachinery:
     """RequestMachinery is a helper class for the Camera class."""
-
-    _runloop_cond: Condition
-    _runloop_thread: Thread
-    _runloop_abort: Event
-
     def __init__(self) -> None:
-        self._requests = deque()
-        self._request_callbacks = []
+        self._requests: Deque[CompletedRequest] = deque()
+        self._request_callbacks: List[Callable[[CompletedRequest], None]] = []
         self._task_deque: Deque[LoopTask] = deque()
 
         self._runloop_cond = Condition()
