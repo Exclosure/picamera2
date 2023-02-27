@@ -5,6 +5,9 @@
 # prevents us from adding the images straightforwardly), but then we must recreate
 # it and apply it ourselves at the end.
 
+import os
+import tempfile
+
 import numpy as np
 from PIL import Image
 
@@ -51,4 +54,7 @@ for image in images:
     accumulated += image
 accumulated = gamma_lut[accumulated]
 
-Image.fromarray(accumulated).save("accumulated.jpg")
+with tempfile.TemporaryDirectory() as tmpdir:
+    path = os.path.join(tmpdir, "accumulated.jpg")
+    Image.fromarray(accumulated).save(path)
+    assert os.path.isfile(path)
