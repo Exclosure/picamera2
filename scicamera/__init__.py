@@ -1,7 +1,5 @@
 import importlib.metadata
-import sys
 
-sys.path.append("/usr/lib/python3/dist-packages")
 import libcamera
 
 from scicamera.camera import Camera, CameraInfo
@@ -28,5 +26,7 @@ __all__ = [
     "CameraInfo",
     "CompletedRequest",
 ]
-
-__version__ = importlib.metadata.version(__package__ or __name__)
+try:
+    __version__ = importlib.metadata.version(__package__ or __name__)
+except ModuleNotFoundError:
+    __version__ = "0.0.0-local"
