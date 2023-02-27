@@ -5,12 +5,11 @@ import sys
 import pytest
 
 this_folder, this_file = os.path.split(__file__)
-old_tests = os.path.join(this_folder, "old")
-test_file_names = [
-    os.path.join(old_tests, name)
-    for name in os.listdir(old_tests)
-    if name.endswith(".py")
-]
+old_test_folder = os.path.join(this_folder, "old")
+
+test_file_names = list(
+    name for name in os.listdir(old_test_folder) if name.endswith(".py")
+)
 test_file_names.sort()
 
 
@@ -50,7 +49,7 @@ def test_file(test_file_name):
     try:
         subprocess.run(
             ["python", test_file_name],
-            cwd=this_folder,
+            cwd=old_test_folder,
             env=process_env,
             timeout=20,
             capture_output=True,
