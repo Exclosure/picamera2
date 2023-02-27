@@ -229,8 +229,9 @@ class Camera(RequestMachinery):
 
     def __del__(self):
         """Without this libcamera will complain if we shut down without closing the camera."""
-        _log.warning(f"__del__ call responsible for cleanup of {self}")
-        self.close()
+        if self.is_open:
+            _log.warning(f"__del__ call responsible for cleanup of {self}")
+            self.close()
 
     def requires_camera(self):
         if self.camera is None:
