@@ -9,7 +9,7 @@ from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.request import CompletedRequest
 
 
-def make_fake_image(shape: tuple):
+def make_fake_image(shape: Tuple[int, ...]):
     img = np.zeros(shape + (3,), dtype=np.uint8)
     w, h = shape
     img[:, 0 : w // 3, 0] = 255
