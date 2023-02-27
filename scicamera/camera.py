@@ -18,7 +18,6 @@ from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.frame import CameraFrame
 from scicamera.lc_helpers import errno_handle, lc_unpack, lc_unpack_controls
-
 from scicamera.preview import NullPreview
 from scicamera.request import CompletedRequest, LoopTask
 from scicamera.sensor_format import SensorFormat
