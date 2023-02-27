@@ -1,14 +1,14 @@
 from collections import deque
-from typing import Deque, Callable, Optional, Dict, Tuple, List, Any
-from logging import getLogger
 from concurrent.futures import Future
+from logging import getLogger
+from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 
 import numpy as np
 from PIL import Image
 
 from scicamera.frame import CameraFrame
+from scicamera.request import CompletedRequest, LoopTask
 from scicamera.typing import TypedFuture
-from scicamera.request import LoopTask, CompletedRequest
 
 _log = getLogger(__name__)
 

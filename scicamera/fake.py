@@ -1,17 +1,20 @@
-from typing import Dict, Any
-from threading import Thread, Event
-from scicamera.request import CompletedRequest
+from threading import Event, Thread
+from typing import Any, Dict
+
 import numpy as np
 
 from scicamera.actions import RequestMachinery
+from scicamera.request import CompletedRequest
+
 
 def make_fake_image(shape, dtype=np.uint8):
     img = np.zeros(shape + (3,), dtype=dtype)
     w, h = shape
-    img[0:w/3, :, 0] = 255
-    img[w/3:2*w/3, :, 1] = 255
-    img[2*w/3:, :, 2] = 255
+    img[0 : w / 3, :, 0] = 255
+    img[w / 3 : 2 * w / 3, :, 1] = 255
+    img[2 * w / 3 :, :, 2] = 255
     return img
+
 
 class FakeCompletedRequest(CompletedRequest):
     def __init__(self, fake_size: tuple):

@@ -13,6 +13,7 @@ from typing import Dict, List
 import libcamera
 
 import scicamera.formats as formats
+from scicamera.actions import RequestMachinery
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.lc_helpers import lc_unpack, lc_unpack_controls
@@ -20,7 +21,6 @@ from scicamera.preview import NullPreview
 from scicamera.request import CompletedRequest, LoopTask
 from scicamera.sensor_format import SensorFormat
 from scicamera.tuning import TuningContext
-from scicamera.actions import RequestMachinery
 
 STILL = libcamera.StreamRole.StillCapture
 RAW = libcamera.StreamRole.Raw

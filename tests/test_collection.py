@@ -6,7 +6,11 @@ import pytest
 
 this_folder, this_file = os.path.split(__file__)
 old_tests = os.path.join(this_folder, "old")
-test_file_names = [os.path.join(old_tests, name) for name in os.listdir(old_tests) if name.endswith(".py")]
+test_file_names = [
+    os.path.join(old_tests, name)
+    for name in os.listdir(old_tests)
+    if name.endswith(".py")
+]
 test_file_names.sort()
 
 
