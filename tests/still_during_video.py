@@ -2,10 +2,14 @@
 from scicamera import Camera, CameraConfig
 from scicamera.request import CompletedRequest
 
+from scicamera.testing import requires_non_mjpeg
+
 # Encode a VGA stream, and capture a higher resolution still image half way through.
 
 
 def test_still_during_video(camera: Camera):
+    requires_non_mjpeg(camera)
+
     half_resolution = tuple(dim // 2 for dim in camera.sensor_resolution)
     video_config = CameraConfig.for_video(
         camera, main={"size": half_resolution}, lores={"size": half_resolution}

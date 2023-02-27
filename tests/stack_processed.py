@@ -32,9 +32,11 @@ gamma_lut = np.interp(range(num_frames * 255 + 1), gamma_x, gamma_y, right=255).
 
 
 def test_load_tuning():
-    requires_controls(camera, ("ExposureTime", "AnalogueGain"))
 
     camera = Camera(tuning=tuning)
+    requires_controls(camera, ("ExposureTime", "AnalogueGain"))
+    
+
     config = CameraConfig.for_still(camera, {"format": "RGB888"}, buffer_count=2)
     camera.configure(config)
     images = []

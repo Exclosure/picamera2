@@ -6,7 +6,6 @@ from scicamera import Camera, CameraConfig
 
 def test_circular_capture(camera: Camera):
     lsize = (320, 240)
-    camera = Camera()
     video_config = CameraConfig.for_video(
         camera,
         main={"size": (1280, 720), "format": "RGB888"},
@@ -27,3 +26,4 @@ def test_circular_capture(camera: Camera):
             mse = np.square(np.subtract(cur, prev)).mean()
             print("New Motion", mse)
         prev = cur
+    camera.stop()

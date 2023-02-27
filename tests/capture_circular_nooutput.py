@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from scicamera import Camera, CameraConfig
-from scicamera.testing import mature_after_frames_or_timeout, requires_controls
+from scicamera.testing import elapse_frames_or_timeout, requires_controls
 
 
 def test_video_configuration(camera: Camera):
@@ -14,6 +14,6 @@ def test_video_configuration(camera: Camera):
     camera.configure(video_cfg)
 
     camera.start()
-    mature_after_frames_or_timeout(camera, 5).result()
+    elapse_frames_or_timeout(camera, 5)
     camera.stop()
     camera.close()

@@ -80,12 +80,19 @@ class CameraInfo:
 
 
 class CameraManager:
+    _instance: CameraManager
     cameras: Dict[int, Camera]
 
     def __init__(self):
         self.running = False
         self.cameras = {}
         self._lock = threading.Lock()
+
+    @classmethod
+    def singleton(cls):
+        if not hasattr(cls, "_instance"):
+            cls._instance = cls()
+        return cls._instance
 
     def setup(self):
         self.cms = libcamera.CameraManager.singleton()
@@ -98,6 +105,14 @@ class CameraManager:
             self.cameras[index] = camera
             if not self.running:
                 self.setup()
+
+    def close_all(self) -> int:
+        n_closed = 0
+        for idx in self.cameras.keys():
+            # FIXME(meawoppl) - this calls back into self.cleanup()
+            self.cameras[idx].close()
+            n_closed += 1
+        return n_closed
 
     def cleanup(self, index: int):
         flag = False
@@ -297,8 +312,9 @@ class Camera:
 
     def __del__(self):
         """Without this libcamera will complain if we shut down without closing the camera."""
-        _log.warning(f"__del__ call responsible for cleanup of {self}")
-        self.close()
+        if self.is_open:
+            _log.warning(f"__del__ call responsible for cleanup of {self}")
+            self.close()
 
     def _grab_camera(self, idx: str | int):
         if isinstance(idx, str):

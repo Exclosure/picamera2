@@ -3,7 +3,7 @@
 from PIL import Image
 
 from scicamera import Camera, CameraConfig
-from scicamera.testing import mature_after_frames_or_timeout
+from scicamera.testing import elapse_frames_or_timeout
 
 
 def test_capture_full_res(camera: Camera):
@@ -13,9 +13,9 @@ def test_capture_full_res(camera: Camera):
 
     camera.configure(preview_config)
     camera.start()
-    mature_after_frames_or_timeout(camera, 5).result()
+    elapse_frames_or_timeout(camera, 5)
 
     image = camera.capture_image(config=capture_config).result()
     assert isinstance(image, Image.Image)
 
-    mature_after_frames_or_timeout(camera, 5).result()
+    elapse_frames_or_timeout(camera, 5)

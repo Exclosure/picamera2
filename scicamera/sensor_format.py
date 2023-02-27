@@ -5,7 +5,7 @@ from libcamera import Transform
 
 
 class SensorFormat:
-    def __init__(self, fmt_string):
+    def __init__(self, fmt_string: str):
         if "_" in fmt_string:
             pixels, self.packing = fmt_string.split("_")
         else:

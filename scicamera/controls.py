@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import threading
-from typing import Set
+from typing import Set, Tuple
 
 from libcamera import ControlType, Rectangle, Size
-
+from functools import cached_property
 
 # TODO(meawoppl) Bring the libcamera cohersion functions into this file
 # currently in the root `__init__.py` Perform forward and backward
@@ -38,6 +38,10 @@ class Controls:
     def available_control_names(self) -> Set[str]:
         """Returns a set of all available control names"""
         return set(self._camera.camera_ctrl_info.keys())
+
+    def has_controls(self, *names: Tuple[str]) -> bool:
+        """Returns True if the control is available"""
+        return set(names).issubset(self.available_control_names)
 
     def __setattr__(self, name, value):
         if not name.startswith("_"):

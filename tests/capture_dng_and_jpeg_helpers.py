@@ -2,7 +2,7 @@
 # Capture a DNG and a JPEG made from the same raw data.
 from scicamera import Camera, CameraConfig
 from scicamera.configuration import CameraConfig
-from scicamera.testing import mature_after_frames_or_timeout
+from scicamera.testing import elapse_frames_or_timeout
 
 
 def test_capture_dng_and_jpeg(camera: Camera):
@@ -13,7 +13,7 @@ def test_capture_dng_and_jpeg(camera: Camera):
     camera.configure(preview_config)
 
     camera.start()
-    mature_after_frames_or_timeout(camera, 2).result()
+    elapse_frames_or_timeout(camera, 2)
     camera.switch_mode(capture_config).result()
     buffers, metadata = camera.capture_buffers_and_metadata(["main", "raw"]).result()
 

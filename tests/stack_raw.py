@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 # This example adds multiple exposures together to create a much longer exposure
 # image. It does this by adding raw images together, correcting the black level,
 # and saving a DNG file. Currentl you need to use a raw converter to obtain the
@@ -10,12 +8,15 @@ from PIL import Image
 
 from scicamera import Camera, CameraConfig
 from scicamera.sensor_format import SensorFormat
+from scicamera.testing import requires_non_mjpeg
 
 exposure_time = 60000
 num_frames = 6
 
 # Configure an unpacked raw format as these are easier to add.
 def test_stack_raw(camera: Camera):
+    requires_non_mjpeg(camera)
+
     raw_format = SensorFormat(camera.sensor_format)
     raw_format.packing = None
     config = CameraConfig.for_still(

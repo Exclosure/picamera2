@@ -43,6 +43,7 @@ def test_sensor_modes(camera: Camera):
     modes = camera.sensor_modes
     # Make sure less than 5 modes, to avoid timing out
     modes = modes[:5]
+    print(modes)
     for i, mode in enumerate(modes):
         print(f"Testing mode (packed): '{mode}' {i+1}/{len(modes)}")
         # Check packed mode works
