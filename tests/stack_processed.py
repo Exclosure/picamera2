@@ -6,10 +6,12 @@
 # it and apply it ourselves at the end.
 
 import numpy as np
+import os
 from PIL import Image
 
 from scicamera import Camera, CameraConfig
 from scicamera.tuning import find_tuning_algo, load_tuning_file
+import tempfile
 
 exposure_time = 60000  # put your own numbers here
 num_frames = 6
@@ -51,4 +53,7 @@ for image in images:
     accumulated += image
 accumulated = gamma_lut[accumulated]
 
-Image.fromarray(accumulated).save("accumulated.jpg")
+with tempfile.TemporaryDirectory() as tmpdir:
+    path = os.path.join(tmpdir, "accumulated.jpg")
+    Image.fromarray(accumulated).save(path)
+    assert os.path.isfile(path)

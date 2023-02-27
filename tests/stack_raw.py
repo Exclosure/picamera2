@@ -7,7 +7,8 @@
 
 import numpy as np
 from PIL import Image
-
+import tempfile
+import os
 from scicamera import Camera, CameraConfig
 from scicamera.sensor_format import SensorFormat
 
@@ -42,4 +43,8 @@ accumulated = accumulated.clip(0, 2**raw_format.bit_depth - 1).astype(np.uint16)
 accumulated = accumulated.view(np.uint8)
 metadata["ExposureTime"] = exposure_time
 
-Image.fromarray(accumulated).save("accumulated.jpeg")
+with tempfile.TemporaryDirectory() as tmpdir:
+    path = os.path.join(tmpdir, "accumulated.dng")
+    Image.fromarray(accumulated).save(path)
+    assert os.path.isfile(path)
+
