@@ -5,9 +5,11 @@ import sys
 import pytest
 
 this_folder, this_file = os.path.split(__file__)
+old_test_folder = os.path.join(this_folder, "old")
 
-test_file_names = [name for name in os.listdir(this_folder) if name.endswith(".py")]
-test_file_names.remove(this_file)
+test_file_names = list(
+    name for name in os.listdir(old_test_folder) if name.endswith(".py")
+)
 test_file_names.sort()
 
 
@@ -38,10 +40,8 @@ def test_xfail_list():
         ), f"XFAIL {xfail_name} not in test_file_names (remove it from KNOWN_XFAIL)"
 
 
-# @pytest.mark.xfail(reason="Not validated to be working")
 @pytest.mark.parametrize("test_file_name", test_file_names)
 def test_file(test_file_name):
-    print(sys.path)
     success = False
     process_env = os.environ.copy()
     process_env["LIBCAMERA_LOG_LEVELS"] = "*:DEBUG"
@@ -49,7 +49,7 @@ def test_file(test_file_name):
     try:
         subprocess.run(
             ["python", test_file_name],
-            cwd=this_folder,
+            cwd=old_test_folder,
             env=process_env,
             timeout=20,
             capture_output=True,
