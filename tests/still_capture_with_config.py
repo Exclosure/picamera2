@@ -1,7 +1,7 @@
 # Use the configuration structure method to do a full res capture.
 from scicamera import Camera
-from scicamera.testing import elapse_frames_or_timeout
-from scicamera.testing import requires_non_mjpeg
+from scicamera.testing import elapse_frames_or_timeout, requires_non_mjpeg
+
 
 def test_still_with_config(camera: Camera):
     requires_non_mjpeg(camera)

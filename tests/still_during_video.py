@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 from scicamera import Camera, CameraConfig
 from scicamera.request import CompletedRequest
-
 from scicamera.testing import requires_non_mjpeg
 
 # Encode a VGA stream, and capture a higher resolution still image half way through.

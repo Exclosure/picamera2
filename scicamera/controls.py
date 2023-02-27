@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import threading
+from functools import cached_property
 from typing import Set, Tuple
 
 from libcamera import ControlType, Rectangle, Size
-from functools import cached_property
+
 
 # TODO(meawoppl) Bring the libcamera cohersion functions into this file
 # currently in the root `__init__.py` Perform forward and backward

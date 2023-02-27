@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import sys
 from concurrent.futures import Future
 from typing import Iterable, NoReturn
@@ -8,11 +9,9 @@ from scicamera import Camera
 from scicamera.request import CompletedRequest
 
 
-def elapse_frames_or_timeout(
-    camera: Camera, n_frames: int, timeout_seconds=5
-):
+def elapse_frames_or_timeout(camera: Camera, n_frames: int, timeout_seconds=5):
     """Wait for ``camera`` to complete ``n_frames`` frames, or timeout.
-    
+
     If the frames are not produces within ``timeout_seconds`` a ``TimeoutError``
     will be raised."""
     future = Future()
@@ -31,13 +30,16 @@ def elapse_frames_or_timeout(
     finally:
         camera.remove_request_callback(callback)
 
+
 def _skip_hack(message: str) -> NoReturn:
     try:
         import pytest
+
         pytest.skip(reason=message)
     except ImportError:
         print(message, file=sys.stderr)
         sys.exit(0)
+
 
 def requires_controls(camera: Camera, controls: Iterable[str]) -> None | NoReturn:
     """Decorator to skip tests if the camera does not support the given controls."""
@@ -52,6 +54,7 @@ def requires_controls(camera: Camera, controls: Iterable[str]) -> None | NoRetur
 
     camera.close()
     _skip_hack(f"Skipping test, missing controls: {missing_controls}")
+
 
 def requires_non_mjpeg(camera: Camera):
     if camera.sensor_format == "MJPEG":

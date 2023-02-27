@@ -35,7 +35,6 @@ def test_load_tuning():
 
     camera = Camera(tuning=tuning)
     requires_controls(camera, ("ExposureTime", "AnalogueGain"))
-    
 
     config = CameraConfig.for_still(camera, {"format": "RGB888"}, buffer_count=2)
     camera.configure(config)

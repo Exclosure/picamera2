@@ -1,6 +1,6 @@
-import pytest
-
 from logging import getLogger
+
+import pytest
 
 from scicamera import Camera
 from scicamera.camera import CameraManager
@@ -16,6 +16,7 @@ def camera() -> Camera:
     if camera.is_open:
         camera.stop()
     camera.close()
+
 
 def _close_all_warn():
     n_closed = CameraManager.singleton().close_all()
