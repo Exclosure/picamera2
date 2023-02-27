@@ -5,13 +5,14 @@
 # prevents us from adding the images straightforwardly), but then we must recreate
 # it and apply it ourselves at the end.
 
-import numpy as np
 import os
+import tempfile
+
+import numpy as np
 from PIL import Image
 
 from scicamera import Camera, CameraConfig
 from scicamera.tuning import find_tuning_algo, load_tuning_file
-import tempfile
 
 exposure_time = 60000  # put your own numbers here
 num_frames = 6

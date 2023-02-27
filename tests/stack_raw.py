@@ -5,10 +5,12 @@
 # and saving a DNG file. Currentl you need to use a raw converter to obtain the
 # final result (e.g. "dcraw -w -W accumulated.dng").
 
+import os
+import tempfile
+
 import numpy as np
 from PIL import Image
-import tempfile
-import os
+
 from scicamera import Camera, CameraConfig
 from scicamera.sensor_format import SensorFormat
 
@@ -47,4 +49,3 @@ with tempfile.TemporaryDirectory() as tmpdir:
     path = os.path.join(tmpdir, "accumulated.dng")
     Image.fromarray(accumulated).save(path)
     assert os.path.isfile(path)
-

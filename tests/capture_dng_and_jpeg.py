@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Capture a DNG and a JPEG made from the same raw data.
-import tempfile
 import os
+import tempfile
 
 from scicamera import Camera
 from scicamera.configuration import CameraConfig
