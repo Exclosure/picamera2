@@ -20,7 +20,7 @@ camera.switch_mode(capture_config).result()
 request = camera.capture_request(capture_config).result()
 
 with tempfile.TemporaryDirectory() as tmpdir:
-    path = os.path.join(tmpdir, "capture.dng")
+    path = os.path.join(tmpdir, "capture.jpeg")
     request.make_image("main").convert("RGB").save(path)
     assert os.path.isfile(path)
 request.release()
