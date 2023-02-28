@@ -6,7 +6,7 @@ import logging
 import selectors
 import threading
 from collections import deque
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from functools import partial
 from typing import Dict, List
 
@@ -16,7 +16,7 @@ import scicamera.formats as formats
 from scicamera.actions import RequestMachinery
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
-from scicamera.frame import CameraFrame
+from scicamera.info import CameraInfo
 from scicamera.lc_helpers import errno_handle, lc_unpack, lc_unpack_controls
 from scicamera.preview import NullPreview
 from scicamera.request import CompletedRequest, LoopTask
@@ -31,60 +31,20 @@ VIEWFINDER = libcamera.StreamRole.Viewfinder
 _log = logging.getLogger(__name__)
 
 
-# TODO(meawoppl) doc these arrtibutes
-@dataclass
-class CameraInfo:
-    id: str
-
-    model: str
-
-    location: str
-
-    rotation: int
-
-    @staticmethod
-    def global_camera_info() -> List[CameraInfo]:
-        """
-        Return Id string and Model name for all attached cameras, one dict per camera,
-        and ordered correctly by camera number. Also return the location and rotation
-        of the camera when known, as these may help distinguish which is which.
-        """
-        infos = []
-        for cam in libcamera.CameraManager.singleton().cameras:
-            name_to_val = {
-                k.name.lower(): v
-                for k, v in cam.properties.items()
-                if k.name in ("Model", "Location", "Rotation")
-            }
-            name_to_val["id"] = cam.id
-            infos.append(CameraInfo(**name_to_val))
-        return infos
-
-    @staticmethod
-    def n_cameras() -> int:
-        """Return the number of attached cameras."""
-        return len(libcamera.CameraManager.singleton().cameras)
-
-    def requires_camera(n: int = 1):
-        if CameraInfo.n_cameras() < n:
-            _log.error(
-                "Camera(s) not found (Do not forget to disable legacy camera with raspi-config)."
-            )
-            raise RuntimeError(
-                "Camera(s) not found (Do not forget to disable legacy camera with raspi-config)."
-            )
-
-
-class CameraManager(RequestMachinery):
+class CameraManager:
     cameras: Dict[int, Camera]
 
     def __init__(self):
         self.running = False
         self.cameras = {}
         self._lock = threading.Lock()
+        self.cms = libcamera.CameraManager.singleton()
+
+    def get_camera(self, idx: int):
+        """Get the (lc) camera with the given index"""
+        return self.cms.cameras[idx]
 
     def setup(self):
-        self.cms = libcamera.CameraManager.singleton()
         self.thread = threading.Thread(target=self.listen, daemon=True)
         self.running = True
         self.thread.start()
@@ -104,7 +64,6 @@ class CameraManager(RequestMachinery):
                 flag = True
         if flag:
             self.thread.join()
-            self.cms = None
 
     def listen(self):
         sel = selectors.DefaultSelector()
@@ -117,7 +76,6 @@ class CameraManager(RequestMachinery):
                 callback()
 
         sel.unregister(self.cms.event_fd)
-        self.cms = None
 
     def handle_request(self, flushid=None):
         """Handle requests"""
@@ -148,7 +106,7 @@ class Camera(RequestMachinery):
 
     _cm = CameraManager()
 
-    def __init__(self, camera_num=0, tuning=None):
+    def __init__(self, camera_num: int = 0, tuning=None):
         """Initialise camera system and open the camera for use.
 
         :param camera_num: Camera index, defaults to 0
@@ -271,17 +229,9 @@ class Camera(RequestMachinery):
 
     def __del__(self):
         """Without this libcamera will complain if we shut down without closing the camera."""
-        _log.warning(f"__del__ call responsible for cleanup of {self}")
-        self.close()
-
-    def _grab_camera(self, idx: str | int):
-        if isinstance(idx, str):
-            try:
-                return self.camera_manager.get(idx)
-            except Exception:
-                return self.camera_manager.find(idx)
-        elif isinstance(idx, int):
-            return self.camera_manager.cameras[idx]
+        if self.is_open:
+            _log.warning(f"__del__ call responsible for cleanup of {self}")
+            self.close()
 
     def requires_camera(self):
         if self.camera is None:
@@ -294,8 +244,8 @@ class Camera(RequestMachinery):
 
         :raises RuntimeError: Failure to initialise camera
         """
-        CameraInfo.requires_camera(1)
-        self.camera = self._grab_camera(self.camera_idx)
+        CameraInfo.requires_camera()
+        self.camera = self._cm.get_camera(self.camera_idx)
         self.requires_camera()
 
         self.__identify_camera()
