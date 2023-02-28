@@ -12,6 +12,7 @@ def _framerates_to_durations_(framerates):
         framerates = (framerates, framerates)
     return (int(1000000 / framerates[1]), int(1000000 / framerates[0]))
 
+
 def _durations_to_framerates_(durations):
     if durations[0] == durations[1]:
         return 1000000 / durations[0]
