@@ -166,7 +166,7 @@ class CompletedRequest(AbstractCompletedRequest):
             self.cleanup()
             self.request = None
 
-    def get_config(self, name: str) -> Dict[str, Any]:
+    def get_config(self, name: str) -> CameraConfig:
         """Fetch the configuration for the named stream."""
         return self.config
 

@@ -7,20 +7,22 @@ from typing import Set
 from libcamera import ControlType, Rectangle, Size
 
 
+def _framerates_to_durations_(framerates):
+    if not isinstance(framerates, (tuple, list)):
+        framerates = (framerates, framerates)
+    return (int(1000000 / framerates[1]), int(1000000 / framerates[0]))
+
+
+def _durations_to_framerates_(durations):
+    if durations[0] == durations[1]:
+        return 1000000 / durations[0]
+    return (1000000 / durations[1], 1000000 / durations[0])
+
+
 # TODO(meawoppl) Bring the libcamera cohersion functions into this file
 # currently in the root `__init__.py` Perform forward and backward
 # type conversion in one place... here.
 class Controls:
-    def _framerates_to_durations_(framerates):
-        if not isinstance(framerates, (tuple, list)):
-            framerates = (framerates, framerates)
-        return (int(1000000 / framerates[1]), int(1000000 / framerates[0]))
-
-    def _durations_to_framerates_(durations):
-        if durations[0] == durations[1]:
-            return 1000000 / durations[0]
-        return (1000000 / durations[1], 1000000 / durations[0])
-
     _VIRTUAL_FIELDS_MAP_ = {
         "FrameRate": (
             "FrameDurationLimits",
@@ -32,7 +34,6 @@ class Controls:
     def __init__(self, camera, controls={}):
         self._camera = camera
         self._controls = []
-        self._lock = threading.Lock()
         self.set_controls(controls)
 
     def available_control_names(self) -> Set[str]:
@@ -61,34 +62,31 @@ class Controls:
         return f"<Controls: {self.make_dict()}>"
 
     def set_controls(self, controls: dict | Controls):
-        with self._lock:
-            if isinstance(controls, dict):
-                for k, v in controls.items():
-                    self.__setattr__(k, v)
-            elif isinstance(controls, Controls):
-                for k in controls._controls:
-                    v = controls.__dict__[k]
-                    self.__setattr__(k, v)
-            else:
-                raise RuntimeError(f"Cannot update controls with {type(controls)} type")
+        if isinstance(controls, dict):
+            for k, v in controls.items():
+                self.__setattr__(k, v)
+        elif isinstance(controls, Controls):
+            for k in controls._controls:
+                v = controls.__dict__[k]
+                self.__setattr__(k, v)
+        else:
+            raise RuntimeError(f"Cannot update controls with {type(controls)} type")
 
-    def get_libcamera_controls(self):
+    def get_libcamera_controls(self) -> dict:
         libcamera_controls = {}
-        with self._lock:
-            for k in self._controls:
-                v = self.__dict__[k]
-                id = self._camera.camera_ctrl_info[k][0]
-                if id.type == ControlType.Rectangle:
-                    v = Rectangle(*v)
-                elif id.type == ControlType.Size:
-                    v = Size(*v)
-                libcamera_controls[id] = v
+        for k in self._controls:
+            v = self.__dict__[k]
+            id = self._camera.camera_ctrl_info[k][0]
+            if id.type == ControlType.Rectangle:
+                v = Rectangle(*v)
+            elif id.type == ControlType.Size:
+                v = Size(*v)
+            libcamera_controls[id] = v
         return libcamera_controls
 
     def make_dict(self):
         dict_ = {}
-        with self._lock:
-            for k in self._controls:
-                v = self.__dict__[k]
-                dict_[k] = v
+        for k in self._controls:
+            v = self.__dict__[k]
+            dict_[k] = v
         return dict_
