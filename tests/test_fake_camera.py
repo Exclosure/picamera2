@@ -30,6 +30,24 @@ def test_fake_camera_run_internals():
     camera.stop()
     camera.close()
 
+def test_fake_image_plausible(show=False):
+    camera = FakeCamera()
+    camera.start()
+    img = camera.capture_image().result(timeout=0.2)
+    if show:
+        img.show()
+
+    img_array = camera.capture_array().result(timeout=0.2)
+    # First row is red
+    assert np.all(img_array[:, 0, 0] == 255)
+
+    # Middle row is green
+    assert np.all(img_array[:, img_array.shape[1]// 2, 1] == 255)
+
+    # Last row is blue
+    assert np.all(img_array[:, -1, 2] == 255)
+
+    camera.stop()
 
 def test_fake_camera_makes_images():
     camera = FakeCamera()
