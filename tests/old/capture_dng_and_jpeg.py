@@ -5,6 +5,7 @@ import tempfile
 
 from scicamera import Camera
 from scicamera.configuration import CameraConfig
+
 camera = Camera()
 camera.start_preview()
 

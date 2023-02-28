@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-
 from collections import deque
 from typing import List
 
@@ -15,11 +14,11 @@ from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.info import CameraInfo
 from scicamera.lc_helpers import errno_handle, lc_unpack, lc_unpack_controls
+from scicamera.manager import CameraManager
 from scicamera.preview import NullPreview
 from scicamera.request import LoopTask
 from scicamera.sensor_format import SensorFormat
 from scicamera.tuning import TuningContext
-from scicamera.manager import CameraManager
 
 STILL = libcamera.StreamRole.StillCapture
 RAW = libcamera.StreamRole.Raw

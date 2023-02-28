@@ -1,20 +1,22 @@
 from __future__ import annotations
+
+import selectors
 import threading
-import libcamera
-from typing import Dict, TYPE_CHECKING
 from dataclasses import replace
 from functools import partial
-from scicamera.request import CompletedRequest
-from scicamera.misc import make_completed_thread
-import selectors
-
 from logging import getLogger
+from typing import TYPE_CHECKING, Dict
+
+import libcamera
+
+from scicamera.misc import make_completed_thread
+from scicamera.request import CompletedRequest
 
 _log = getLogger(__name__)
 
 if TYPE_CHECKING:
     from scicamera.camera import Camera
-    
+
 
 class CameraManager:
     _instance: CameraManager = None
@@ -35,7 +37,7 @@ class CameraManager:
 
     def get_camera(self, index: int, camera: Camera):
         """Get the (lc) camera with the given index
-        
+
         This additionally register callbacks to be made to
         the ``Camera`` instance when the camera is ready
         """
@@ -47,7 +49,7 @@ class CameraManager:
                 self._thread = threading.Thread(target=self.listen, daemon=True)
                 self._thread.start()
                 _log.info("Started camera manager thread")
-        return lc_camera       
+        return lc_camera
 
     def cleanup(self, index: int):
         with self._lock:

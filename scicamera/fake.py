@@ -13,8 +13,8 @@ import numpy as np
 
 from scicamera.actions import RequestMachinery
 from scicamera.configuration import CameraConfig, StreamConfig
-from scicamera.request import CompletedRequest
 from scicamera.misc import make_completed_thread
+from scicamera.request import CompletedRequest
 
 FAKE_SIZE = (320, 240)
 FAKE_FORMAT = "RGB888"
