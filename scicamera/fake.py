@@ -8,7 +8,6 @@ from scicamera.actions import RequestMachinery
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.request import CompletedRequest
 
-
 FAKE_SIZE = (320, 240)
 FAKE_FORMAT = "RGB888"
 FAKE_CHANNELS = 3
@@ -17,16 +16,16 @@ FAKE_STRIDE = FAKE_CHANNELS * FAKE_SIZE[0]
 
 def make_fake_image(shape: Tuple[int, int]):
     """Make a image buffer in the style the cameras might return
-    
+
     This is intended to be a ``RGB888`` encoding, so the size/shape
     isn't what most people are used to for images in ``numpy`` land.
     """
     w, h = shape
     img = np.zeros((h, w, FAKE_CHANNELS), dtype=np.uint8)
-    
-    img[:,            : w // 3    , 0] = 255
-    img[:, w // 3     : 2 * w // 3, 1] = 255
-    img[:, 2 * w // 3 :           , 2] = 255
+
+    img[:, : w // 3, 0] = 255
+    img[:, w // 3 : 2 * w // 3, 1] = 255
+    img[:, 2 * w // 3 :, 2] = 255
     return img
 
 
@@ -69,11 +68,7 @@ class FakeCamera(RequestMachinery):
             controls={},
             transform=libcamera.Transform(),
             color_space=libcamera.ColorSpace.Sycc(),
-            main=StreamConfig(
-                size=FAKE_SIZE,
-                format=FAKE_FORMAT,
-                stride=FAKE_STRIDE
-            ),
+            main=StreamConfig(size=FAKE_SIZE, format=FAKE_FORMAT, stride=FAKE_STRIDE),
         )
 
     def _run(self):
