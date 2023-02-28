@@ -5,6 +5,9 @@
 # prevents us from adding the images straightforwardly), but then we must recreate
 # it and apply it ourselves at the end.
 
+import os
+import tempfile
+
 import numpy as np
 from PIL import Image
 
@@ -33,7 +36,13 @@ camera = Camera(tuning=tuning)
 config = CameraConfig.for_still(camera, {"format": "RGB888"}, buffer_count=2)
 camera.configure(config)
 images = []
-camera.set_controls({"ExposureTime": exposure_time // num_frames, "AnalogueGain": 1.0})
+
+# NOTE(meawoppl) pytest.skip here
+available = camera.controls.available_control_names()
+if {"ExposureTime", "AnalogueGain"}.issubset(available):
+    camera.set_controls(
+        {"ExposureTime": exposure_time // num_frames, "AnalogueGain": 1.0}
+    )
 camera.start()
 
 for i in range(num_frames):
@@ -45,4 +54,7 @@ for image in images:
     accumulated += image
 accumulated = gamma_lut[accumulated]
 
-Image.fromarray(accumulated).save("accumulated.jpg")
+with tempfile.TemporaryDirectory() as tmpdir:
+    path = os.path.join(tmpdir, "accumulated.jpg")
+    Image.fromarray(accumulated).save(path)
+    assert os.path.isfile(path)

@@ -1,16 +1,18 @@
 #!/usr/bin/python3
-# Capture a JPEG while still running in the preview mode.
+# Another (simpler!) way to fix the AEC/AGC and AWB.
+
 from scicamera import Camera, CameraConfig
-from scicamera.configuration import CameraConfig
 
 camera = Camera()
 camera.start_preview()
 
 preview_config = CameraConfig.for_preview(camera)
-capture_config = CameraConfig.for_still(camera)
 camera.configure(preview_config)
 
 camera.start()
 camera.discard_frames(2)
-camera.capture_file("test_full.jpg", config=capture_config).result()
+
+if {"AwbEnable", "AeEnable"} <= camera.controls.available_control_names():
+    camera.set_controls({"AwbEnable": 0, "AeEnable": 0})
+camera.discard_frames(2).result()
 camera.close()

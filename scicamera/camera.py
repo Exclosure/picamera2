@@ -3,29 +3,25 @@
 from __future__ import annotations
 
 import logging
-import os
 import selectors
 import threading
 from collections import deque
-from concurrent.futures import Future
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from functools import partial
-from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
+from typing import Dict, List
 
 import libcamera
-import numpy as np
-from PIL import Image
 
 import scicamera.formats as formats
+from scicamera.actions import RequestMachinery
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
-from scicamera.frame import CameraFrame
-from scicamera.lc_helpers import lc_unpack, lc_unpack_controls
-from scicamera.previews import NullPreview
+from scicamera.info import CameraInfo
+from scicamera.lc_helpers import errno_handle, lc_unpack, lc_unpack_controls
+from scicamera.preview import NullPreview
 from scicamera.request import CompletedRequest, LoopTask
 from scicamera.sensor_format import SensorFormat
 from scicamera.tuning import TuningContext
-from scicamera.typing import TypedFuture
 
 STILL = libcamera.StreamRole.StillCapture
 RAW = libcamera.StreamRole.Raw
@@ -35,50 +31,6 @@ VIEWFINDER = libcamera.StreamRole.Viewfinder
 _log = logging.getLogger(__name__)
 
 
-# TODO(meawoppl) doc these arrtibutes
-@dataclass
-class CameraInfo:
-    id: str
-
-    model: str
-
-    location: str
-
-    rotation: int
-
-    @staticmethod
-    def global_camera_info() -> List[CameraInfo]:
-        """
-        Return Id string and Model name for all attached cameras, one dict per camera,
-        and ordered correctly by camera number. Also return the location and rotation
-        of the camera when known, as these may help distinguish which is which.
-        """
-        infos = []
-        for cam in libcamera.CameraManager.singleton().cameras:
-            name_to_val = {
-                k.name.lower(): v
-                for k, v in cam.properties.items()
-                if k.name in ("Model", "Location", "Rotation")
-            }
-            name_to_val["id"] = cam.id
-            infos.append(CameraInfo(**name_to_val))
-        return infos
-
-    @staticmethod
-    def n_cameras() -> int:
-        """Return the number of attached cameras."""
-        return len(libcamera.CameraManager.singleton().cameras)
-
-    def requires_camera(n: int = 1):
-        if CameraInfo.n_cameras() < n:
-            _log.error(
-                "Camera(s) not found (Do not forget to disable legacy camera with raspi-config)."
-            )
-            raise RuntimeError(
-                "Camera(s) not found (Do not forget to disable legacy camera with raspi-config)."
-            )
-
-
 class CameraManager:
     cameras: Dict[int, Camera]
 
@@ -86,9 +38,13 @@ class CameraManager:
         self.running = False
         self.cameras = {}
         self._lock = threading.Lock()
+        self.cms = libcamera.CameraManager.singleton()
+
+    def get_camera(self, idx: int):
+        """Get the (lc) camera with the given index"""
+        return self.cms.cameras[idx]
 
     def setup(self):
-        self.cms = libcamera.CameraManager.singleton()
         self.thread = threading.Thread(target=self.listen, daemon=True)
         self.running = True
         self.thread.start()
@@ -108,7 +64,6 @@ class CameraManager:
                 flag = True
         if flag:
             self.thread.join()
-            self.cms = None
 
     def listen(self):
         sel = selectors.DefaultSelector()
@@ -121,7 +76,6 @@ class CameraManager:
                 callback()
 
         sel.unregister(self.cms.event_fd)
-        self.cms = None
 
     def handle_request(self, flushid=None):
         """Handle requests"""
@@ -147,12 +101,12 @@ class CameraManager:
                     )
 
 
-class Camera:
+class Camera(RequestMachinery):
     """Welcome to the Camera class."""
 
     _cm = CameraManager()
 
-    def __init__(self, camera_num=0, tuning=None):
+    def __init__(self, camera_num: int = 0, tuning=None):
         """Initialise camera system and open the camera for use.
 
         :param camera_num: Camera index, defaults to 0
@@ -161,10 +115,10 @@ class Camera:
         :type tuning: str, optional
         :raises RuntimeError: Init didn't complete
         """
+        super().__init__()
+
         self._cm.add(camera_num, self)
         self.camera_idx = camera_num
-        self._requests = deque()
-        self._request_callbacks = []
         self._reset_flags()
 
         with TuningContext(tuning):
@@ -180,25 +134,6 @@ class Camera:
     def camera_manager(self):
         return Camera._cm.cms
 
-    def add_request_callback(self, callback: Callable[[CompletedRequest], None]):
-        """Add a callback to be called when every request completes.
-
-        Note that the request is only valid within the callback, and will be
-        deallocated after the callback returns.
-
-        :param callback: The callback to be called
-        :type callback: Callable[[CompletedRequest], None]
-        """
-        self._request_callbacks.append(callback)
-
-    def remove_request_callback(self, callback: Callable[[CompletedRequest], None]):
-        """Remove a callback previously added with add_request_callback.
-
-        :param callback: The callback to be removed
-        :type callback: Callable[[CompletedRequest], None]
-        """
-        self._request_callbacks.remove(callback)
-
     def _reset_flags(self) -> None:
         self.camera = None
         self.is_open = False
@@ -210,8 +145,6 @@ class Camera:
         self.stream_map = None
         self.started = False
         self.stop_count = 0
-        self.frames = 0
-        self._task_deque: Deque[LoopTask] = deque()
         self.options = {}
         self.post_callback = None
         self.camera_properties_ = {}
@@ -296,17 +229,9 @@ class Camera:
 
     def __del__(self):
         """Without this libcamera will complain if we shut down without closing the camera."""
-        _log.warning(f"__del__ call responsible for cleanup of {self}")
-        self.close()
-
-    def _grab_camera(self, idx: str | int):
-        if isinstance(idx, str):
-            try:
-                return self.camera_manager.get(idx)
-            except Exception:
-                return self.camera_manager.find(idx)
-        elif isinstance(idx, int):
-            return self.camera_manager.cameras[idx]
+        if self.is_open:
+            _log.warning(f"__del__ call responsible for cleanup of {self}")
+            self.close()
 
     def requires_camera(self):
         if self.camera is None:
@@ -319,8 +244,8 @@ class Camera:
 
         :raises RuntimeError: Failure to initialise camera
         """
-        CameraInfo.requires_camera(1)
-        self.camera = self._grab_camera(self.camera_idx)
+        CameraInfo.requires_camera()
+        self.camera = self._cm.get_camera(self.camera_idx)
         self.requires_camera()
 
         self.__identify_camera()
@@ -350,8 +275,7 @@ class Camera:
         self._initialize_camera()
 
         acq_code = self.camera.acquire()
-        if acq_code != 0:
-            raise RuntimeError(f"camera.acquire() returned unexpected code: {acq_code}")
+        errno_handle(acq_code, "camera.acquire()")
 
         self.is_open = True
         _log.info("Camera now open.")
@@ -434,9 +358,9 @@ class Camera:
             return
 
         self.stop()
-        release_code = self.camera.release()
-        if release_code < 0:
-            raise RuntimeError(f"Failed to release camera ({release_code})")
+        code = self.camera.release()
+        errno_handle(code, "camera.release()")
+
         self._cm.cleanup(self.camera_idx)
         self.is_open = False
         self.streams = None
@@ -521,7 +445,9 @@ class Camera:
         for id, value in controls.items():
             request.set_control(id, value)
         self.controls = Controls(self)
-        self.camera.queue_request(request)
+
+        code = self.camera.queue_request(request)
+        errno_handle(code, f"camera.queue_request({request})")
 
     def _make_requests(self) -> List[libcamera.Request]:
         """Make libcamera request objects.
@@ -621,11 +547,8 @@ class Camera:
             _log.info("Camera configuration has been adjusted!")
 
         # Configure libcamera.
-        config_call_code = self.camera.configure(libcamera_config)
-        if config_call_code:
-            raise RuntimeError(
-                f"Configuration failed ({config_call_code}): {camera_config}\n{libcamera_config}"
-            )
+        code = self.camera.configure(libcamera_config)
+        errno_handle(code, "camera.configure()")
         _log.info("Configuration successful!")
         _log.debug(f"Final configuration: {camera_config}")
 
@@ -681,11 +604,8 @@ class Camera:
         controls = self.controls.get_libcamera_controls()
         self.controls = Controls(self)
 
-        return_code = self.camera.start(controls)
-        if return_code < 0:
-            msg = f"Camera did not start properly. ({return_code})"
-            _log.error(msg)
-            raise RuntimeError(msg)
+        code = self.camera.start(controls)
+        errno_handle(code, "camera.start()")
 
         for request in self._make_requests():
             self.camera.queue_request(request)
@@ -722,7 +642,8 @@ class Camera:
         """
         if self.started:
             self.stop_count += 1
-            self.camera.stop()
+            code = self.camera.stop()
+            errno_handle(code, "camera.stop()")
 
             # Flush Requests from the event queue.
             # This is needed to prevent old completed Requests from showing
@@ -745,223 +666,3 @@ class Camera:
     def set_controls(self, controls) -> None:
         """Set camera controls. These will be delivered with the next request that gets submitted."""
         self.controls.set_controls(controls)
-
-    def add_completed_request(self, request: CompletedRequest) -> None:
-        self._requests.append(request)
-
-    def has_requests(self) -> bool:
-        return len(self._requests) > 0
-
-    def process_requests(self) -> None:
-        # Safe copy and pop off all requests
-        requests = list(self._requests)
-        for _ in requests:
-            self._requests.popleft()
-
-        self.frames += len(requests)
-
-        req_idx = 0
-        while len(self._task_deque) and (req_idx < len(requests)):
-            task = self._task_deque.popleft()
-            _log.debug(f"Begin LoopTask Execution: {task.call}")
-            try:
-                if task.needs_request:
-                    req = requests[req_idx]
-                    req_idx += 1
-                    task.future.set_result(task.call(req))
-                else:
-                    task.future.set_result(task.call())
-            except Exception as e:
-                _log.warning(f"Error in LoopTask {task.call}: {e}")
-                task.future.set_exception(e)
-            _log.debug(f"End LoopTask Execution: {task.call}")
-
-        for request in requests:
-            for callback in self._request_callbacks:
-                try:
-                    callback(request)
-                except Exception as e:
-                    _log.error(f"Error in request callback ({callback}): {e}")
-
-        for req in requests:
-            req.release()
-
-    def _dispatch_loop_tasks(
-        self, *args: LoopTask, config: Optional[dict] = None
-    ) -> List[Future]:
-        """The main thread should use this to dispatch a number of operations for the event
-        loop to perform. The event loop will execute them in order, and return a list of
-        futures which mature at the time the corresponding operation completes.
-        """
-
-        if config is None:
-            tasks = args
-        else:
-            previous_config = self.camera_config
-            # FIXME: the discarded request enough for test cases, but the correct
-            # way to flag this is with the request.cookie, but that is currently
-            # used to route between cameras. Fixable, but independent issue for now.
-            tasks = (
-                [
-                    LoopTask.without_request(self._switch_mode, config),
-                    LoopTask.with_request(self._discard_request),
-                ]
-                + list(args)
-                + [
-                    LoopTask.without_request(self._switch_mode, previous_config),
-                ]
-            )
-        self._task_deque.extend(tasks)
-        # Note that the below strips the config changes
-        return [task.future for task in args]
-
-    def _discard_request(self, request: CompletedRequest) -> None:
-        pass
-
-    def discard_frames(self, n_frames: int) -> TypedFuture[None]:
-        """Discard the next ``n_frames`` in the queue."""
-        return self._dispatch_loop_tasks(
-            *[LoopTask.with_request(self._discard_request) for _ in range(n_frames)]
-        )[-1]
-
-    def _switch_mode(self, camera_config):
-        self._stop()
-        self._configure(camera_config)
-        self._start()
-        return self.camera_config
-
-    def switch_mode(self, camera_config: dict) -> TypedFuture[dict]:
-        """Switch the camera into another mode given by the camera_config."""
-        return self._dispatch_loop_tasks(
-            LoopTask.without_request(self._switch_mode, camera_config)
-        )[0]
-
-    def _capture_file(
-        self, name, file_output, format, request: CompletedRequest
-    ) -> dict:
-        request.make_image(name).convert("RGB").save(file_output, format=format)
-        return request.get_metadata()
-
-    def capture_file(
-        self, file_output, name: str = "main", format=None, config=None
-    ) -> TypedFuture[dict]:
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_file, name, file_output, format),
-            config=config,
-        )[0]
-
-    def _capture_request(self, request: CompletedRequest):
-        request.acquire()
-        return request
-
-    def capture_request(
-        self, config: Optional[dict] = None
-    ) -> TypedFuture[CompletedRequest]:
-        """Fetch the next completed request from the camera system. You will be holding a
-        reference to this request so you must release it again to return it to the camera system.
-        """
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_request), config=config
-        )[0]
-
-    def _capture_metadata(self, request: CompletedRequest) -> Dict[str, Any]:
-        return request.get_metadata()
-
-    def capture_metadata(self, config: Optional[dict] = None) -> Future:
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_metadata), config=config
-        )[0]
-
-    # Buffer Capture Methods
-    def _capture_buffer(self, name: str, request: CompletedRequest):
-        return request.get_buffer(name)
-
-    def capture_buffer(self, name="main", config: dict = None) -> Future[np.ndarray]:
-        """Make a 1d numpy array from the next frame in the named stream."""
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_buffer, name), config=config
-        )[0]
-
-    # Buffers and metadata
-    def _capture_buffers_and_metadata(
-        self, names: List[str], request: CompletedRequest
-    ) -> Tuple[List[np.ndarray], dict]:
-        return ([request.get_buffer(name) for name in names], request.get_metadata())
-
-    def capture_buffers_and_metadata(
-        self, names=["main"]
-    ) -> TypedFuture[Tuple[List[np.ndarray], dict]]:
-        """Make a 1d numpy array from the next frame for each of the named streams."""
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_buffers_and_metadata, names)
-        )[0]
-
-    # Array Capture Methods
-    def _capture_array(self, name, request: CompletedRequest):
-        return request.make_array(name)
-
-    def capture_array(
-        self, name="main", config: Optional[dict] = None
-    ) -> Future[np.ndarray]:
-        """Make a 2d image from the next frame in the named stream."""
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_array, name), config=config
-        )[0]
-
-    def _capture_arrays_and_metadata(
-        self, names, request: CompletedRequest
-    ) -> Tuple[List[np.ndarray], Dict[str, Any]]:
-        return ([request.make_array(name) for name in names], request.get_metadata())
-
-    def capture_arrays_and_metadata(
-        self, names=["main"]
-    ) -> TypedFuture[Tuple[List[np.ndarray], Dict[str, Any]]]:
-        """Make 2d image arrays from the next frames in the named streams."""
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_arrays_and_metadata, names)
-        )[0]
-
-    def _capture_image(self, name: str, request: CompletedRequest) -> Image.Image:
-        return request.make_image(name)
-
-    def capture_image(
-        self, name: str = "main", config: Optional[dict] = None
-    ) -> TypedFuture[Image.Image]:
-        """Make a PIL image from the next frame in the named stream.
-
-        :param name: Stream name, defaults to "main"
-        :type name: str, optional
-        :param wait: Wait for the event loop to finish an operation and signal us, defaults to True
-        :type wait: bool, optional
-        :param signal_function: Callback, defaults to None
-        :type signal_function: function, optional
-        :return: PIL Image
-        :rtype: Image
-        """
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_image, name),
-            config=config,
-        )[0]
-
-    def _capture_frame(self, name: str, request: CompletedRequest) -> CameraFrame:
-        return CameraFrame.from_request(name, request)
-
-    def capture_frame(
-        self, name: str = "main", config=None
-    ) -> TypedFuture[CameraFrame]:
-        """Make a CameraFrame from the next frame in the named stream.
-
-        :param name: Stream name, defaults to "main"
-        :type name: str, optional
-        """
-        return self._dispatch_loop_tasks(
-            LoopTask.with_request(self._capture_frame, name), config=config
-        )[0]
-
-    def capture_serial_frames(
-        self, n_frames: int, name="main"
-    ) -> List[TypedFuture[CameraFrame]]:
-        """Capture a number of frames from the named stream, returning a list of CameraFrames."""
-        return self._dispatch_loop_tasks(
-            *(LoopTask.with_request(self._capture_frame, name) for _ in range(n_frames))
-        )

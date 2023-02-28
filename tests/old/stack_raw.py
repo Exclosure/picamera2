@@ -5,6 +5,9 @@
 # and saving a DNG file. Currentl you need to use a raw converter to obtain the
 # final result (e.g. "dcraw -w -W accumulated.dng").
 
+import os
+import tempfile
+
 import numpy as np
 from PIL import Image
 
@@ -42,4 +45,7 @@ accumulated = accumulated.clip(0, 2**raw_format.bit_depth - 1).astype(np.uint16)
 accumulated = accumulated.view(np.uint8)
 metadata["ExposureTime"] = exposure_time
 
-Image.fromarray(accumulated).save("accumulated.jpeg")
+with tempfile.TemporaryDirectory() as tmpdir:
+    path = os.path.join(tmpdir, "accumulated.jpg")
+    Image.fromarray(accumulated).save(path)
+    assert os.path.isfile(path)
