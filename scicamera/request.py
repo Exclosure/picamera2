@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import mmap
 import threading
+import time
 from abc import ABC, abstractmethod
 from concurrent.futures import Future
 from dataclasses import dataclass, field
@@ -133,6 +134,7 @@ class CompletedRequest(AbstractCompletedRequest):
         stream_map: Dict[str, Any],
         cleanup: Callable[[], None],
     ):
+        self.completion_time = time.time()
         self.request = lc_request
         self.ref_count = 1
         self.lock = threading.Lock()
