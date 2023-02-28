@@ -1,6 +1,25 @@
+import errno
+from logging import getLogger
 from typing import Any, Dict
 
 import libcamera
+
+_log = getLogger(__name__)
+
+
+def errno_handle(code: int, callname: str) -> None:
+    """Convert an errno to a string."""
+    if code >= 0:
+        str_rep = "Success"
+    else:
+        str_rep = errno.errorcode.get(-code, "Unknown error")
+    formatted = f"{callname} - {str_rep} ({code})"
+
+    if code >= 0:
+        _log.debug(formatted)
+    else:
+        _log.error(formatted)
+        raise RuntimeError(formatted)
 
 
 def _convert_from_libcamera_type(value):
