@@ -18,7 +18,7 @@ FAKE_STRIDE = FAKE_CHANNELS * FAKE_SIZE[0]
 def make_fake_image(shape: Tuple[int, int]):
     """Make a image buffer in the style the cameras might return
     
-    This is intended to be a ``XRGB888`` encoding, so the size/shape
+    This is intended to be a ``RGB888`` encoding, so the size/shape
     isn't what most people are used to for images in ``numpy`` land.
     """
     w, h = shape
