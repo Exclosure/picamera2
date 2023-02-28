@@ -14,6 +14,7 @@ import numpy as np
 from scicamera.actions import RequestMachinery
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.request import CompletedRequest
+from scicamera.misc import make_completed_thread
 
 FAKE_SIZE = (320, 240)
 FAKE_FORMAT = "RGB888"
@@ -63,9 +64,7 @@ class FakeCompletedRequest(CompletedRequest):
 class FakeCamera(RequestMachinery):
     def __init__(self) -> None:
         super().__init__()
-        self._t = Thread(target=lambda: None, daemon=True)
-        self._t.start()
-        self._t.join()
+        self._t = make_completed_thread()
         self._abort = Event()
 
         self.config = CameraConfig(

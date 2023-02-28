@@ -3,12 +3,9 @@
 from __future__ import annotations
 
 import logging
-import selectors
-import threading
+
 from collections import deque
-from dataclasses import replace
-from functools import partial
-from typing import Dict, List
+from typing import List
 
 import libcamera
 
@@ -19,9 +16,10 @@ from scicamera.controls import Controls
 from scicamera.info import CameraInfo
 from scicamera.lc_helpers import errno_handle, lc_unpack, lc_unpack_controls
 from scicamera.preview import NullPreview
-from scicamera.request import CompletedRequest, LoopTask
+from scicamera.request import LoopTask
 from scicamera.sensor_format import SensorFormat
 from scicamera.tuning import TuningContext
+from scicamera.manager import CameraManager
 
 STILL = libcamera.StreamRole.StillCapture
 RAW = libcamera.StreamRole.Raw
@@ -29,76 +27,6 @@ VIDEO = libcamera.StreamRole.VideoRecording
 VIEWFINDER = libcamera.StreamRole.Viewfinder
 
 _log = logging.getLogger(__name__)
-
-
-class CameraManager:
-    cameras: Dict[int, Camera]
-
-    def __init__(self):
-        self.running = False
-        self.cameras = {}
-        self._lock = threading.Lock()
-        self.cms = libcamera.CameraManager.singleton()
-
-    def get_camera(self, idx: int):
-        """Get the (lc) camera with the given index"""
-        return self.cms.cameras[idx]
-
-    def setup(self):
-        self.thread = threading.Thread(target=self.listen, daemon=True)
-        self.running = True
-        self.thread.start()
-
-    def add(self, index: int, camera: Camera):
-        with self._lock:
-            self.cameras[index] = camera
-            if not self.running:
-                self.setup()
-
-    def cleanup(self, index: int):
-        flag = False
-        with self._lock:
-            del self.cameras[index]
-            if self.cameras == {}:
-                self.running = False
-                flag = True
-        if flag:
-            self.thread.join()
-
-    def listen(self):
-        sel = selectors.DefaultSelector()
-        sel.register(self.cms.event_fd, selectors.EVENT_READ, self.handle_request)
-
-        while self.running:
-            events = sel.select(0.2)
-            for key, _ in events:
-                callback = key.data
-                callback()
-
-        sel.unregister(self.cms.event_fd)
-
-    def handle_request(self, flushid=None):
-        """Handle requests"""
-        with self._lock:
-            cams = set()
-            for req in self.cms.get_ready_requests():
-                if (
-                    req.status == libcamera.Request.Status.Complete
-                    and req.cookie != flushid
-                ):
-                    cams.add(req.cookie)
-                    camera_inst = self.cameras[req.cookie]
-                    cleanup_call = partial(
-                        camera_inst.recycle_request, camera_inst.stop_count, req
-                    )
-                    self.cameras[req.cookie].add_completed_request(
-                        CompletedRequest(
-                            req,
-                            replace(camera_inst.camera_config),
-                            camera_inst.stream_map,
-                            cleanup_call,
-                        )
-                    )
 
 
 class Camera(RequestMachinery):
@@ -117,12 +45,10 @@ class Camera(RequestMachinery):
         """
         super().__init__()
 
-        self._cm.add(camera_num, self)
         self.camera_idx = camera_num
         self._reset_flags()
-
         with TuningContext(tuning):
-            self._open_camera()
+            self._initialize_camera()
 
         # Configuration requires various bits of information from the camera
         # so we build the default configurations here
@@ -233,24 +159,18 @@ class Camera(RequestMachinery):
             _log.warning(f"__del__ call responsible for cleanup of {self}")
             self.close()
 
-    def requires_camera(self):
-        if self.camera is None:
-            message = "Initialization failed."
-            _log.error(message)
-            raise RuntimeError(message)
-
     def _initialize_camera(self) -> None:
         """Initialize camera
 
         :raises RuntimeError: Failure to initialise camera
         """
         CameraInfo.requires_camera()
-        self.camera = self._cm.get_camera(self.camera_idx)
-        self.requires_camera()
+        self.camera = CameraManager.singleton().get_camera(self.camera_idx, self)
 
-        self.__identify_camera()
         self.camera_ctrl_info = lc_unpack_controls(self.camera.controls)
         self.camera_properties_ = lc_unpack(self.camera.properties)
+
+        _log.warning(self.camera_properties)
 
         # The next two lines could be placed elsewhere?
         self.sensor_resolution = self.camera_properties_["PixelArraySize"]
@@ -259,20 +179,6 @@ class Camera(RequestMachinery):
         )
 
         _log.info("Initialization successful.")
-
-    def __identify_camera(self):
-        # TODO(meawoppl) make this a helper on the camera_manager
-        for idx, address in enumerate(self.camera_manager.cameras):
-            if address == self.camera:
-                self.camera_idx = idx
-                break
-
-    def _open_camera(self) -> None:
-        """Tries to open camera
-
-        :raises RuntimeError: Failed to setup camera
-        """
-        self._initialize_camera()
 
         acq_code = self.camera.acquire()
         errno_handle(acq_code, "camera.acquire()")
@@ -361,7 +267,7 @@ class Camera(RequestMachinery):
         code = self.camera.release()
         errno_handle(code, "camera.release()")
 
-        self._cm.cleanup(self.camera_idx)
+        CameraManager.singleton().cleanup(self.camera_idx)
         self.is_open = False
         self.streams = None
         self.stream_map = None
@@ -648,7 +554,7 @@ class Camera(RequestMachinery):
             # Flush Requests from the event queue.
             # This is needed to prevent old completed Requests from showing
             # up when the camera is started the next time.
-            self._cm.handle_request(self.camera_idx)
+            CameraManager.singleton().handle_request(flushid=self.camera_idx)
             self.started = False
             self._requests = deque()
             _log.info("Camera stopped")

@@ -51,7 +51,7 @@ def test_file(test_file_name):
             ["python", test_file_name],
             cwd=old_test_folder,
             env=process_env,
-            timeout=20,
+            timeout=5,
             capture_output=True,
             check=True,
         ).check_returncode()

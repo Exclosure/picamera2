@@ -5,7 +5,6 @@ import tempfile
 
 from scicamera import Camera
 from scicamera.configuration import CameraConfig
-
 camera = Camera()
 camera.start_preview()
 
@@ -13,7 +12,8 @@ preview_config = CameraConfig.for_preview(camera)
 camera.configure("preview")
 
 camera.start()
-camera.discard_frames(2)
+camera.discard_frames(2).result()
+1/0
 
 capture_config = CameraConfig.for_still(camera)
 camera.switch_mode(capture_config).result()
