@@ -30,4 +30,4 @@ jobs:
       - name: Poetry Install Deps
         run: poetry install
       - name: Test
-        run: bash test.sh 
+        run: PYTHONPATH=/usr/lib/python3/dist-packages bash test.sh
