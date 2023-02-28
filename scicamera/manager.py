@@ -19,6 +19,12 @@ if TYPE_CHECKING:
 class CameraManager:
     _instance: CameraManager = None
 
+    @classmethod
+    def singleton(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
     index_to_scicam: Dict[int, Camera]
 
     def __init__(self):
@@ -27,12 +33,6 @@ class CameraManager:
         self.cms = libcamera.CameraManager.singleton()
         self._thread = make_completed_thread()
 
-    @classmethod
-    def singleton(cls):
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
-
     def get_camera(self, index: int, camera: Camera):
         """Get the (lc) camera with the given index
         
@@ -40,7 +40,7 @@ class CameraManager:
         the ``Camera`` instance when the camera is ready
         """
         lc_camera = self.cms.cameras[index]
-        _log.info("Got camera %s", lc_camera.name)
+        _log.info("Got camera %s", lc_camera)
         with self._lock:
             self.index_to_scicam[index] = camera
             if not self._thread.is_alive():

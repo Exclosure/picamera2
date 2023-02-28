@@ -511,7 +511,7 @@ class Camera(RequestMachinery):
         self.controls = Controls(self)
 
         code = self.camera.start(controls)
-        errno_handle(code, "camera.start()")
+        errno_handle(code, "Camera.start()")
 
         for request in self._make_requests():
             self.camera.queue_request(request)
