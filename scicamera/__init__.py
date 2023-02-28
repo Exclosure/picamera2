@@ -2,7 +2,7 @@ import importlib.metadata
 
 import libcamera
 
-from scicamera.camera import Camera
+from scicamera.camera import Camera, CameraManager
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.fake import FakeCamera
@@ -20,7 +20,9 @@ libcamera.ColorSpace.__eq__ = libcamera_color_spaces_eq
 __all__ = [
     "Camera",
     "CameraConfig",
-    "CameraInfo" "CompletedRequest",
+    "CameraInfo",
+    "CameraManager",
+    "CompletedRequest",
     "Controls",
     "FakeCamera",
     "StreamConfig",
