@@ -39,7 +39,6 @@ class CameraManager:
         This additionally register callbacks to be made to
         the ``Camera`` instance when the camera is ready
         """
-        1/0
         lc_camera = self.cms.cameras[index]
         _log.info("Got camera %s", lc_camera.name)
         with self._lock:
