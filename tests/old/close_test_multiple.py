@@ -17,7 +17,6 @@ def run_camera(idx):
 
 
 if __name__ == "__main__":
-
     if CameraInfo.n_cameras() <= 1:
         print("SKIPPED (one camera)")
         quit()
