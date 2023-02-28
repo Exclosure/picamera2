@@ -13,7 +13,7 @@ preview_config = CameraConfig.for_preview(camera)
 camera.configure("preview")
 
 camera.start()
-camera.discard_frames(2)
+camera.discard_frames(2).result()
 
 capture_config = CameraConfig.for_still(camera)
 camera.switch_mode(capture_config).result()
