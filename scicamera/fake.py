@@ -1,3 +1,10 @@
+"""
+This submodule contins a fake camera implementation that can be used for
+testing purposes. All instances of the FakeCamera class will share the
+same class structure so type-checking will work as expected. Similarly,
+the FakeCamera class will be a subclass of RequestMachinery so it can be
+used as a drop-in replacement for a real camera in basically every way.
+"""
 from threading import Event, Thread
 from typing import Any, Dict, Tuple
 
