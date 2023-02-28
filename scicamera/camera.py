@@ -17,7 +17,7 @@ from scicamera.actions import RequestMachinery
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.info import CameraInfo
-from scicamera.lc_helpers import lc_unpack, lc_unpack_controls
+from scicamera.lc_helpers import errno_handle, lc_unpack, lc_unpack_controls
 from scicamera.preview import NullPreview
 from scicamera.request import CompletedRequest, LoopTask
 from scicamera.sensor_format import SensorFormat
@@ -275,8 +275,7 @@ class Camera(RequestMachinery):
         self._initialize_camera()
 
         acq_code = self.camera.acquire()
-        if acq_code != 0:
-            raise RuntimeError(f"camera.acquire() returned unexpected code: {acq_code}")
+        errno_handle(acq_code, "camera.acquire()")
 
         self.is_open = True
         _log.info("Camera now open.")
@@ -359,9 +358,9 @@ class Camera(RequestMachinery):
             return
 
         self.stop()
-        release_code = self.camera.release()
-        if release_code < 0:
-            raise RuntimeError(f"Failed to release camera ({release_code})")
+        code = self.camera.release()
+        errno_handle(code, "camera.release()")
+
         self._cm.cleanup(self.camera_idx)
         self.is_open = False
         self.streams = None
@@ -446,7 +445,9 @@ class Camera(RequestMachinery):
         for id, value in controls.items():
             request.set_control(id, value)
         self.controls = Controls(self)
-        self.camera.queue_request(request)
+
+        code = self.camera.queue_request(request)
+        errno_handle(code, f"camera.queue_request({request})")
 
     def _make_requests(self) -> List[libcamera.Request]:
         """Make libcamera request objects.
@@ -546,11 +547,8 @@ class Camera(RequestMachinery):
             _log.info("Camera configuration has been adjusted!")
 
         # Configure libcamera.
-        config_call_code = self.camera.configure(libcamera_config)
-        if config_call_code:
-            raise RuntimeError(
-                f"Configuration failed ({config_call_code}): {camera_config}\n{libcamera_config}"
-            )
+        code = self.camera.configure(libcamera_config)
+        errno_handle(code, "camera.configure()")
         _log.info("Configuration successful!")
         _log.debug(f"Final configuration: {camera_config}")
 
@@ -606,11 +604,8 @@ class Camera(RequestMachinery):
         controls = self.controls.get_libcamera_controls()
         self.controls = Controls(self)
 
-        return_code = self.camera.start(controls)
-        if return_code < 0:
-            msg = f"Camera did not start properly. ({return_code})"
-            _log.error(msg)
-            raise RuntimeError(msg)
+        code = self.camera.start(controls)
+        errno_handle(code, "camera.start()")
 
         for request in self._make_requests():
             self.camera.queue_request(request)
@@ -647,7 +642,8 @@ class Camera(RequestMachinery):
         """
         if self.started:
             self.stop_count += 1
-            self.camera.stop()
+            code = self.camera.stop()
+            errno_handle(code, "camera.stop()")
 
             # Flush Requests from the event queue.
             # This is needed to prevent old completed Requests from showing
