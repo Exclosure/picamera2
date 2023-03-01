@@ -2,7 +2,7 @@ from typing import Type
 
 import pytest
 
-from scicamera import Camera, CameraConfig, FakeCamera
+from scicamera import Camera, FakeCamera
 from scicamera.camera import CameraManager
 
 
