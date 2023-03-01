@@ -19,5 +19,7 @@ def test_capture_multi_frame(CameraClass: Type[Camera]):
     camera.close()
 
     for f in futures:
+        frame = f.result()
         assert isinstance(f, Future)
-        assert isinstance(f.result(), CameraFrame)
+        assert isinstance(frame, CameraFrame)
+        assert frame.controls["ExposureTime"] is not None
