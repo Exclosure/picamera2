@@ -5,6 +5,7 @@ same class structure so type-checking will work as expected. Similarly,
 the FakeCamera class will be a subclass of RequestMachinery so it can be
 used as a drop-in replacement for a real camera in basically every way.
 """
+import time
 from threading import Event, Thread
 from typing import Any, Dict, Tuple
 
@@ -13,6 +14,7 @@ import numpy as np
 
 from scicamera.actions import RequestMachinery
 from scicamera.configuration import CameraConfig, StreamConfig
+from scicamera.controls import Controls
 from scicamera.request import CompletedRequest
 
 FAKE_SIZE = (320, 240)
@@ -37,8 +39,13 @@ def make_fake_image(shape: Tuple[int, int]):
 
 
 class FakeCompletedRequest(CompletedRequest):
-    def __init__(self, config: CameraConfig):
-        self._config = config
+    def __init__(self, config: CameraConfig, metadata: Dict[str, Any]):
+        self.config = config
+        self.completion_time = time.time()
+        self._metadata = metadata
+        self._metadata["SensorTimestamp"] = int(
+            (self.completion_time - 1.0) * 1_000_000_000
+        )
 
     def acquire(self):
         pass
@@ -48,20 +55,20 @@ class FakeCompletedRequest(CompletedRequest):
 
     def get_config(self, name: str) -> Dict[str, Any]:
         """Fetch the configuration for the named stream."""
-        return self._config
+        return self.config
 
     def get_buffer(self, name: str) -> np.ndarray:
         """Make a 1d numpy array from the named stream's buffer."""
-        size = self._config.get_config(name).size
+        size = self.config.get_config(name).size
         return make_fake_image(size).flatten()
 
     def get_metadata(self) -> Dict[str, Any]:
         """Fetch the metadata corresponding to this completed request."""
-        return {}
+        return self._metadata
 
 
 class FakeCamera(RequestMachinery):
-    def __init__(self) -> None:
+    def __init__(self, camera_num: int = 0, tuning=None) -> None:
         super().__init__()
         self._t = Thread(target=lambda: None, daemon=True)
         self._t.start()
@@ -78,14 +85,37 @@ class FakeCamera(RequestMachinery):
             main=StreamConfig(size=FAKE_SIZE, format=FAKE_FORMAT, stride=FAKE_STRIDE),
         )
 
+        self.sensor_resolution = FAKE_SIZE
+        self.camera_config = None
+        self.camera_ctrl_info = {
+            "AeEnable": 0,
+            "AnalogueGain": 1,
+            "AwbEnable": 0,
+            "ColourGains": 0.5,
+            "ExposureTime": 10000000,
+            "FrameDurationLimits": (10000000, 10000000),
+            "NoiseReductionMode": 0,
+        }
+        self.controls = Controls(self, self.camera_ctrl_info)
+
     def _run(self):
         while not self._abort.wait(0.1):
-            request = FakeCompletedRequest(self.config)
+            request = FakeCompletedRequest(self.config, self.controls.make_dict())
             self.add_completed_request(request)
             self.process_requests()
 
     def configure(self, config: CameraConfig) -> None:
-        self.config = config
+        self.camera_config = config
+
+    @property
+    def camera_controls(self):
+        return {}
+
+    def start_preview(self):
+        pass
+
+    def stop_preview(self):
+        pass
 
     def start(self) -> None:
         self._t = Thread(target=self._run, daemon=True)
@@ -99,3 +129,7 @@ class FakeCamera(RequestMachinery):
     def close(self) -> None:
         if self._t.is_alive():
             self.stop()
+
+    # TODO(meawoppl) - Kill this method
+    def set_controls(self, controls: Dict[str, Any]) -> None:
+        self.controls.set_controls(controls)

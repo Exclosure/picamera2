@@ -34,6 +34,14 @@ _log = logging.getLogger(__name__)
 class CameraManager:
     cameras: Dict[int, Camera]
 
+    _instance: CameraManager = None
+
+    @classmethod
+    def singleton(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
     def __init__(self):
         self.running = False
         self.cameras = {}
@@ -48,6 +56,14 @@ class CameraManager:
         self.thread = threading.Thread(target=self.listen, daemon=True)
         self.running = True
         self.thread.start()
+
+    def close_all(self) -> int:
+        n_closed = 0
+        for idx in self.cameras.keys():
+            # FIXME(meawoppl) - this calls back into self.cleanup()
+            self.cameras[idx].close()
+            n_closed += 1
+        return n_closed
 
     def add(self, index: int, camera: Camera):
         with self._lock:
