@@ -1,10 +1,11 @@
 import io
-
 from typing import Type
+
+import pytest
+
 from scicamera import Camera, CameraConfig
 from scicamera.fake import FakeCamera
 
-import pytest
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_to_buffer(CameraClass: Type[Camera]):

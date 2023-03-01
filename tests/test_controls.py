@@ -1,7 +1,9 @@
-from scicamera import Camera, CameraConfig
 from typing import Type
+
 import pytest
-from scicamera import FakeCamera
+
+from scicamera import Camera, CameraConfig, FakeCamera
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_set_controls(CameraClass: Type[Camera]):

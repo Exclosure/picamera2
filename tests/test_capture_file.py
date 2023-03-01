@@ -1,16 +1,17 @@
 import os
 from tempfile import TemporaryDirectory
-
-from scicamera import Camera, CameraConfig
 from typing import Type
+
 import pytest
-from scicamera import FakeCamera
+
+from scicamera import Camera, CameraConfig, FakeCamera
+
 
 @pytest.mark.parametrize("extension", ["jpg", "png", "bmp", "gif", "pgm"])
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_file_encodings(CameraClass: Type[Camera], extension: str):
     """Capture a JPEG while still running in the preview mode.
-    
+
     When you capture to a file, the return value is the metadata for that image.
     """
     camera = CameraClass()

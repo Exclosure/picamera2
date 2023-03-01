@@ -1,12 +1,12 @@
 from datetime import datetime
-
-from scicamera import Camera, CameraConfig
-from scicamera.timing import calibrate_camera_offset
-from scicamera.fake import FakeCamera
 from typing import Type
 
-
 import pytest
+
+from scicamera import Camera, CameraConfig
+from scicamera.fake import FakeCamera
+from scicamera.timing import calibrate_camera_offset
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_time_calibration(CameraClass: Type[Camera]):

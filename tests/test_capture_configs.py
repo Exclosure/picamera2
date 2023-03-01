@@ -1,7 +1,9 @@
-from scicamera import Camera, CameraConfig
 from typing import Type
+
 import pytest
-from scicamera import FakeCamera
+
+from scicamera import Camera, CameraConfig, FakeCamera
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_config_video(CameraClass: Type[Camera]):
@@ -12,6 +14,7 @@ def test_capture_config_video(CameraClass: Type[Camera]):
     camera.discard_frames(2).result()
     camera.stop()
     camera.close()
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_config_still(CameraClass: Type[Camera]):

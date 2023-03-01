@@ -5,16 +5,16 @@ same class structure so type-checking will work as expected. Similarly,
 the FakeCamera class will be a subclass of RequestMachinery so it can be
 used as a drop-in replacement for a real camera in basically every way.
 """
+import time
 from threading import Event, Thread
 from typing import Any, Dict, Tuple
 
-import time
 import libcamera
 import numpy as np
 
 from scicamera.actions import RequestMachinery
-from scicamera.controls import Controls
 from scicamera.configuration import CameraConfig, StreamConfig
+from scicamera.controls import Controls
 from scicamera.request import CompletedRequest
 
 FAKE_SIZE = (320, 240)

@@ -1,9 +1,10 @@
-from scicamera import Camera, CameraConfig
 from typing import Type
-import pytest
-from scicamera import FakeCamera
 
 import numpy as np
+import pytest
+
+from scicamera import Camera, CameraConfig, FakeCamera
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_file_encodings(CameraClass: Type[Camera]):
