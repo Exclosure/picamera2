@@ -88,7 +88,7 @@ class FakeCamera(RequestMachinery):
             self.process_requests()
 
     def configure(self, config: CameraConfig) -> None:
-        self.camera_config = config  
+        self.camera_config = config
 
     @property
     def camera_controls(self):

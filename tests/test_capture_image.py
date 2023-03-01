@@ -1,13 +1,13 @@
 #!/usr/bin/python3
 # Capture a full resolution image to memory rather than to a file.
-from PIL import Image
-
 from typing import Type
+
+import pytest
+from PIL import Image
 
 from scicamera import Camera, CameraConfig
 from scicamera.fake import FakeCamera
 from scicamera.testing import mature_after_frames_or_timeout
-import pytest
 
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
