@@ -8,10 +8,12 @@ used as a drop-in replacement for a real camera in basically every way.
 from threading import Event, Thread
 from typing import Any, Dict, Tuple
 
+import time
 import libcamera
 import numpy as np
 
 from scicamera.actions import RequestMachinery
+from scicamera.controls import Controls
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.request import CompletedRequest
 
@@ -39,6 +41,7 @@ def make_fake_image(shape: Tuple[int, int]):
 class FakeCompletedRequest(CompletedRequest):
     def __init__(self, config: CameraConfig):
         self._config = config
+        self.completion_time = time.time()
 
     def acquire(self):
         pass
@@ -57,7 +60,8 @@ class FakeCompletedRequest(CompletedRequest):
 
     def get_metadata(self) -> Dict[str, Any]:
         """Fetch the metadata corresponding to this completed request."""
-        return {}
+        mock_timestamp_ns = int((self.completion_time - 1.0) * 1_000_000_000)
+        return {"SensorTimestamp": mock_timestamp_ns}
 
 
 class FakeCamera(RequestMachinery):
@@ -80,6 +84,8 @@ class FakeCamera(RequestMachinery):
 
         self.sensor_resolution = FAKE_SIZE
         self.camera_config = None
+        self.camera_ctrl_info = {}
+        self.controls = Controls(self)
 
     def _run(self):
         while not self._abort.wait(0.1):
