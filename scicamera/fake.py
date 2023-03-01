@@ -86,7 +86,7 @@ class FakeCamera(RequestMachinery):
             "ColourGains": (2.5220680236816406, 1.8971731662750244),
             "ColourTemperature": 4000,
             "ExposureTime": 10000000,
-            "FrameDurationLimits": (10000000, 10000000),
+            "FrameDurationLimits": (33333, 33333),
             "NoiseReductionMode": 0,
         }
         self.controls = Controls(self, self.camera_ctrl_info)
@@ -102,7 +102,7 @@ class FakeCamera(RequestMachinery):
         )
 
     def _run(self):
-        while not self._abort.wait(0.1):
+        while not self._abort.wait(self.controls.FrameDurationLimits[0]/1000000):
             metadata = self.controls.make_dict()
 
             metadata.update(
