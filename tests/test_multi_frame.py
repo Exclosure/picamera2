@@ -25,4 +25,4 @@ def test_capture_multi_frame(CameraClass: Type[Camera]):
         frame = f.result()
         assert isinstance(f, Future), type(f)
         assert isinstance(frame, CameraFrame), type(frame)
-        assert "ExposureTime" in frame.controls, frame.controls
+        assert "FrameDurationLimits" in frame.controls, frame.controls
