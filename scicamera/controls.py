@@ -1,36 +1,23 @@
-#!/usr/bin/python3
 from __future__ import annotations
 
-import threading
 from typing import Set
 
 from libcamera import ControlType, Rectangle, Size
 
 
-def _framerates_to_durations_(framerates):
+def _framerates_to_durations(framerates):
     if not isinstance(framerates, (tuple, list)):
         framerates = (framerates, framerates)
     return (int(1000000 / framerates[1]), int(1000000 / framerates[0]))
 
 
-def _durations_to_framerates_(durations):
+def _durations_to_framerates(durations):
     if durations[0] == durations[1]:
         return 1000000 / durations[0]
     return (1000000 / durations[1], 1000000 / durations[0])
 
 
-# TODO(meawoppl) Bring the libcamera cohersion functions into this file
-# currently in the root `__init__.py` Perform forward and backward
-# type conversion in one place... here.
 class Controls:
-    _VIRTUAL_FIELDS_MAP_ = {
-        "FrameRate": (
-            "FrameDurationLimits",
-            _framerates_to_durations_,
-            _durations_to_framerates_,
-        )
-    }
-
     def __init__(self, camera, controls={}):
         self._camera = camera
         self._controls = []
@@ -38,25 +25,17 @@ class Controls:
 
     def available_control_names(self) -> Set[str]:
         """Returns a set of all available control names"""
-        return set(self._camera.camera_ctrl_info.keys())
+        lc_names = set(self._camera.camera_ctrl_info.keys())
+        if "FrameDurationLimits" in lc_names:
+            lc_names.add("FrameRate")
+        return lc_names
 
     def __setattr__(self, name, value):
         if not name.startswith("_"):
-            if name in Controls._VIRTUAL_FIELDS_MAP_:
-                real_field = Controls._VIRTUAL_FIELDS_MAP_[name]
-                name = real_field[0]
-                value = real_field[1](value)
             if name not in self.available_control_names():
                 raise RuntimeError(f"Control {name} is not advertised by libcamera")
             self._controls.append(name)
         self.__dict__[name] = value
-
-    def __getattribute__(self, name):
-        if name in Controls._VIRTUAL_FIELDS_MAP_:
-            real_field = Controls._VIRTUAL_FIELDS_MAP_[name]
-            real_value = self.__getattribute__(real_field[0])
-            return real_field[2](real_value)
-        return super().__getattribute__(name)
 
     def __repr__(self):
         return f"<Controls: {self.make_dict()}>"
@@ -71,6 +50,14 @@ class Controls:
                 self.__setattr__(k, v)
         else:
             raise RuntimeError(f"Cannot update controls with {type(controls)} type")
+
+    @property
+    def FrameRate(self) -> float:
+        return _durations_to_framerates(self.FrameDurationLimits)
+
+    @FrameRate.setter
+    def FrameRate(self, value: float) -> None:
+        self.FrameDurationLimits = _framerates_to_durations(value)
 
     def get_libcamera_controls(self) -> dict:
         libcamera_controls = {}

@@ -88,9 +88,13 @@ class FakeCamera(RequestMachinery):
         self.sensor_resolution = FAKE_SIZE
         self.camera_config = None
         self.camera_ctrl_info = {
+            "AeEnable": 0,
             "AnalogueGain": 1,
-            "ExposureTime": 1,
+            "AwbEnable": 0,
             "ColourGains": 0.5,
+            "ExposureTime": 10000000,
+            "FrameDurationLimits": (10000000, 10000000),
+            "NoiseReductionMode": 0,
         }
         self.controls = Controls(self, self.camera_ctrl_info)
 
@@ -125,3 +129,7 @@ class FakeCamera(RequestMachinery):
     def close(self) -> None:
         if self._t.is_alive():
             self.stop()
+
+    # TODO(meawoppl) - Kill this method
+    def set_controls(self, controls: Dict[str, Any]) -> None:
+        self.controls.set_controls(controls)

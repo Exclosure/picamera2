@@ -54,3 +54,11 @@ def test_set_gain_exposure(CameraClass: Type[Camera]):
     camera.discard_frames(2)
 
     camera.close()
+
+@pytest.mark.parametrize("CameraClass", [FakeCamera])
+def test_set_frame_rate(CameraClass: Type[Camera]):
+    camera = CameraClass()
+    camera.start()
+    camera.controls.FrameRate = 30
+    camera.stop()
+    camera.close()
