@@ -22,7 +22,6 @@ FAKE_FORMAT = "RGB888"
 FAKE_CHANNELS = 3
 FAKE_STRIDE = FAKE_CHANNELS * FAKE_SIZE[0]
 
-
 def make_fake_image(shape: Tuple[int, int]):
     """Make a image buffer in the style the cameras might return
 
@@ -79,10 +78,12 @@ class FakeCamera(RequestMachinery):
         self.camera_config = None
         self.camera_ctrl_info = {
             "AeEnable": 0,
-            "AnalogueGain": 1,
+            "AnalogueGain": 1.0,
+            "DigitalGain": 1.0,
             "AwbEnable": 0,
             "ColourCorrectionMatrix": [1, 0, 0, 0, 1, 0, 0, 0, 1],
-            "ColourGains": [0.5, 0.6],
+            "ColourGains":  (2.5220680236816406, 1.8971731662750244),
+            "ColourTemperature": 4000,
             "ExposureTime": 10000000,
             "FrameDurationLimits": (10000000, 10000000),
             "NoiseReductionMode": 0,
@@ -101,7 +102,15 @@ class FakeCamera(RequestMachinery):
 
     def _run(self):
         while not self._abort.wait(0.1):
-            request = FakeCompletedRequest(self.config, self.controls.make_dict())
+            metadata = self.controls.make_dict()
+
+            metadata.update({
+                "AeLocked": False,
+                "FocusFoM": 93,
+                "FrameDuration": 24994,
+                "Lux": 330.6990051269531,
+            })
+            request = FakeCompletedRequest(self.config, metadata)
             self.add_completed_request(request)
             self.process_requests()
 
