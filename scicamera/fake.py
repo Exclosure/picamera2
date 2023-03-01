@@ -75,7 +75,6 @@ class FakeCamera(RequestMachinery):
         self._t.join()
         self._abort = Event()
 
-
         self.sensor_resolution = FAKE_SIZE
         self.camera_config = None
         self.camera_ctrl_info = {
@@ -98,7 +97,6 @@ class FakeCamera(RequestMachinery):
             color_space=libcamera.ColorSpace.Sycc(),
             main=StreamConfig(size=FAKE_SIZE, format=FAKE_FORMAT, stride=FAKE_STRIDE),
         )
-
 
     def _run(self):
         while not self._abort.wait(0.1):
