@@ -12,10 +12,11 @@ def test_capture_multi_frame(CameraClass: Type[Camera]):
     camera = CameraClass()
 
     camera.start()
+    camera.controls.ExposureTime = 10000
+    camera.discard_frames(2).result(0.5)
     futures = camera.capture_serial_frames(5)
     wait(futures, timeout=10)
 
-    camera.controls.ExposureTime = 10000
 
     camera.stop()
     camera.close()
