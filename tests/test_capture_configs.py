@@ -5,7 +5,10 @@ import pytest
 from scicamera import Camera, CameraConfig, FakeCamera
 
 
-@pytest.mark.parametrize("config_method", [CameraConfig.for_preview, CameraConfig.for_video, CameraConfig.for_still])
+@pytest.mark.parametrize(
+    "config_method",
+    [CameraConfig.for_preview, CameraConfig.for_video, CameraConfig.for_still],
+)
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_config_video(CameraClass: Type[Camera], config_method):
     camera = CameraClass()

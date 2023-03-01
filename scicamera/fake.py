@@ -43,7 +43,9 @@ class FakeCompletedRequest(CompletedRequest):
         self.config = config
         self.completion_time = time.time()
         self._metadata = metadata
-        self._metadata["SensorTimestamp"] = int((self.completion_time - 1.0) * 1_000_000_000) 
+        self._metadata["SensorTimestamp"] = int(
+            (self.completion_time - 1.0) * 1_000_000_000
+        )
 
     def acquire(self):
         pass
@@ -85,7 +87,11 @@ class FakeCamera(RequestMachinery):
 
         self.sensor_resolution = FAKE_SIZE
         self.camera_config = None
-        self.camera_ctrl_info = {"AnalogueGain": 1, "ExposureTime": 1, "ColourGains": 0.5}
+        self.camera_ctrl_info = {
+            "AnalogueGain": 1,
+            "ExposureTime": 1,
+            "ColourGains": 0.5,
+        }
         self.controls = Controls(self, self.camera_ctrl_info)
 
     def _run(self):

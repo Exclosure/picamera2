@@ -1,15 +1,11 @@
+from pprint import pprint
 from typing import Type
 
 import pytest
 
 from scicamera import Camera, CameraConfig, FakeCamera
-from pprint import pprint
-
-from scicamera import Camera, CameraConfig
 from scicamera.fake import FakeCamera
-from typing import Type
 
-import pytest
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_set_controls(CameraClass: Type[Camera]):
@@ -28,12 +24,10 @@ def test_set_controls(CameraClass: Type[Camera]):
     camera.close()
 
 
-
-
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_set_gain_exposure(CameraClass: Type[Camera]):
     """Example of setting controls.
-    
+
     Here, after one second, we fix the AGC/AEC to the values it
     has reached whereafter it will no longer change.
     """
@@ -53,10 +47,7 @@ def test_set_gain_exposure(CameraClass: Type[Camera]):
     camera.discard_frames(2)
     metadata = camera.capture_metadata().result(timeout=0.5)
     pprint(metadata)
-    controls = {
-        c: metadata[c]
-        for c in ["ExposureTime", "AnalogueGain", "ColourGains"]
-    }
+    controls = {c: metadata[c] for c in ["ExposureTime", "AnalogueGain", "ColourGains"]}
     print(controls)
 
     camera.controls.set_controls(controls)
