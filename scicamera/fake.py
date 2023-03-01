@@ -40,7 +40,7 @@ def make_fake_image(shape: Tuple[int, int]):
 
 class FakeCompletedRequest(CompletedRequest):
     def __init__(self, config: CameraConfig):
-        self._config = config
+        self.config = config
         self.completion_time = time.time()
 
     def acquire(self):
@@ -51,11 +51,11 @@ class FakeCompletedRequest(CompletedRequest):
 
     def get_config(self, name: str) -> Dict[str, Any]:
         """Fetch the configuration for the named stream."""
-        return self._config
+        return self.config
 
     def get_buffer(self, name: str) -> np.ndarray:
         """Make a 1d numpy array from the named stream's buffer."""
-        size = self._config.get_config(name).size
+        size = self.config.get_config(name).size
         return make_fake_image(size).flatten()
 
     def get_metadata(self) -> Dict[str, Any]:
