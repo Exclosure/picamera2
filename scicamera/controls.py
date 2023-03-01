@@ -31,7 +31,10 @@ class Controls:
         return lc_names
 
     def __setattr__(self, name, value):
-        if not name.startswith("_") and name != "FrameRate":
+        if name == "FrameRate":
+            super().__setattr__(name, value)
+            return
+        if not name.startswith("_"):
             if name not in self.available_control_names():
                 raise RuntimeError(f"Control {name} is not advertised by libcamera")
             self._controls.append(name)
