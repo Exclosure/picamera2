@@ -17,7 +17,6 @@ def test_capture_multi_frame(CameraClass: Type[Camera]):
     futures = camera.capture_serial_frames(5)
     wait(futures, timeout=10)
 
-
     camera.stop()
     camera.close()
 
