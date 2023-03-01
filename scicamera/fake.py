@@ -78,6 +78,9 @@ class FakeCamera(RequestMachinery):
             main=StreamConfig(size=FAKE_SIZE, format=FAKE_FORMAT, stride=FAKE_STRIDE),
         )
 
+        self.sensor_resolution = FAKE_SIZE
+        self.camera_config = None
+
     def _run(self):
         while not self._abort.wait(0.1):
             request = FakeCompletedRequest(self.config)
@@ -85,7 +88,17 @@ class FakeCamera(RequestMachinery):
             self.process_requests()
 
     def configure(self, config: CameraConfig) -> None:
-        self.config = config
+        self.camera_config = config  
+
+    @property
+    def camera_controls(self):
+        return {}
+
+    def start_preview(self):
+        pass
+
+    def stop_preview(self):
+        pass
 
     def start(self) -> None:
         self._t = Thread(target=self._run, daemon=True)
