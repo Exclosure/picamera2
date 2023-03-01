@@ -39,9 +39,11 @@ def make_fake_image(shape: Tuple[int, int]):
 
 
 class FakeCompletedRequest(CompletedRequest):
-    def __init__(self, config: CameraConfig):
+    def __init__(self, config: CameraConfig, metadata: Dict[str, Any]):
         self.config = config
         self.completion_time = time.time()
+        self._metadata = metadata
+        self._metadata["SensorTimestamp"] = int((self.completion_time - 1.0) * 1_000_000_000) 
 
     def acquire(self):
         pass
@@ -60,8 +62,7 @@ class FakeCompletedRequest(CompletedRequest):
 
     def get_metadata(self) -> Dict[str, Any]:
         """Fetch the metadata corresponding to this completed request."""
-        mock_timestamp_ns = int((self.completion_time - 1.0) * 1_000_000_000)
-        return {"SensorTimestamp": mock_timestamp_ns}
+        return self._metadata
 
 
 class FakeCamera(RequestMachinery):
@@ -84,12 +85,12 @@ class FakeCamera(RequestMachinery):
 
         self.sensor_resolution = FAKE_SIZE
         self.camera_config = None
-        self.camera_ctrl_info = {}
-        self.controls = Controls(self)
+        self.camera_ctrl_info = {"AnalogueGain": 1, "ExposureTime": 1, "ColourGains": 0.5}
+        self.controls = Controls(self, self.camera_ctrl_info)
 
     def _run(self):
         while not self._abort.wait(0.1):
-            request = FakeCompletedRequest(self.config)
+            request = FakeCompletedRequest(self.config, self.controls.make_dict())
             self.add_completed_request(request)
             self.process_requests()
 
