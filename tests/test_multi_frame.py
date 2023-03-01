@@ -1,13 +1,11 @@
 from concurrent.futures import Future, wait
-
-from scicamera import Camera
-from scicamera.frame import CameraFrame
-
 from typing import Type
 
 import pytest
 
-from scicamera import FakeCamera
+from scicamera import Camera, FakeCamera
+from scicamera.frame import CameraFrame
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_multi_frame(CameraClass: Type[Camera]):

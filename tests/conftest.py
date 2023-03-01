@@ -1,7 +1,8 @@
-from scicamera.camera import CameraManager
+from logging import getLogger
 
 import pytest
-from logging import getLogger
+
+from scicamera.camera import CameraManager
 
 _log = getLogger(__name__)
 

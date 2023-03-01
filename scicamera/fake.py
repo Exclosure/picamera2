@@ -65,7 +65,7 @@ class FakeCompletedRequest(CompletedRequest):
 
 
 class FakeCamera(RequestMachinery):
-    def __init__(self) -> None:
+    def __init__(self, camera_num: int = 0, tuning=None) -> None:
         super().__init__()
         self._t = Thread(target=lambda: None, daemon=True)
         self._t.start()
