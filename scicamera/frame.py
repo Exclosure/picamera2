@@ -12,7 +12,7 @@ class CameraFrame:
     array: np.ndarray
     """The image data as a numpy array."""
 
-    config: dict
+    controls: dict
     """The configuration used to capture the image."""
 
     metadata: dict
@@ -23,6 +23,6 @@ class CameraFrame:
         """Create a CameraFrame from a CompletedRequest."""
         return cls(
             array=request.make_array(name),
+            controls=request.config.controls.make_dict(),
             metadata=request.get_metadata(),
-            config=request.config,
         )

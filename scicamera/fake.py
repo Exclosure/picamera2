@@ -75,16 +75,6 @@ class FakeCamera(RequestMachinery):
         self._t.join()
         self._abort = Event()
 
-        self.config = CameraConfig(
-            self,
-            "still",
-            1,
-            controls={},
-            transform=libcamera.Transform(),
-            color_space=libcamera.ColorSpace.Sycc(),
-            main=StreamConfig(size=FAKE_SIZE, format=FAKE_FORMAT, stride=FAKE_STRIDE),
-        )
-
         self.sensor_resolution = FAKE_SIZE
         self.camera_config = None
         self.camera_ctrl_info = {
@@ -97,6 +87,16 @@ class FakeCamera(RequestMachinery):
             "NoiseReductionMode": 0,
         }
         self.controls = Controls(self, self.camera_ctrl_info)
+
+        self.config = CameraConfig(
+            self,
+            "still",
+            1,
+            controls=self.controls,
+            transform=libcamera.Transform(),
+            color_space=libcamera.ColorSpace.Sycc(),
+            main=StreamConfig(size=FAKE_SIZE, format=FAKE_FORMAT, stride=FAKE_STRIDE),
+        )
 
     def _run(self):
         while not self._abort.wait(0.1):

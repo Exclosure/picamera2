@@ -12,6 +12,8 @@ def test_capture_multi_frame(CameraClass: Type[Camera]):
     camera = CameraClass()
 
     camera.start()
+    camera.controls.ExposureTime = 10000
+    camera.discard_frames(2).result(0.5)
     futures = camera.capture_serial_frames(5)
     wait(futures, timeout=10)
 
@@ -19,5 +21,7 @@ def test_capture_multi_frame(CameraClass: Type[Camera]):
     camera.close()
 
     for f in futures:
-        assert isinstance(f, Future)
-        assert isinstance(f.result(), CameraFrame)
+        frame = f.result()
+        assert isinstance(f, Future), type(f)
+        assert isinstance(frame, CameraFrame), type(frame)
+        assert "FrameDurationLimits" in frame.controls, frame.controls
