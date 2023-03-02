@@ -26,7 +26,7 @@ def check(raw_config, fps):
         camera,
         raw=raw_config,
     )
-    camera.configure("video")
+    camera.configure(camera.video_configuration)
 
     # Check we got the correct raw format
     assert camera.camera_configuration().raw.size == raw_config["size"]

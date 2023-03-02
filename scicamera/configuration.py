@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, replace
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 import libcamera
 
 from scicamera import formats
 from scicamera.controls import Controls
+from scicamera.lc_helpers import errno_handle
 
 if TYPE_CHECKING:
     from scicamera.camera import Camera
@@ -27,6 +28,11 @@ _raw_stream_ignore_list = [
     "fps",
     "unpacked",
 ]
+
+STILL = libcamera.StreamRole.StillCapture
+RAW = libcamera.StreamRole.Raw
+VIDEO = libcamera.StreamRole.VideoRecording
+VIEWFINDER = libcamera.StreamRole.Viewfinder
 
 
 @dataclass
@@ -117,6 +123,9 @@ class CameraConfig:
     main: StreamConfig | dict
     lores: Optional[StreamConfig | dict] = None
     raw: Optional[StreamConfig | dict] = None
+
+    # This is set only after validation by libcamera
+    libcamera_config: Optional[Any] = None
 
     # TODO: Remove forward references.
     @property
@@ -380,3 +389,85 @@ class CameraConfig:
             lores=lores_stream,
             raw=raw_stream,
         )
+
+    def _update_libcamera_stream_config(
+        self, libcamera_stream_config, stream_config: StreamConfig, buffer_count: int
+    ) -> None:
+        # Update the libcamera stream config with ours.
+        libcamera_stream_config.size = libcamera.Size(*stream_config.size)
+        libcamera_stream_config.pixel_format = libcamera.PixelFormat(
+            stream_config.format
+        )
+        libcamera_stream_config.buffer_count = buffer_count
+
+    def apply(self, lc_camera) -> Dict[str, Any]:
+        # Make a libcamera configuration object from our Python configuration.
+
+        # We will create each stream with the "viewfinder" role just to get the stream
+        # configuration objects, and note the positions our named streams will have in
+        # libcamera's stream list.
+        roles = [VIEWFINDER]
+        main_index, lores_index, raw_index = self.get_stream_indices()
+        if self.lores is not None:
+            roles += [VIEWFINDER]
+        if self.raw is not None:
+            roles += [RAW]
+
+        # Make the libcamera configuration, and then we'll write all our parameters over
+        # the ones it gave us.
+        libcamera_config = lc_camera.generate_configuration(roles)
+        libcamera_config.transform = self.transform
+        self._update_libcamera_stream_config(
+            libcamera_config.at(main_index), self.main, self.buffer_count
+        )
+        libcamera_config.at(main_index).color_space = self.color_space
+        if self.lores is not None:
+            self._update_libcamera_stream_config(
+                libcamera_config.at(lores_index),
+                self.lores,
+                self.buffer_count,
+            )
+            libcamera_config.at(lores_index).color_space = self.color_space
+
+        if self.raw is not None:
+            self._update_libcamera_stream_config(
+                libcamera_config.at(raw_index), self.raw, self.buffer_count
+            )
+            libcamera_config.at(raw_index).color_space = libcamera.ColorSpace.Raw()
+
+        # Check that libcamera is happy with it.
+        _log.debug(f"Validating configuration: {self}")
+        status = libcamera_config.validate()
+        if status == libcamera.CameraConfiguration.Status.Invalid:
+            raise RuntimeError(f"Invalid camera configuration: {self}")
+        elif status == libcamera.CameraConfiguration.Status.Adjusted:
+            _log.info("Camera configuration has been adjusted!")
+
+        # Back prop any tweaks it made onto this class
+        self.transform = libcamera_config.transform
+        self.color_space = libcamera_config.at(0).color_space
+        self.main = StreamConfig.from_lc_stream_config(libcamera_config.at(0))
+        if lores_index >= 0:
+            self.lores = StreamConfig.from_lc_stream_config(
+                libcamera_config.at(lores_index)
+            )
+        if raw_index >= 0:
+            self.raw = StreamConfig.from_lc_stream_config(
+                libcamera_config.at(raw_index)
+            )
+
+        # Configure the lc_camera instance
+        code = lc_camera.configure(libcamera_config)
+        errno_handle(code, "camera.configure()")
+        _log.info("Configuration successful!")
+        _log.debug(f"Final configuration: {self}")
+
+        self.libcamera_config = libcamera_config
+
+    def get_stream_map(self) -> Dict[str, Any]:
+        # Record which libcamera stream goes with which of our names.
+        stream_map = {}
+        for idx, name in zip(self.get_stream_indices(), ("main", "lores", "raw")):
+            if idx >= 0:
+                stream_map[name] = self.libcamera_config.at(idx).stream
+        return stream_map
