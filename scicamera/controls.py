@@ -27,7 +27,7 @@ class Controls:
         """Returns a set of all available control names"""
         return set(self._camera.camera_ctrl_info.keys())
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value):
         if not name.startswith("_"):
             if name not in self.available_control_names():
                 raise RuntimeError(f"Control {name} is not advertised by libcamera")

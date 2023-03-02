@@ -401,6 +401,10 @@ class Camera(RequestMachinery):
             return
 
         request.reuse()
+
+        # This is where controls on the camera get updated
+        # TODO(meawoppl) - attach a future to he request.cookie
+        # so that we can mature the future when the controls are set
         controls = self.controls.get_libcamera_controls()
         for id, value in controls.items():
             request.set_control(id, value)
@@ -503,7 +507,7 @@ class Camera(RequestMachinery):
         if self.started:
             raise RuntimeError("Camera already started")
         controls = self.controls.get_libcamera_controls()
-        self.controls = Controls(self, controls)
+        self.controls = Controls(self)
 
         code = self.camera.start(controls)
         errno_handle(code, "camera.start()")
