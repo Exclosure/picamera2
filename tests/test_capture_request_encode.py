@@ -2,14 +2,13 @@
 # Capture a DNG and a JPEG made from the same raw data.
 import os
 import tempfile
-
-from scicamera import Camera
-from scicamera.configuration import CameraConfig
 from typing import Type
 
 import pytest
 
 from scicamera import Camera, FakeCamera
+from scicamera.configuration import CameraConfig
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_request_encode(CameraClass: Type[Camera]):

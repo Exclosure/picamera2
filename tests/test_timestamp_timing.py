@@ -24,7 +24,7 @@ def test_timestamps(CameraClass: Type[Camera]):
 
     # Now let's analyse all the timestamps
     timestamps = np.array(timestamps)
-    diffs = timestamps[1:]- timestamps[:-1]
+    diffs = timestamps[1:] - timestamps[:-1]
     median = np.median(diffs)
     tol = median / 10
     print(diffs)

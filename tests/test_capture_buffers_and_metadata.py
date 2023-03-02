@@ -1,12 +1,11 @@
+from typing import Type
 
-from scicamera import Camera, CameraConfig
+import pytest
+
+from scicamera import Camera, CameraConfig, FakeCamera
 from scicamera.configuration import CameraConfig
 from scicamera.testing import mature_after_frames_or_timeout
 
-from typing import Type
-from scicamera import Camera, FakeCamera
-
-import pytest
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_buffers_and_metadata(CameraClass: Type[Camera]):

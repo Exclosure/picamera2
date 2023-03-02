@@ -102,7 +102,7 @@ class FakeCamera(RequestMachinery):
         )
 
     def _run(self):
-        while not self._abort.wait(self.controls.FrameDurationLimits[0]/1000000):
+        while not self._abort.wait(self.controls.FrameDurationLimits[0] / 1000000):
             metadata = self.controls.make_dict()
 
             metadata.update(
