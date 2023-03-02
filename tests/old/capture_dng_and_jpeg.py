@@ -10,7 +10,7 @@ camera = Camera()
 camera.start_preview()
 
 preview_config = CameraConfig.for_preview(camera)
-camera.configure("preview")
+camera.configure(camera.preview_configuration)
 
 camera.start()
 camera.discard_frames(2)

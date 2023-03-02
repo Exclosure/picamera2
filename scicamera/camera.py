@@ -513,7 +513,7 @@ class Camera(RequestMachinery):
         self.started = True
         _log.info("Camera started")
 
-    def start(self, config=None) -> None:
+    def start(self) -> None:
         """
         Start the camera system running.
 
@@ -524,10 +524,9 @@ class Camera(RequestMachinery):
         config - if not None this is used to configure the camera. This is just a
             convenience so that you don't have to call configure explicitly.
         """
-        if self.camera_config is None and config is None:
-            config = "preview"
-        if config is not None:
-            self.configure(config)
+        if self.camera_config is None:
+            _log.warning("Camera has not been configured, using preview config")
+            self.configure(self.preview_configuration)
         if self.camera_config is None:
             raise RuntimeError("Camera has not been configured")
         # By default we will create an event loop is there isn't one running already.

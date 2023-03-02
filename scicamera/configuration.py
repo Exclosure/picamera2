@@ -464,10 +464,6 @@ class CameraConfig:
 
         self.libcamera_config = libcamera_config
 
-        _log.debug(f"Streams: {self.stream_map}")
-
-        return stream_map
-
     def get_stream_map(self) -> Dict[str, Any]:
         # Record which libcamera stream goes with which of our names.
         stream_map = {}
