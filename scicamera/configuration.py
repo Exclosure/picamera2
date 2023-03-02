@@ -124,7 +124,8 @@ class CameraConfig:
     lores: Optional[StreamConfig | dict] = None
     raw: Optional[StreamConfig | dict] = None
 
-    libcamera_config: Optional[Any]
+    # This is set only after validation by libcamera
+    libcamera_config: Optional[Any] = None
 
     # TODO: Remove forward references.
     @property

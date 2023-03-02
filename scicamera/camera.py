@@ -439,6 +439,7 @@ class Camera(RequestMachinery):
 
         if isinstance(config, dict):
             _log.warning("Using old-style camera config, please update")
+            config = config.copy()
             return CameraConfig(camera=self, **config)
 
         raise RuntimeError(f"Don't know how to make a config from {config} ({type(config)})")
