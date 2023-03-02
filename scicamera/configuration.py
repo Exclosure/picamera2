@@ -28,6 +28,11 @@ _raw_stream_ignore_list = [
     "unpacked",
 ]
 
+STILL = libcamera.StreamRole.StillCapture
+RAW = libcamera.StreamRole.Raw
+VIDEO = libcamera.StreamRole.VideoRecording
+VIEWFINDER = libcamera.StreamRole.Viewfinder
+
 
 @dataclass
 class StreamConfig:
@@ -380,3 +385,58 @@ class CameraConfig:
             lores=lores_stream,
             raw=raw_stream,
         )
+
+    def _update_libcamera_stream_config(
+        libcamera_stream_config, stream_config: StreamConfig, buffer_count: int
+    ) -> None:
+        # Update the libcamera stream config with ours.
+        libcamera_stream_config.size = libcamera.Size(*stream_config.size)
+        libcamera_stream_config.pixel_format = libcamera.PixelFormat(
+            stream_config.format
+        )
+        libcamera_stream_config.buffer_count = buffer_count
+
+    def make_libcamera_config(self, lc_camera):
+        # Make a libcamera configuration object from our Python configuration.
+
+        # We will create each stream with the "viewfinder" role just to get the stream
+        # configuration objects, and note the positions our named streams will have in
+        # libcamera's stream list.
+        roles = [VIEWFINDER]
+        main_index, lores_index, raw_index = self.get_stream_indices()
+        if self.lores is not None:
+            roles += [VIEWFINDER]
+        if self.raw is not None:
+            roles += [RAW]
+
+        # Make the libcamera configuration, and then we'll write all our parameters over
+        # the ones it gave us.
+        libcamera_config = lc_camera.generate_configuration(roles)
+        libcamera_config.transform = self.transform
+        self._update_libcamera_stream_config(
+            libcamera_config.at(main_index),
+            self.main,
+            self.buffer_count
+        )
+        libcamera_config.at(main_index).color_space = self.color_space
+        if self.lores is not None:
+            self._update_libcamera_stream_config(
+                libcamera_config.at(lores_index),
+                self.lores,
+                self.buffer_count,
+            )
+            libcamera_config.at(lores_index).color_space = self.color_space
+
+        if self.raw is not None:
+            self._update_libcamera_stream_config(
+                libcamera_config.at(raw_index), self.raw, self.buffer_count
+            )
+            libcamera_config.at(raw_index).color_space = libcamera.ColorSpace.Raw()
+
+        return libcamera_config
+
+
+
+
+
+def _make_libcamera_config(lc_camera, camera_config: CameraConfig):
