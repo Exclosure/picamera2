@@ -147,7 +147,7 @@ class Camera(RequestMachinery):
 
     @property
     def camera_manager(self):
-        return Camera._cm.cms
+        return self._cm.cms
 
     def _reset_flags(self) -> None:
         self.camera = None
