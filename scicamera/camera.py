@@ -23,7 +23,6 @@ from scicamera.request import CompletedRequest, LoopTask
 from scicamera.sensor_format import SensorFormat
 from scicamera.tuning import TuningContext
 
-
 _log = logging.getLogger(__name__)
 
 
@@ -265,7 +264,9 @@ class Camera(RequestMachinery):
         # The next two lines could be placed elsewhere?
         self.sensor_resolution = self.camera_properties_["PixelArraySize"]
         self.sensor_format = str(
-            self.camera.generate_configuration([libcamera.StreamRole.Raw]).at(0).pixel_format
+            self.camera.generate_configuration([libcamera.StreamRole.Raw])
+            .at(0)
+            .pixel_format
         )
 
         _log.info("Initialization successful.")
@@ -431,8 +432,6 @@ class Camera(RequestMachinery):
             requests.append(request)
         return requests
 
-
-
     def _config_opts(self, config: dict | CameraConfig) -> CameraConfig:
         if isinstance(config, CameraConfig):
             return config
@@ -442,7 +441,9 @@ class Camera(RequestMachinery):
             config = config.copy()
             return CameraConfig(camera=self, **config)
 
-        raise RuntimeError(f"Don't know how to make a config from {config} ({type(config)})")
+        raise RuntimeError(
+            f"Don't know how to make a config from {config} ({type(config)})"
+        )
 
     def configure(self, config: dict | CameraConfig) -> None:
         """Configure the camera system with the given configuration.
@@ -467,7 +468,9 @@ class Camera(RequestMachinery):
         self.camera_properties_ = lc_unpack(self.camera.properties)
 
         # Allocate all the frame buffers.
-        self.streams = [stream_config.stream for stream_config in camera_config.libcamera_config]
+        self.streams = [
+            stream_config.stream for stream_config in camera_config.libcamera_config
+        ]
 
         # TODO(meawoppl) - can be taken off public and used in the 1 function
         # that calls it.

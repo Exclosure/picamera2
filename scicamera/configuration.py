@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, replace
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Optional, Tuple, Dict
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 import libcamera
 
@@ -391,7 +391,7 @@ class CameraConfig:
         )
 
     def _update_libcamera_stream_config(
-        libcamera_stream_config, stream_config: StreamConfig, buffer_count: int
+        self, libcamera_stream_config, stream_config: StreamConfig, buffer_count: int
     ) -> None:
         # Update the libcamera stream config with ours.
         libcamera_stream_config.size = libcamera.Size(*stream_config.size)
@@ -418,9 +418,7 @@ class CameraConfig:
         libcamera_config = lc_camera.generate_configuration(roles)
         libcamera_config.transform = self.transform
         self._update_libcamera_stream_config(
-            libcamera_config.at(main_index),
-            self.main,
-            self.buffer_count
+            libcamera_config.at(main_index), self.main, self.buffer_count
         )
         libcamera_config.at(main_index).color_space = self.color_space
         if self.lores is not None:
@@ -456,7 +454,7 @@ class CameraConfig:
         if raw_index >= 0:
             self.raw = StreamConfig.from_lc_stream_config(
                 libcamera_config.at(raw_index)
-            )      
+            )
 
         # Configure the lc_camera instance
         code = lc_camera.configure(libcamera_config)
@@ -465,7 +463,6 @@ class CameraConfig:
         _log.debug(f"Final configuration: {self}")
 
         self.libcamera_config = libcamera_config
-
 
         _log.debug(f"Streams: {self.stream_map}")
 
