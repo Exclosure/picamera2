@@ -6,6 +6,7 @@ import pytest
 from scicamera import Camera, CameraConfig, FakeCamera
 from scicamera.testing import mature_after_frames_or_timeout
 
+
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_file_encodings(CameraClass: Type[Camera]):
     """Capture a np.array directly from the camera."""

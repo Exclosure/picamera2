@@ -5,8 +5,8 @@ import pytest
 
 from scicamera import Camera, CameraConfig, FakeCamera
 from scicamera.fake import FakeCamera
-
 from scicamera.testing import mature_after_frames_or_timeout
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_set_controls(CameraClass: Type[Camera]):

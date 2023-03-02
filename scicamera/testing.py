@@ -6,7 +6,7 @@ from scicamera import Camera
 
 def mature_after_frames_or_timeout(camera: Camera, n_frames: int, timeout_seconds=5):
     """Return a future that will be mature after n_frames or 2 seconds.
-    
+
     Raises: TimeoutError if it takes too long.
     """
     camera.discard_frames(n_frames).result(timeout_seconds)
