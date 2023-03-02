@@ -12,8 +12,9 @@ camera.still_configuration.size = (1600, 1200)
 camera.still_configuration.enable_raw()
 camera.still_configuration.raw.size = camera.sensor_resolution
 
-camera.start("preview")
+camera.configure(camera.preview_configuration)
+camera.start()
 mature_after_frames_or_timeout(camera, 3)
-assert camera.capture_image(config="still").result()
+assert camera.capture_image(config=camera.still_configuration).result()
 camera.stop()
 camera.close()

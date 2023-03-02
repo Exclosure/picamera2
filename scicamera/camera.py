@@ -23,11 +23,6 @@ from scicamera.request import CompletedRequest, LoopTask
 from scicamera.sensor_format import SensorFormat
 from scicamera.tuning import TuningContext
 
-STILL = libcamera.StreamRole.StillCapture
-RAW = libcamera.StreamRole.Raw
-VIDEO = libcamera.StreamRole.VideoRecording
-VIEWFINDER = libcamera.StreamRole.Viewfinder
-
 _log = logging.getLogger(__name__)
 
 
@@ -59,7 +54,8 @@ class CameraManager:
 
     def close_all(self) -> int:
         n_closed = 0
-        for idx in self.cameras.keys():
+        ids_to_close = list(self.cameras.keys())
+        for idx in ids_to_close:
             # FIXME(meawoppl) - this calls back into self.cleanup()
             self.cameras[idx].close()
             n_closed += 1
@@ -155,7 +151,6 @@ class Camera(RequestMachinery):
         self.camera_ctrl_info = {}
         self._preview = None
         self.camera_config = None
-        self.libcamera_config = None
         self.streams = None
         self.stream_map = None
         self.started = False
@@ -270,7 +265,9 @@ class Camera(RequestMachinery):
         # The next two lines could be placed elsewhere?
         self.sensor_resolution = self.camera_properties_["PixelArraySize"]
         self.sensor_format = str(
-            self.camera.generate_configuration([RAW]).at(0).pixel_format
+            self.camera.generate_configuration([libcamera.StreamRole.Raw])
+            .at(0)
+            .pixel_format
         )
 
         _log.info("Initialization successful.")
@@ -383,63 +380,11 @@ class Camera(RequestMachinery):
         self.camera = None
         self.camera_ctrl_info = None
         self.camera_config = None
-        self.libcamera_config = None
         self.preview_configuration_ = None
         self.still_configuration_ = None
         self.video_configuration_ = None
         self.allocator = None
         _log.info("Camera closed successfully.")
-
-    # TODO(meawoppl) - Obviated by dataclasses
-    @staticmethod
-    def _update_libcamera_stream_config(
-        libcamera_stream_config, stream_config: StreamConfig, buffer_count: int
-    ) -> None:
-        # Update the libcamera stream config with ours.
-        libcamera_stream_config.size = libcamera.Size(*stream_config.size)
-        libcamera_stream_config.pixel_format = libcamera.PixelFormat(
-            stream_config.format
-        )
-        libcamera_stream_config.buffer_count = buffer_count
-
-    # TODO(meawoppl) - Obviated by dataclasses
-    def _make_libcamera_config(self, camera_config: CameraConfig):
-        # Make a libcamera configuration object from our Python configuration.
-
-        # We will create each stream with the "viewfinder" role just to get the stream
-        # configuration objects, and note the positions our named streams will have in
-        # libcamera's stream list.
-        roles = [VIEWFINDER]
-        main_index, lores_index, raw_index = camera_config.get_stream_indices()
-        if camera_config.lores is not None:
-            roles += [VIEWFINDER]
-        if camera_config.raw is not None:
-            roles += [RAW]
-
-        # Make the libcamera configuration, and then we'll write all our parameters over
-        # the ones it gave us.
-        libcamera_config = self.camera.generate_configuration(roles)
-        libcamera_config.transform = camera_config.transform
-        buffer_count = camera_config.buffer_count
-        self._update_libcamera_stream_config(
-            libcamera_config.at(main_index), camera_config.main, buffer_count
-        )
-        libcamera_config.at(main_index).color_space = camera_config.color_space
-        if camera_config.lores is not None:
-            self._update_libcamera_stream_config(
-                libcamera_config.at(lores_index),
-                camera_config.lores,
-                buffer_count,
-            )
-            libcamera_config.at(lores_index).color_space = camera_config.color_space
-
-        if camera_config.raw is not None:
-            self._update_libcamera_stream_config(
-                libcamera_config.at(raw_index), camera_config.raw, buffer_count
-            )
-            libcamera_config.at(raw_index).color_space = libcamera.ColorSpace.Raw()
-
-        return libcamera_config
 
     def recycle_request(self, stop_count: int, request: libcamera.Request) -> None:
         """Recycle a request.
@@ -488,50 +433,20 @@ class Camera(RequestMachinery):
             requests.append(request)
         return requests
 
-    def _update_camera_config(
-        self, camera_config: CameraConfig, libcamera_config
-    ) -> None:
-        """Update our camera config from libcamera's.
+    def _config_opts(self, config: dict | CameraConfig) -> CameraConfig:
+        if isinstance(config, CameraConfig):
+            return config
 
-        :param camera_config: Camera configuration
-        :type camera_config: dict
-        :param libcamera_config: libcamera configuration
-        :type libcamera_config: dict
-        """
-        _, lores_index, raw_index = camera_config.get_stream_indices()
-        camera_config.transform = libcamera_config.transform
-        camera_config.color_space = libcamera_config.at(0).color_space
-        camera_config.main = StreamConfig.from_lc_stream_config(libcamera_config.at(0))
-        if lores_index >= 0:
-            camera_config.lores = StreamConfig.from_lc_stream_config(
-                libcamera_config.at(lores_index)
-            )
-        if raw_index >= 0:
-            camera_config.raw = StreamConfig.from_lc_stream_config(
-                libcamera_config.at(raw_index)
-            )
-
-    def _config_opts(self, config: str | dict | CameraConfig) -> CameraConfig:
-        if isinstance(config, str):
-            config_name_to_camera_config = {
-                "preview": self.preview_configuration,
-                "still": self.still_configuration,
-                "video": self.video_configuration,
-            }
-            camera_config = config_name_to_camera_config[config]
-        elif isinstance(config, dict):
+        if isinstance(config, dict):
             _log.warning("Using old-style camera config, please update")
             config = config.copy()
-            config["camera"] = self
-            camera_config = CameraConfig(**config)
-        elif isinstance(config, CameraConfig):
-            # We expect values to have been set for any lores/raw streams.
-            camera_config = config
-        else:
-            raise RuntimeError(f"Don't know how to make a config from {config}")
-        return camera_config
+            return CameraConfig(camera=self, **config)
 
-    def _configure(self, config: str | dict | CameraConfig = "preview") -> None:
+        raise RuntimeError(
+            f"Don't know how to make a config from {config} ({type(config)})"
+        )
+
+    def configure(self, config: dict | CameraConfig) -> None:
         """Configure the camera system with the given configuration.
 
         :param camera_config: Configuration, defaults to the 'preview' configuration
@@ -542,45 +457,21 @@ class Camera(RequestMachinery):
             raise RuntimeError("Camera must be stopped before configuring")
         camera_config = self._config_opts(config)
 
-        if camera_config is None:
-            camera_config = CameraConfig.for_preview(camera=self)
-
         # Mark ourselves as unconfigured.
-        self.libcamera_config = None
         self.camera_config = None
 
         # Check the config and turn it into a libcamera config.
-        libcamera_config = self._make_libcamera_config(camera_config)
-
-        # Check that libcamera is happy with it.
-        status = libcamera_config.validate()
-        self._update_camera_config(camera_config, libcamera_config)
-        _log.debug(f"Requesting configuration: {camera_config}")
-        if status == libcamera.CameraConfiguration.Status.Invalid:
-            raise RuntimeError("Invalid camera configuration: {}".format(camera_config))
-        elif status == libcamera.CameraConfiguration.Status.Adjusted:
-            _log.info("Camera configuration has been adjusted!")
-
-        # Configure libcamera.
-        code = self.camera.configure(libcamera_config)
-        errno_handle(code, "camera.configure()")
-        _log.info("Configuration successful!")
-        _log.debug(f"Final configuration: {camera_config}")
+        camera_config.apply(self.camera)
+        self.stream_map = camera_config.get_stream_map()
 
         # Update the controls and properties list as some of the values may have changed.
         self.camera_ctrl_info = lc_unpack_controls(self.camera.controls)
         self.camera_properties_ = lc_unpack(self.camera.properties)
 
-        indices = camera_config.get_stream_indices()
-        self.stream_map = {}
-        for idx, name in zip(indices, ("main", "lores", "raw")):
-            if idx >= 0:
-                self.stream_map[name] = libcamera_config.at(idx).stream
-        # Record which libcamera stream goes with which of our names.
-        _log.debug(f"Streams: {self.stream_map}")
-
         # Allocate all the frame buffers.
-        self.streams = [stream_config.stream for stream_config in libcamera_config]
+        self.streams = [
+            stream_config.stream for stream_config in camera_config.libcamera_config
+        ]
 
         # TODO(meawoppl) - can be taken off public and used in the 1 function
         # that calls it.
@@ -592,15 +483,10 @@ class Camera(RequestMachinery):
             msg = f"Allocated {len(self.allocator.buffers(stream))} buffers for stream {i}."
             _log.debug(msg)
         # Mark ourselves as configured.
-        self.libcamera_config = libcamera_config
         self.camera_config = camera_config
 
         # Set the controls directly so as to overwrite whatever is there.
         self.controls.set_controls(self.camera_config.controls)
-
-    def configure(self, camera_config="preview") -> None:
-        """Configure the camera system with the given configuration."""
-        self._configure(camera_config)
 
     def camera_configuration(self) -> CameraConfig:
         """Return the camera configuration."""
@@ -627,7 +513,7 @@ class Camera(RequestMachinery):
         self.started = True
         _log.info("Camera started")
 
-    def start(self, config=None) -> None:
+    def start(self) -> None:
         """
         Start the camera system running.
 
@@ -638,10 +524,9 @@ class Camera(RequestMachinery):
         config - if not None this is used to configure the camera. This is just a
             convenience so that you don't have to call configure explicitly.
         """
-        if self.camera_config is None and config is None:
-            config = "preview"
-        if config is not None:
-            self.configure(config)
+        if self.camera_config is None:
+            _log.warning("Camera has not been configured, using preview config")
+            self.configure(self.preview_configuration)
         if self.camera_config is None:
             raise RuntimeError("Camera has not been configured")
         # By default we will create an event loop is there isn't one running already.
