@@ -54,7 +54,8 @@ class CameraManager:
 
     def close_all(self) -> int:
         n_closed = 0
-        for idx in self.cameras.keys():
+        ids_to_close = list(self.cameras.keys())
+        for idx in ids_to_close:
             # FIXME(meawoppl) - this calls back into self.cleanup()
             self.cameras[idx].close()
             n_closed += 1
