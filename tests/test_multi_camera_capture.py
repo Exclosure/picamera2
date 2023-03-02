@@ -4,7 +4,7 @@ import pytest
 
 from scicamera import Camera, FakeCamera
 from scicamera.camera import CameraManager
-
+from scicamera.testing import mature_after_frames_or_timeout
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_multi_camera(CameraClass: Type[Camera]):
@@ -12,6 +12,6 @@ def test_capture_multi_camera(CameraClass: Type[Camera]):
     for index in range(n_cameras):
         camera = CameraClass(camera_num=index)
         camera.start()
-        camera.discard_frames(2).result(timeout=1.0)
+        mature_after_frames_or_timeout(2)
         camera.stop()
         camera.close()

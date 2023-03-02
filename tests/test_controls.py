@@ -6,6 +6,7 @@ import pytest
 from scicamera import Camera, CameraConfig, FakeCamera
 from scicamera.fake import FakeCamera
 
+from scicamera.testing import mature_after_frames_or_timeout
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_set_controls(CameraClass: Type[Camera]):
@@ -16,11 +17,11 @@ def test_set_controls(CameraClass: Type[Camera]):
     camera.configure(preview_config)
 
     camera.start()
-    camera.discard_frames(2)
+    mature_after_frames_or_timeout(2)
 
     if {"AwbEnable", "AeEnable"} <= camera.controls.available_control_names():
         camera.set_controls({"AwbEnable": 0, "AeEnable": 0})
-    camera.discard_frames(2).result()
+    mature_after_frames_or_timeout(2)
     camera.close()
 
 
@@ -44,14 +45,14 @@ def test_set_gain_exposure(CameraClass: Type[Camera]):
     camera.configure(preview_config)
 
     camera.start()
-    camera.discard_frames(2)
+    mature_after_frames_or_timeout(2)
     metadata = camera.capture_metadata().result(timeout=0.5)
     pprint(metadata)
     controls = {c: metadata[c] for c in ["ExposureTime", "AnalogueGain", "ColourGains"]}
     print(controls)
 
     camera.controls.set_controls(controls)
-    camera.discard_frames(2)
+    mature_after_frames_or_timeout(2)
 
     camera.close()
 

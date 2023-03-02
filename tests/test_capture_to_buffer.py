@@ -6,6 +6,7 @@ import pytest
 from scicamera import Camera, CameraConfig
 from scicamera.fake import FakeCamera
 
+from scicamera.testing import mature_after_frames_or_timeout
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_to_buffer(CameraClass: Type[Camera]):
@@ -15,10 +16,10 @@ def test_capture_to_buffer(CameraClass: Type[Camera]):
     camera.start()
 
     for _ in range(2):
-        camera.discard_frames(2).result()
+        mature_after_frames_or_timeout(camera)
         data = io.BytesIO()
         camera.capture_file(data, format="jpeg").result()
         assert data.getbuffer().nbytes > 0
-        camera.discard_frames(2).result()
+        mature_after_frames_or_timeout(camera)
 
     camera.close()

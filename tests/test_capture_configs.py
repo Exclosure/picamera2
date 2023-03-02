@@ -3,6 +3,7 @@ from typing import Type
 import pytest
 
 from scicamera import Camera, CameraConfig, FakeCamera
+from scicamera.testing import mature_after_frames_or_timeout
 
 
 @pytest.mark.parametrize(
@@ -15,6 +16,6 @@ def test_capture_config_video(CameraClass: Type[Camera], config_method):
     config = config_method(camera)
     camera.configure(config)
     camera.start()
-    camera.discard_frames(2).result()
+    mature_after_frames_or_timeout(camera, 0.5)
     camera.stop()
     camera.close()
