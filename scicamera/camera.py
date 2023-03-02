@@ -86,7 +86,7 @@ class CameraManager:
         sel.register(self.cms.event_fd, selectors.EVENT_READ, self.handle_request)
 
         while self.running:
-            events = sel.select(0.2)
+            events = sel.select(0.05)
             for key, _ in events:
                 callback = key.data
                 callback()
