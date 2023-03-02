@@ -1,3 +1,8 @@
+"""NOTE(meawoppl) This is a pytest script that runs the old tests.
+
+Do not add new tests here, instead add them to the new test suite.
+Follow patterns found in `/tests/test_*.py` to maximize your joy.
+"""
 import os
 import subprocess
 import sys
@@ -23,7 +28,6 @@ def forward_subprocess_output(e: subprocess.CalledProcessError):
 KNOWN_XFAIL = set(
     [
         "capture_circular.py",
-        "check_timestamps.py",
         "drm_multiple_test.py",
         "multicamera_preview.py",
         "raw.py",

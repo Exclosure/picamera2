@@ -48,6 +48,9 @@ class CameraManager:
         self._lock = threading.Lock()
         self.cms = libcamera.CameraManager.singleton()
 
+    def n_cameras_attached(self):
+        return len(self.cms.cameras)
+
     def get_camera(self, idx: int):
         """Get the (lc) camera with the given index"""
         return self.cms.cameras[idx]
