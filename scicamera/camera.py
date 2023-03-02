@@ -120,8 +120,6 @@ class CameraManager:
 class Camera(RequestMachinery):
     """Welcome to the Camera class."""
 
-    _cm = CameraManager()
-
     def __init__(self, camera_num: int = 0, tuning=None):
         """Initialise camera system and open the camera for use.
 
@@ -132,6 +130,7 @@ class Camera(RequestMachinery):
         :raises RuntimeError: Init didn't complete
         """
         super().__init__()
+        self._cm = CameraManager.singleton()
 
         self._cm.add(camera_num, self)
         self.camera_idx = camera_num
@@ -148,7 +147,7 @@ class Camera(RequestMachinery):
 
     @property
     def camera_manager(self):
-        return Camera._cm.cms
+        return self._cm.cms
 
     def _reset_flags(self) -> None:
         self.camera = None
