@@ -151,7 +151,6 @@ class Camera(RequestMachinery):
         self.camera_ctrl_info = {}
         self._preview = None
         self.camera_config = None
-        self.libcamera_config = None
         self.streams = None
         self.stream_map = None
         self.started = False
@@ -379,7 +378,6 @@ class Camera(RequestMachinery):
         self.camera = None
         self.camera_ctrl_info = None
         self.camera_config = None
-        self.libcamera_config = None
         self.preview_configuration_ = None
         self.still_configuration_ = None
         self.video_configuration_ = None
@@ -433,28 +431,7 @@ class Camera(RequestMachinery):
             requests.append(request)
         return requests
 
-    def _update_camera_config(
-        self, camera_config: CameraConfig, libcamera_config
-    ) -> None:
-        """Update our camera config from libcamera's.
 
-        :param camera_config: Camera configuration
-        :type camera_config: dict
-        :param libcamera_config: libcamera configuration
-        :type libcamera_config: dict
-        """
-        _, lores_index, raw_index = camera_config.get_stream_indices()
-        camera_config.transform = libcamera_config.transform
-        camera_config.color_space = libcamera_config.at(0).color_space
-        camera_config.main = StreamConfig.from_lc_stream_config(libcamera_config.at(0))
-        if lores_index >= 0:
-            camera_config.lores = StreamConfig.from_lc_stream_config(
-                libcamera_config.at(lores_index)
-            )
-        if raw_index >= 0:
-            camera_config.raw = StreamConfig.from_lc_stream_config(
-                libcamera_config.at(raw_index)
-            )
 
     def _config_opts(self, config: dict | CameraConfig) -> CameraConfig:
         if isinstance(config, CameraConfig):
@@ -462,9 +439,7 @@ class Camera(RequestMachinery):
 
         if isinstance(config, dict):
             _log.warning("Using old-style camera config, please update")
-            config = config.copy()
-            config["camera"] = self
-            return CameraConfig(**config)
+            return CameraConfig(camera=self, **config)
 
         raise RuntimeError(f"Don't know how to make a config from {config} ({type(config)})")
 
@@ -479,45 +454,19 @@ class Camera(RequestMachinery):
             raise RuntimeError("Camera must be stopped before configuring")
         camera_config = self._config_opts(config)
 
-        if camera_config is None:
-            camera_config = CameraConfig.for_preview(camera=self)
-
         # Mark ourselves as unconfigured.
-        self.libcamera_config = None
         self.camera_config = None
 
         # Check the config and turn it into a libcamera config.
-        libcamera_config = camera_config.make_libcamera_config(self.camera)
-
-        # Check that libcamera is happy with it.
-        status = libcamera_config.validate()
-        self._update_camera_config(camera_config, libcamera_config)
-        _log.debug(f"Requesting configuration: {camera_config}")
-        if status == libcamera.CameraConfiguration.Status.Invalid:
-            raise RuntimeError("Invalid camera configuration: {}".format(camera_config))
-        elif status == libcamera.CameraConfiguration.Status.Adjusted:
-            _log.info("Camera configuration has been adjusted!")
-
-        # Configure libcamera.
-        code = self.camera.configure(libcamera_config)
-        errno_handle(code, "camera.configure()")
-        _log.info("Configuration successful!")
-        _log.debug(f"Final configuration: {camera_config}")
+        camera_config.apply(self.camera)
+        self.stream_map = camera_config.get_stream_map()
 
         # Update the controls and properties list as some of the values may have changed.
         self.camera_ctrl_info = lc_unpack_controls(self.camera.controls)
         self.camera_properties_ = lc_unpack(self.camera.properties)
 
-        indices = camera_config.get_stream_indices()
-        self.stream_map = {}
-        for idx, name in zip(indices, ("main", "lores", "raw")):
-            if idx >= 0:
-                self.stream_map[name] = libcamera_config.at(idx).stream
-        # Record which libcamera stream goes with which of our names.
-        _log.debug(f"Streams: {self.stream_map}")
-
         # Allocate all the frame buffers.
-        self.streams = [stream_config.stream for stream_config in libcamera_config]
+        self.streams = [stream_config.stream for stream_config in camera_config.libcamera_config]
 
         # TODO(meawoppl) - can be taken off public and used in the 1 function
         # that calls it.
@@ -529,7 +478,6 @@ class Camera(RequestMachinery):
             msg = f"Allocated {len(self.allocator.buffers(stream))} buffers for stream {i}."
             _log.debug(msg)
         # Mark ourselves as configured.
-        self.libcamera_config = libcamera_config
         self.camera_config = camera_config
 
         # Set the controls directly so as to overwrite whatever is there.
