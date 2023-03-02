@@ -617,7 +617,7 @@ class Camera(RequestMachinery):
         if self.started:
             raise RuntimeError("Camera already started")
         controls = self.controls.get_libcamera_controls()
-        self.controls = Controls(self)
+        self.controls = Controls(self, controls)
 
         code = self.camera.start(controls)
         errno_handle(code, "camera.start()")

@@ -35,7 +35,7 @@ def check(raw_config, fps):
     assert (
         set_format.format == raw_config["format"]
     ), f'{camera.camera_configuration().raw.format} != {raw_config["format"]}'
-    camera.set_controls({"FrameRate": fps})
+    camera.controls.set_frame_rate(fps)
 
     camera.start()
     camera.discard_frames(2)

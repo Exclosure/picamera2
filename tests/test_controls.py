@@ -61,6 +61,6 @@ def test_set_gain_exposure(CameraClass: Type[Camera]):
 def test_set_frame_rate(CameraClass: Type[Camera]):
     camera = CameraClass()
     camera.start()
-    camera.controls.FrameRate = 30
+    camera.controls.set_frame_rate(30)
     camera.stop()
     camera.close()

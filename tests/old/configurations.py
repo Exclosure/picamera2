@@ -5,7 +5,7 @@ from scicamera.testing import requires_controls
 
 camera = Camera()
 
-requires_controls(camera, ("ExposureTime", "FrameRate"))
+requires_controls(camera, ("ExposureTime", "FrameDurationLimits"))
 
 # We're going to set up some configuration structures, apply each one in
 # turn and see if it gave us the configuration we expected.
@@ -16,7 +16,7 @@ camera.preview_configuration.controls.ExposureTime = 10000
 
 camera.video_configuration.main.size = (800, 480)
 camera.video_configuration.main.format = "YUV420"
-camera.video_configuration.controls.FrameRate = 25.0
+camera.video_configuration.controls.set_frame_rate(25.0)
 
 camera.still_configuration.size = (1024, 768)
 camera.still_configuration.enable_lores()
@@ -33,7 +33,8 @@ if config.main.size != (800, 600):
     raise RuntimeError("preview resolution incorrect")
 
 camera.configure("video")
-if camera.controls.FrameRate < 24.99 or camera.controls.FrameRate > 25.01:
+frame_rate = camera.controls.get_frame_rate()
+if frame_rate < 24.99 or frame_rate > 25.01:
     raise RuntimeError("framerate was not set")
 config = camera.camera_configuration()
 if config.size != (800, 480):

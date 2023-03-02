@@ -25,15 +25,9 @@ class Controls:
 
     def available_control_names(self) -> Set[str]:
         """Returns a set of all available control names"""
-        lc_names = set(self._camera.camera_ctrl_info.keys())
-        if "FrameDurationLimits" in lc_names:
-            lc_names.add("FrameRate")
-        return lc_names
+        return set(self._camera.camera_ctrl_info.keys())
 
     def __setattr__(self, name, value):
-        if name == "FrameRate":
-            super().__setattr__(name, value)
-            return
         if not name.startswith("_"):
             if name not in self.available_control_names():
                 raise RuntimeError(f"Control {name} is not advertised by libcamera")
@@ -54,12 +48,10 @@ class Controls:
         else:
             raise RuntimeError(f"Cannot update controls with {type(controls)} type")
 
-    @property
-    def FrameRate(self) -> float:
+    def get_frame_rate(self) -> float:
         return _durations_to_framerates(self.FrameDurationLimits)
 
-    @FrameRate.setter
-    def FrameRate(self, value: float) -> None:
+    def set_frame_rate(self, value: float):
         self.FrameDurationLimits = _framerates_to_durations(value)
 
     def get_libcamera_controls(self) -> dict:
