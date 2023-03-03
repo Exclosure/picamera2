@@ -2,7 +2,7 @@ import sys
 from typing import Iterable
 
 from scicamera import Camera
-
+from concurrent.futures._base import TimeoutError as FuturesTimeoutError
 
 def mature_after_frames_or_timeout(
     camera: Camera, n_frames: int = 2, timeout_seconds=5
@@ -11,7 +11,10 @@ def mature_after_frames_or_timeout(
 
     Raises: TimeoutError if it takes too long.
     """
-    camera.discard_frames(n_frames).result(timeout_seconds)
+    try:
+        camera.discard_frames(n_frames).result(timeout_seconds)
+    except FuturesTimeoutError as e:
+        raise TimeoutError("Timed out waiting for camera to mature") from e
 
 
 def requires_controls(camera: Camera, controls: Iterable[str]):
