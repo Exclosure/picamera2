@@ -76,6 +76,7 @@ class FakeCamera(RequestMachinery):
         self._abort = Event()
 
         self.sensor_resolution = FAKE_SIZE
+        self.sensor_format = FAKE_FORMAT
         self.camera_config = None
         self.camera_ctrl_info = {
             "AeEnable": 0,
@@ -105,20 +106,19 @@ class FakeCamera(RequestMachinery):
         while not self._abort.wait(0.1):
             metadata = self.controls.make_dict()
 
-            metadata.update(
-                {
-                    "AeLocked": False,
-                    "FocusFoM": 93,
-                    "FrameDuration": 24994,
-                    "Lux": 330.6990051269531,
-                }
-            )
+            metadata.update({
+                "AeLocked": False,
+                "FocusFoM": 93,
+                "FrameDuration": 24994,
+                "Lux": 330.6990051269531,
+            })
             request = FakeCompletedRequest(self.config, metadata)
             self.add_completed_request(request)
             self.process_requests()
 
     def configure(self, config: CameraConfig) -> None:
         self.camera_config = config
+        self.controls.set_controls(config.controls)
 
     @property
     def camera_controls(self):
@@ -143,6 +143,9 @@ class FakeCamera(RequestMachinery):
         if self._t.is_alive():
             self.stop()
 
-    # TODO(meawoppl) - Kill this method
+    # TODO(meawoppl) - Kill methods below here
     def set_controls(self, controls: Dict[str, Any]) -> None:
         self.controls.set_controls(controls)
+
+    def camera_configuration(self) -> CameraConfig:
+        return self.camera_config

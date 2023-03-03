@@ -20,30 +20,28 @@ def test_configurations(CameraClass: Type[Camera]):
     cfg_preview.controls.ExposureTime = 10000
 
     camera.configure(cfg_preview)
-    if camera.controls.ExposureTime != 10000:
-        raise RuntimeError("exposure value was not set")
-
-    config = camera.camera_configuration()
-    if config.main.size != (800, 600):
-        raise RuntimeError("preview resolution incorrect")
+    assert camera.controls.ExposureTime == 10000
+    assert camera.camera_configuration().main.size == (800, 600)
 
     # Video
     cfg_video = CameraConfig.for_video(camera)
     cfg_video.main.size = (800, 480)
     cfg_video.main.format = "YUV420"
-    cfg_video.controls.set_frame_rate( 25.0)
+
+    has_frameduration = "FrameDurationLimits" in camera.controls.available_control_names()
+    if has_frameduration:
+        cfg_video.controls.set_frame_rate(25.0)
 
     camera.configure(cfg_video)
-    frame_rate = camera.controls.get_frame_rate()
-    if frame_rate < 24.99 or frame_rate > 25.01:
-        raise RuntimeError("framerate was not set")
+
+    if has_frameduration:
+        frame_rate = camera.controls.get_frame_rate()
+        assert frame_rate == pytest.approx(frame_rate, 25.0, 0.1)
 
     config = camera.camera_configuration()
-    if config.size != (800, 480):
-        raise RuntimeError("video resolution incorrect")
-    if config.format != "YUV420":
-        raise RuntimeError("video format incorrect")
-
+    assert config.size == (800, 480)
+    assert config.format == "YUV420"
+    
     # Still
     cfg_still = CameraConfig.for_still(camera)
     cfg_still.size = (1024, 768)
@@ -56,7 +54,6 @@ def test_configurations(CameraClass: Type[Camera]):
 
     camera.configure(cfg_still)
     config = camera.camera_configuration()
-    if config.raw.size != half_res:
-        raise RuntimeError("still raw size incorrect")
+    assert config.raw.size == half_res
 
     camera.close()

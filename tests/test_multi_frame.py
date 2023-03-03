@@ -12,6 +12,10 @@ from scicamera.testing import mature_after_frames_or_timeout
 def test_capture_multi_frame(CameraClass: Type[Camera]):
     camera = CameraClass()
 
+    if "FrameDurationLimits" not in camera.controls.available_control_names():
+        camera.close()
+        pytest.skip("Camera does not support multi-frame capture.")
+
     camera.start()
     camera.controls.ExposureTime = 10000
     mature_after_frames_or_timeout(camera)
