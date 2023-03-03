@@ -15,7 +15,7 @@ def test_capture_file_encodings(CameraClass: Type[Camera]):
     camera.configure(preview_config)
 
     camera.start()
-    mature_after_frames_or_timeout(camera, 0.5)
+    mature_after_frames_or_timeout(camera)
     array = camera.capture_array().result()
     assert isinstance(array, np.ndarray)
     camera.stop()

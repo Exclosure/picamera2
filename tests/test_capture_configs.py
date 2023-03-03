@@ -16,6 +16,6 @@ def test_capture_config_video(CameraClass: Type[Camera], config_method):
     config = config_method(camera)
     camera.configure(config)
     camera.start()
-    mature_after_frames_or_timeout(camera, 0.5)
+    mature_after_frames_or_timeout(camera)
     camera.stop()
     camera.close()

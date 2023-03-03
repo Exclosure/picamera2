@@ -23,7 +23,7 @@ def test_capture_file_encodings(CameraClass: Type[Camera], extension: str):
     camera.start_preview()
 
     camera.start()
-    mature_after_frames_or_timeout(2)
+    mature_after_frames_or_timeout(camera)
     with TemporaryDirectory() as tmpdir:
         filepath = f"{tmpdir}/test.{extension}"
         metadata = camera.capture_file(filepath).result()
