@@ -4,7 +4,6 @@ import pytest
 
 from scicamera import Camera, CameraConfig
 from scicamera.fake import FakeCamera
-from scicamera.testing import requires_controls
 
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
