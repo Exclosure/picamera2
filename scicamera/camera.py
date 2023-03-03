@@ -96,7 +96,7 @@ class CameraManager:
                     continue
 
                 if req.status == libcamera.Request.Status.Complete:
-                    self.cameras[req.cookie].add_completed_request(req)
+                    self.cameras[req.cookie].add_lc_request(req)
 
 
 class Camera(RequestMachinery):
