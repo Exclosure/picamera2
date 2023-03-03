@@ -79,38 +79,24 @@ class CameraManager:
 
     def listen(self):
         sel = selectors.DefaultSelector()
-        sel.register(self.cms.event_fd, selectors.EVENT_READ, self.handle_request)
+        sel.register(self.cms.event_fd, selectors.EVENT_READ)
 
         while self.running:
-            events = sel.select(0.05)
-            for key, _ in events:
-                callback = key.data
-                callback()
+            for _ in sel.select(0.05):
+                self.handle_request()
 
         sel.unregister(self.cms.event_fd)
 
-    def handle_request(self, flushid=None):
+    def handle_request(self, flushid: int=None):
         """Handle requests"""
         with self._lock:
-            cams = set()
             for req in self.cms.get_ready_requests():
-                if (
-                    req.status == libcamera.Request.Status.Complete
-                    and req.cookie != flushid
-                ):
-                    cams.add(req.cookie)
-                    camera_inst = self.cameras[req.cookie]
-                    cleanup_call = partial(
-                        camera_inst.recycle_request, camera_inst.stop_count, req
-                    )
-                    self.cameras[req.cookie].add_completed_request(
-                        CompletedRequest(
-                            req,
-                            replace(camera_inst.camera_config),
-                            camera_inst.stream_map,
-                            cleanup_call,
-                        )
-                    )
+                if req.cookie == flushid:
+                    _log.info("Flushed request %s for camera %s", req, req.cookie)
+                    continue
+
+                if req.status == libcamera.Request.Status.Complete:
+                    self.cameras[req.cookie].add_completed_request(req)
 
 
 class Camera(RequestMachinery):

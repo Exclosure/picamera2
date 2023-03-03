@@ -6,10 +6,10 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from concurrent.futures import Future
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import partial
 from logging import getLogger
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, TYPE_CHECKING
 
 import numpy as np
 from PIL import Image
@@ -18,6 +18,10 @@ import scicamera.formats as formats
 from scicamera import formats
 from scicamera.configuration import CameraConfig
 from scicamera.lc_helpers import lc_unpack
+
+if TYPE_CHECKING:
+    from scicamera.camera import Camera
+
 
 _log = getLogger(__name__)
 
@@ -141,6 +145,19 @@ class CompletedRequest(AbstractCompletedRequest):
         self.config = config
         self.cleanup = cleanup
         self.stream_map = stream_map
+
+    @classmethod
+    def for_camera(cls, camera: Camera, req):
+        cleanup_call = partial(
+            camera.recycle_request, camera.stop_count, req
+        )
+        CompletedRequest(
+                req,
+                replace(camera.camera_config),
+                camera.stream_map,
+                cleanup_call,
+            )
+
 
     def acquire(self):
         """Acquire a reference to this completed request, which stops it being recycled back to

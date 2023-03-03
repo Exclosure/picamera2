@@ -40,8 +40,9 @@ class RequestMachinery:
         """
         self._request_callbacks.remove(callback)
 
-    def add_completed_request(self, request: CompletedRequest) -> None:
-        self._requests.append(request)
+    def add_completed_request(self, lc_request) -> None:
+        wrapped_request = CompletedRequest.for_camera(self, lc_request)
+        self._requests.append(wrapped_request)
 
     def has_requests(self) -> bool:
         return len(self._requests) > 0
