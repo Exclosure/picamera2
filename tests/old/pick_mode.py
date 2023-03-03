@@ -24,10 +24,12 @@ if not available_modes:
 
 chosen_mode = available_modes[0]
 
-camera.video_configuration = CameraConfig.for_video(
+video_config = CameraConfig.for_video(camera)
+
+video_configuration = CameraConfig.for_video(
     camera, raw={"size": chosen_mode["size"], "format": chosen_mode["format"].format}
 )
-camera.configure(camera.video_configuration)
+camera.configure(video_configuration)
 
 # Set the fps
 fps = chosen_mode["fps"]

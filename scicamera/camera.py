@@ -135,16 +135,6 @@ class Camera(RequestMachinery):
         with TuningContext(tuning):
             self._open_camera()
 
-        # Configuration requires various bits of information from the camera
-        # so we build the default configurations here
-        self.preview_configuration = CameraConfig.for_preview(self)
-        self.still_configuration = CameraConfig.for_still(self)
-        self.video_configuration = CameraConfig.for_video(self)
-
-    @property
-    def camera_manager(self):
-        return self._cm.cms
-
     def _reset_flags(self) -> None:
         self.camera = None
         self.is_open = False
@@ -155,38 +145,9 @@ class Camera(RequestMachinery):
         self.stream_map = None
         self.started = False
         self.stop_count = 0
-        self.options = {}
-        self.post_callback = None
         self.camera_properties_ = {}
         self.controls = Controls(self)
         self.sensor_modes_ = None
-
-    @property
-    def preview_configuration(self) -> CameraConfig:
-        return self.preview_configuration_
-
-    @preview_configuration.setter
-    def preview_configuration(self, value: CameraConfig):
-        assert isinstance(value, CameraConfig)
-        self.preview_configuration_ = value
-
-    @property
-    def still_configuration(self) -> CameraConfig:
-        return self.still_configuration_
-
-    @still_configuration.setter
-    def still_configuration(self, value: CameraConfig):
-        assert isinstance(value, CameraConfig)
-        self.still_configuration_ = value
-
-    @property
-    def video_configuration(self) -> CameraConfig:
-        return self.video_configuration_
-
-    @video_configuration.setter
-    def video_configuration(self, value: CameraConfig):
-        assert isinstance(value, CameraConfig)
-        self.video_configuration_ = value
 
     @property
     def asynchronous(self) -> bool:
@@ -243,20 +204,18 @@ class Camera(RequestMachinery):
             _log.warning(f"__del__ call responsible for cleanup of {self}")
             self.close()
 
-    def requires_camera(self):
+    def _initialize_camera(self) -> None:
+        """Initialize camera
+
+        :raises RuntimeError: Failure to initialize camera
+        """
+        CameraInfo.requires_camera()
+
+        self.camera = self._cm.get_camera(self.camera_idx)
         if self.camera is None:
             message = "Initialization failed."
             _log.error(message)
             raise RuntimeError(message)
-
-    def _initialize_camera(self) -> None:
-        """Initialize camera
-
-        :raises RuntimeError: Failure to initialise camera
-        """
-        CameraInfo.requires_camera()
-        self.camera = self._cm.get_camera(self.camera_idx)
-        self.requires_camera()
 
         self.__identify_camera()
         self.camera_ctrl_info = lc_unpack_controls(self.camera.controls)
@@ -274,7 +233,7 @@ class Camera(RequestMachinery):
 
     def __identify_camera(self):
         # TODO(meawoppl) make this a helper on the camera_manager
-        for idx, address in enumerate(self.camera_manager.cameras):
+        for idx, address in enumerate(self._cm.cms.cameras):
             if address == self.camera:
                 self.camera_idx = idx
                 break
@@ -380,9 +339,7 @@ class Camera(RequestMachinery):
         self.camera = None
         self.camera_ctrl_info = None
         self.camera_config = None
-        self.preview_configuration_ = None
-        self.still_configuration_ = None
-        self.video_configuration_ = None
+        self._preview_configuration = None
         self.allocator = None
         _log.info("Camera closed successfully.")
 
@@ -530,7 +487,7 @@ class Camera(RequestMachinery):
         """
         if self.camera_config is None:
             _log.warning("Camera has not been configured, using preview config")
-            self.configure(self.preview_configuration)
+            self.configure(CameraConfig.for_preview(self))
         if self.camera_config is None:
             raise RuntimeError("Camera has not been configured")
         # By default we will create an event loop is there isn't one running already.
