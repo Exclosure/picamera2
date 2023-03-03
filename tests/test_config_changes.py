@@ -28,7 +28,9 @@ def test_configurations(CameraClass: Type[Camera]):
     cfg_video.main.size = (800, 480)
     cfg_video.main.format = "YUV420"
 
-    has_frameduration = "FrameDurationLimits" in camera.controls.available_control_names()
+    has_frameduration = (
+        "FrameDurationLimits" in camera.controls.available_control_names()
+    )
     if has_frameduration:
         cfg_video.controls.set_frame_rate(25.0)
 
@@ -41,7 +43,7 @@ def test_configurations(CameraClass: Type[Camera]):
     config = camera.camera_configuration()
     assert config.size == (800, 480)
     assert config.format == "YUV420"
-    
+
     # Still
     cfg_still = CameraConfig.for_still(camera)
     cfg_still.size = (1024, 768)

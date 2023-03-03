@@ -1,8 +1,9 @@
 import sys
+from concurrent.futures._base import TimeoutError as FuturesTimeoutError
 from typing import Iterable
 
 from scicamera import Camera
-from concurrent.futures._base import TimeoutError as FuturesTimeoutError
+
 
 def mature_after_frames_or_timeout(
     camera: Camera, n_frames: int = 2, timeout_seconds=5

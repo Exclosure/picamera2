@@ -106,12 +106,14 @@ class FakeCamera(RequestMachinery):
         while not self._abort.wait(0.1):
             metadata = self.controls.make_dict()
 
-            metadata.update({
-                "AeLocked": False,
-                "FocusFoM": 93,
-                "FrameDuration": 24994,
-                "Lux": 330.6990051269531,
-            })
+            metadata.update(
+                {
+                    "AeLocked": False,
+                    "FocusFoM": 93,
+                    "FrameDuration": 24994,
+                    "Lux": 330.6990051269531,
+                }
+            )
             request = FakeCompletedRequest(self.config, metadata)
             self.add_completed_request(request)
             self.process_requests()
