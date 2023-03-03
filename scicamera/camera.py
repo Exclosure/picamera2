@@ -141,10 +141,6 @@ class Camera(RequestMachinery):
         self.still_configuration = CameraConfig.for_still(self)
         self.video_configuration = CameraConfig.for_video(self)
 
-    @property
-    def camera_manager(self):
-        return self._cm.cms
-
     def _reset_flags(self) -> None:
         self.camera = None
         self.is_open = False
@@ -155,8 +151,6 @@ class Camera(RequestMachinery):
         self.stream_map = None
         self.started = False
         self.stop_count = 0
-        self.options = {}
-        self.post_callback = None
         self.camera_properties_ = {}
         self.controls = Controls(self)
         self.sensor_modes_ = None
@@ -274,7 +268,7 @@ class Camera(RequestMachinery):
 
     def __identify_camera(self):
         # TODO(meawoppl) make this a helper on the camera_manager
-        for idx, address in enumerate(self.camera_manager.cameras):
+        for idx, address in enumerate(self._cm.cms.cameras):
             if address == self.camera:
                 self.camera_idx = idx
                 break
