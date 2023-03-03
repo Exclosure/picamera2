@@ -13,6 +13,6 @@ def test_capture_multi_camera(CameraClass: Type[Camera]):
     for index in range(n_cameras):
         camera = CameraClass(camera_num=index)
         camera.start()
-        mature_after_frames_or_timeout(2)
+        mature_after_frames_or_timeout(camera)
         camera.stop()
         camera.close()

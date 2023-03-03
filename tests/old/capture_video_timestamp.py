@@ -7,6 +7,6 @@ video_config = CameraConfig.for_video(camera)
 camera.configure(video_config)
 
 camera.start()
-mature_after_frames_or_timeout(camera, 0.5)
+mature_after_frames_or_timeout(camera)
 camera.stop()
 camera.close()

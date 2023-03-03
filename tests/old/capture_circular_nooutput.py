@@ -14,6 +14,6 @@ video_cfg.controls.FrameDurationLimits = (micro, micro)
 camera.configure(video_cfg)
 
 camera.start()
-mature_after_frames_or_timeout(camera, 5).result()
+mature_after_frames_or_timeout(camera)
 camera.stop()
 camera.close()

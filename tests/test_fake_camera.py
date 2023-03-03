@@ -25,7 +25,7 @@ def test_fake_camera_run_internals():
     camera = FakeCamera()
     camera.start()
 
-    mature_after_frames_or_timeout(camera, 10, 1)
+    mature_after_frames_or_timeout(camera)
 
     camera.stop()
     camera.close()

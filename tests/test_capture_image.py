@@ -18,11 +18,11 @@ def test_capture_image(CameraClass: Type[Camera]):
 
     camera.configure(preview_config)
     camera.start()
-    mature_after_frames_or_timeout(camera, 2).result()
+    mature_after_frames_or_timeout(camera)
 
     image = camera.capture_image(config=capture_config).result()
     assert isinstance(image, Image.Image)
 
-    mature_after_frames_or_timeout(camera, 2).result()
+    mature_after_frames_or_timeout(camera)
 
     camera.close()

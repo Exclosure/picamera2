@@ -17,11 +17,11 @@ def test_set_controls(CameraClass: Type[Camera]):
     camera.configure(preview_config)
 
     camera.start()
-    mature_after_frames_or_timeout(2)
+    mature_after_frames_or_timeout(camera)
 
     if {"AwbEnable", "AeEnable"} <= camera.controls.available_control_names():
         camera.set_controls({"AwbEnable": 0, "AeEnable": 0})
-    mature_after_frames_or_timeout(2)
+    mature_after_frames_or_timeout(camera)
     camera.close()
 
 
@@ -45,14 +45,14 @@ def test_set_gain_exposure(CameraClass: Type[Camera]):
     camera.configure(preview_config)
 
     camera.start()
-    mature_after_frames_or_timeout(2)
+    mature_after_frames_or_timeout(camera)
     metadata = camera.capture_metadata().result(timeout=0.5)
     pprint(metadata)
     controls = {c: metadata[c] for c in ["ExposureTime", "AnalogueGain", "ColourGains"]}
     print(controls)
 
     camera.controls.set_controls(controls)
-    mature_after_frames_or_timeout(2)
+    mature_after_frames_or_timeout(camera)
 
     camera.close()
 

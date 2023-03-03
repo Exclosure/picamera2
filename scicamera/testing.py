@@ -4,7 +4,7 @@ from typing import Iterable
 from scicamera import Camera
 
 
-def mature_after_frames_or_timeout(camera: Camera, n_frames: int, timeout_seconds=5):
+def mature_after_frames_or_timeout(camera: Camera, n_frames: int=2, timeout_seconds=5):
     """Return a future that will be mature after n_frames or 2 seconds.
 
     Raises: TimeoutError if it takes too long.
