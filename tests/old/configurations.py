@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from scicamera import Camera
+from scicamera import Camera, CameraConfig
 from scicamera.testing import requires_controls
 
 camera = Camera()
@@ -10,29 +10,27 @@ requires_controls(camera, ("ExposureTime", "FrameRate"))
 # We're going to set up some configuration structures, apply each one in
 # turn and see if it gave us the configuration we expected.
 
-camera.preview_configuration.size = (800, 600)
-camera.preview_configuration.format = "RGB888"
-camera.preview_configuration.controls.ExposureTime = 10000
+# Preview
+cfg_preview = CameraConfig.for_preview(camera)
+cfg_preview.size = (800, 600)
+cfg_preview.format = "RGB888"
+cfg_preview.controls.ExposureTime = 10000
 
-camera.video_configuration.main.size = (800, 480)
-camera.video_configuration.main.format = "YUV420"
-camera.video_configuration.controls.FrameRate = 25.0
-
-camera.still_configuration.size = (1024, 768)
-camera.still_configuration.enable_lores()
-camera.still_configuration.lores.format = "YUV420"
-camera.still_configuration.enable_raw()
-half_res = tuple([v // 2 for v in camera.sensor_resolution])
-camera.still_configuration.raw.size = half_res
-
-camera.configure(camera.preview_configuration)
+camera.configure(cfg_preview)
 if camera.controls.ExposureTime != 10000:
     raise RuntimeError("exposure value was not set")
+
 config = camera.camera_configuration()
 if config.main.size != (800, 600):
     raise RuntimeError("preview resolution incorrect")
 
-camera.configure(camera.video_configuration)
+# Video
+cfg_video = CameraConfig.for_video(camera)
+cfg_video.main.size = (800, 480)
+cfg_video.main.format = "YUV420"
+cfg_video.controls.FrameRate = 25.0
+
+camera.configure(cfg_video)
 if camera.controls.FrameRate < 24.99 or camera.controls.FrameRate > 25.01:
     raise RuntimeError("framerate was not set")
 config = camera.camera_configuration()
@@ -41,7 +39,17 @@ if config.size != (800, 480):
 if config.format != "YUV420":
     raise RuntimeError("video format incorrect")
 
-camera.configure(camera.still_configuration)
+# Still
+cfg_still = CameraConfig.for_still(camera)
+cfg_still.size = (1024, 768)
+cfg_still.enable_lores()
+cfg_still.lores.format = "YUV420"
+cfg_still.enable_raw()
+
+half_res = tuple([v // 2 for v in camera.sensor_resolution])
+cfg_still.raw.size = half_res
+
+camera.configure(cfg_still)
 config = camera.camera_configuration()
 if config.raw.size != half_res:
     raise RuntimeError("still raw size incorrect")
