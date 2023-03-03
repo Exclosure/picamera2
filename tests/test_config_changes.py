@@ -31,10 +31,11 @@ def test_configurations(CameraClass: Type[Camera]):
     cfg_video = CameraConfig.for_video(camera)
     cfg_video.main.size = (800, 480)
     cfg_video.main.format = "YUV420"
-    cfg_video.controls.FrameRate = 25.0
+    cfg_video.controls.set_frame_rate( 25.0)
 
     camera.configure(cfg_video)
-    if camera.controls.FrameRate < 24.99 or camera.controls.FrameRate > 25.01:
+    frame_rate = camera.controls.get_frame_rate()
+    if frame_rate < 24.99 or frame_rate > 25.01:
         raise RuntimeError("framerate was not set")
 
     config = camera.camera_configuration()
