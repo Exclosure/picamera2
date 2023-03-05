@@ -460,13 +460,6 @@ class Camera(RequestMachinery):
     def start(self) -> None:
         """
         Start the camera system running.
-
-        Camera controls may be sent to the camera before it starts running.
-
-        The following parameters may be supplied:
-
-        config - if not None this is used to configure the camera. This is just a
-            convenience so that you don't have to call configure explicitly.
         """
         if self.camera_config is None:
             _log.warning("Camera has not been configured, using preview config")
