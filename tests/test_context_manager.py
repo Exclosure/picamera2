@@ -1,8 +1,10 @@
-from scicamera import Camera, CameraConfig, FakeCamera
-
-from scicamera.testing import mature_after_frames_or_timeout
 from typing import Type
+
 import pytest
+
+from scicamera import Camera, CameraConfig, FakeCamera
+from scicamera.testing import mature_after_frames_or_timeout
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_context_manager(CameraClass: Type[Camera]):
@@ -14,7 +16,6 @@ def test_context_manager(CameraClass: Type[Camera]):
         metadata = camera.capture_metadata().result()
         assert isinstance(metadata, dict)
         print(metadata)
-
 
     print("Without context...")
     camera = CameraClass()

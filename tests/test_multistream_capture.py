@@ -1,9 +1,10 @@
+from typing import Type
+
 import numpy as np
+import pytest
 
 from scicamera import Camera, CameraConfig, FakeCamera
 
-from typing import Type
-import pytest
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_multiple_streams(CameraClass: Type[Camera]):
@@ -26,6 +27,7 @@ def test_multiple_streams(CameraClass: Type[Camera]):
         assert main_array.size == main_size + (3,)
 
     camera.stop()
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_multiple_streams_with_config(CameraClass: Type[Camera]):
