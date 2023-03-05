@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from scicamera import Camera, CameraConfig, FakeCamera
+from scicamera.testing import mature_after_frames_or_timeout
 
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
@@ -14,7 +15,7 @@ def test_capture_file_encodings(CameraClass: Type[Camera]):
     camera.configure(preview_config)
 
     camera.start()
-    camera.discard_frames(2)
+    mature_after_frames_or_timeout(camera)
     array = camera.capture_array().result()
     assert isinstance(array, np.ndarray)
     camera.stop()

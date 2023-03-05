@@ -33,7 +33,7 @@ camera.configure(video_configuration)
 
 # Set the fps
 fps = chosen_mode["fps"]
-camera.set_controls({"FrameRate": fps})
+camera.controls.set_frame_rate(fps)
 
 camera.start()
 camera.discard_frames(2).result()

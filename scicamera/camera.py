@@ -358,6 +358,10 @@ class Camera(RequestMachinery):
             return
 
         request.reuse()
+
+        # This is where controls on the camera get updated
+        # TODO(meawoppl) - attach a future to he request.cookie
+        # so that we can mature the future when the controls are set
         controls = self.controls.get_libcamera_controls()
         for id, value in controls.items():
             request.set_control(id, value)
