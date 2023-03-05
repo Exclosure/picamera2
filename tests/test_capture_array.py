@@ -21,3 +21,20 @@ def test_capture_file_encodings(CameraClass: Type[Camera]):
     camera.stop()
 
     camera.close()
+
+
+@pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
+def test_capture_array_mode_change(CameraClass: Type[Camera]):
+    camera = CameraClass()
+    camera.start_preview()
+
+    preview_config = CameraConfig.for_preview(camera)
+    still_config = CameraConfig.for_still(camera)
+    camera.configure(preview_config)
+
+    camera.start()
+    camera.discard_frames(2)
+    array = camera.capture_array(config=still_config).result()
+    assert array.shape == camera.sensor_resolution + (3,)
+
+    camera.close()
