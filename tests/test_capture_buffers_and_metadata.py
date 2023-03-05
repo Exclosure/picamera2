@@ -17,7 +17,7 @@ def test_capture_buffers_and_metadata(CameraClass: Type[Camera]):
     camera.configure(preview_config)
 
     camera.start()
-    mature_after_frames_or_timeout(camera, 2).result()
+    mature_after_frames_or_timeout(camera)
     camera.switch_mode(capture_config).result()
     buffers, metadata = camera.capture_buffers_and_metadata(["main", "raw"]).result()
 

@@ -29,7 +29,6 @@ KNOWN_XFAIL = set(
     [
         "capture_circular.py",
         "drm_multiple_test.py",
-        "multicamera_preview.py",
         "raw.py",
         "stack_raw.py",
     ]

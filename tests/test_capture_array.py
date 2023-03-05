@@ -35,6 +35,6 @@ def test_capture_array_mode_change(CameraClass: Type[Camera]):
     camera.start()
     camera.discard_frames(2)
     array = camera.capture_array(config=still_config).result()
-    assert array.shape == camera.sensor_resolution + (3,)
+    assert array.shape == camera.sensor_resolution[::-1] + (3,)
 
     camera.close()
