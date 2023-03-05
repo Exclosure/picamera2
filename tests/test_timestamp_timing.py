@@ -16,11 +16,17 @@ def test_timestamps(CameraClass: Type[Camera]):
 
     timestamps = []
 
-    camera.add_request_callback(lambda r: timestamps.append(time.time() * 1e6))
+    def _callback(request):
+        timestamps.append(time.time() * 1e6)
+        if len(timestamps) == 10:
+            camera.remove_request_callback(_callback)
+
+    camera.add_request_callback(_callback)
 
     camera.start()
     camera.discard_frames(10).result(timeout=5.0)
     camera.stop()
+    camera.close()
 
     # Now let's analyse all the timestamps
     timestamps = np.array(timestamps)
@@ -48,4 +54,3 @@ def test_timestamps(CameraClass: Type[Camera]):
         raise RuntimeError(f"Unexpectedly large number ({hist[2]}) of late frames")
     if hist[3] > 0:
         raise RuntimeError(f"{hist[3]} very late frames detected")
-    camera.close()

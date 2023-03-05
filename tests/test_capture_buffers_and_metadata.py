@@ -18,12 +18,14 @@ def test_capture_buffers_and_metadata(CameraClass: Type[Camera]):
 
     camera.start()
     mature_after_frames_or_timeout(camera)
-    camera.switch_mode(capture_config).result()
-    buffers, metadata = camera.capture_buffers_and_metadata(["main", "raw"]).result()
+    camera.switch_mode(capture_config).result(timeout=5.0)
+    buffers, metadata = camera.capture_buffers_and_metadata(["main", "raw"]).result(
+        timeout=5.0
+    )
+
+    camera.stop()
+    camera.close()
 
     assert isinstance(buffers, list)
     assert len(buffers) == 2
     assert isinstance(metadata, dict)
-
-    camera.stop()
-    camera.close()

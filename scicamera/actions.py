@@ -6,6 +6,7 @@ from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 import numpy as np
 from PIL import Image
 
+from scicamera.configuration import CameraConfig
 from scicamera.frame import CameraFrame
 from scicamera.request import CompletedRequest, LoopTask
 from scicamera.typing import TypedFuture
@@ -122,13 +123,13 @@ class RequestMachinery:
             *[LoopTask.with_request(self._discard_request) for _ in range(n_frames)]
         )[-1]
 
-    def _switch_mode(self, camera_config):
+    def _switch_mode(self, camera_config: CameraConfig):
         self._stop()
         self.configure(camera_config)
         self._start()
         return self.camera_config
 
-    def switch_mode(self, camera_config: dict) -> TypedFuture[dict]:
+    def switch_mode(self, camera_config: CameraConfig) -> TypedFuture[CameraConfig]:
         """Switch the camera into another mode given by the camera_config."""
         return self._dispatch_loop_tasks(
             LoopTask.without_request(self._switch_mode, camera_config)

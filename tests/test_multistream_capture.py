@@ -1,6 +1,5 @@
 from typing import Type
 
-import numpy as np
 import pytest
 
 from scicamera import Camera, CameraConfig, FakeCamera
@@ -10,7 +9,7 @@ from scicamera import Camera, CameraConfig, FakeCamera
 def test_multiple_streams(CameraClass: Type[Camera]):
     main_size = (1280, 720)
     lores_size = (320, 240)
-    camera = Camera()
+    camera = CameraClass()
     video_config = CameraConfig.for_video(
         camera,
         main={"size": main_size, "format": "RGB888"},
@@ -19,14 +18,16 @@ def test_multiple_streams(CameraClass: Type[Camera]):
     camera.configure(video_config)
     camera.start()
 
-    for _ in range(2):
-        cur = camera.capture_array("lores").result()
-        assert cur.size == lores_size + (3,)
+    try:
+        for _ in range(2):
+            cur = camera.capture_array("lores").result()
+            assert cur.size == lores_size + (3,)
 
-        main_array = camera.capture_array("main").result()
-        assert main_array.size == main_size + (3,)
-
-    camera.stop()
+            main_array = camera.capture_array("main").result()
+            assert main_array.size == main_size + (3,)
+    finally:
+        camera.stop()
+        camera.close()
 
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])

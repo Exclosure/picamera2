@@ -6,6 +6,7 @@ the FakeCamera class will be a subclass of RequestMachinery so it can be
 used as a drop-in replacement for a real camera in basically every way.
 """
 import time
+from concurrent.futures import Future
 from threading import Event, Thread
 from typing import Any, Dict, Tuple
 
@@ -16,6 +17,7 @@ from scicamera.actions import RequestMachinery
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.request import CompletedRequest
+from scicamera.typing import TypedFuture
 
 FAKE_SIZE = (320, 240)
 FAKE_FORMAT = "RGB888"
@@ -144,6 +146,9 @@ class FakeCamera(RequestMachinery):
     def close(self) -> None:
         if self._t.is_alive():
             self.stop()
+
+    def switch_mode(self, camera_config: CameraConfig) -> TypedFuture[CameraConfig]:
+        return Future().set_result(camera_config)
 
     # TODO(meawoppl) - Kill methods below here
     def set_controls(self, controls: Dict[str, Any]) -> None:
