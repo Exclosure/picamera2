@@ -50,7 +50,7 @@ class MappedBuffer:
 
 class AbstractCompletedRequest(ABC):
     @abstractmethod
-    def get_camera_config(self, name: str) -> CameraConfig:
+    def get_camera_config(self) -> CameraConfig:
         raise NotImplementedError()
 
     @abstractmethod
@@ -63,7 +63,7 @@ class AbstractCompletedRequest(ABC):
 
     def make_array(self, name: str) -> np.ndarray:
         """Make a 2d numpy array from the named stream's buffer."""
-        config = self.get_camera_config(name)
+        config = self.get_camera_config()
         stream_cfg = config.get_stream_config(name)
         w, h = stream_cfg.size
         stride = stream_cfg.stride
