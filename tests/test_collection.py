@@ -27,7 +27,6 @@ def forward_subprocess_output(e: subprocess.CalledProcessError):
 
 KNOWN_XFAIL = set(
     [
-        "capture_circular.py",
         "drm_multiple_test.py",
         "raw.py",
         "stack_raw.py",

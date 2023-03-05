@@ -15,3 +15,4 @@ def test_timeout_helper(CameraClass: Type[Camera]):
     camera.start()
     mature_after_frames_or_timeout(camera)
     camera.stop()
+    camera.close()
