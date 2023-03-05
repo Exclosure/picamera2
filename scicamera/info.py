@@ -32,11 +32,12 @@ class CameraInfo:
         """
         infos = []
         for cam in libcamera.CameraManager.singleton().cameras:
-            name_to_val = {
-                k.name.lower(): v
-                for k, v in cam.properties.items()
-                if k.name in ("Model", "Location", "Rotation")
-            }
+            name_to_val = {}
+            for k, v in cam.properties.items():
+                if k.name in ("Model", "Location", "Rotation"):
+                    name_to_val[k.name.lower()] = v
+                else:
+                    _log.warning("Unknown property %s: %s", k.name, v)
             name_to_val["id"] = cam.id
             infos.append(CameraInfo(**name_to_val))
         return infos

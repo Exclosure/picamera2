@@ -1,8 +1,10 @@
 from logging import getLogger
 
 import pytest
+from pprint import pprint
 
 from scicamera.camera import CameraManager
+from scicamera.info import CameraInfo
 
 _log = getLogger(__name__)
 
@@ -12,6 +14,11 @@ def _close_all_warn() -> int:
     if n_closed > 0:
         _log.error(f"Test left %s cameras open", n_closed)
     return n_closed
+
+def _log_camera_info():
+    _log.info("Camera info:")
+    for camera in CameraInfo.global_camera_info():
+        pprint(camera)
 
 
 @pytest.fixture(autouse=True)
