@@ -127,6 +127,13 @@ class CameraConfig:
     # This is set only after validation by libcamera
     libcamera_config: Optional[Any] = None
 
+    def get_stream_config(self, name: str) -> StreamConfig | None:
+        return {
+            "main": self.main,
+            "lores": self.lores,
+            "raw": self.raw,
+        }[name]
+
     # TODO: Remove forward references.
     @property
     def size(self):
@@ -161,16 +168,6 @@ class CameraConfig:
         if self.lores is not None:
             self.lores.align(optimal)
         # No sense trying to align the raw stream.
-
-    def get_config(self, config_name: str) -> StreamConfig:
-        # TODO(meawoppl) - backcompat shim. remove me.
-        if config_name == "main":
-            return self.main
-        if config_name == "lores":
-            return self.lores
-        if config_name == "raw":
-            return self.raw
-        raise ValueError("Unknown config name " + config_name)
 
     def get_stream_indices(self) -> Tuple[int, int, int]:
         """Get the main, lores, and raw stream indices.

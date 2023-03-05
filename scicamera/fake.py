@@ -53,13 +53,13 @@ class FakeCompletedRequest(CompletedRequest):
     def release(self):
         pass
 
-    def get_config(self, name: str) -> Dict[str, Any]:
+    def get_camera_config(self) -> CameraConfig:
         """Fetch the configuration for the named stream."""
         return self.config
 
     def get_buffer(self, name: str) -> np.ndarray:
         """Make a 1d numpy array from the named stream's buffer."""
-        size = self.config.get_config(name).size
+        size = self.config.get_stream_config(name).size
         return make_fake_image(size).flatten()
 
     def get_metadata(self) -> Dict[str, Any]:
