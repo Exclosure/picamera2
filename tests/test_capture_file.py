@@ -5,6 +5,7 @@ from typing import Type
 import pytest
 
 from scicamera import Camera, CameraConfig, FakeCamera
+from scicamera.testing import mature_after_frames_or_timeout
 
 
 @pytest.mark.parametrize("extension", ["jpg", "png", "bmp", "gif", "pgm"])
@@ -22,7 +23,7 @@ def test_capture_file_encodings(CameraClass: Type[Camera], extension: str):
     camera.start_preview()
 
     camera.start()
-    camera.discard_frames(2)
+    mature_after_frames_or_timeout(camera)
     with TemporaryDirectory() as tmpdir:
         filepath = f"{tmpdir}/test.{extension}"
         metadata = camera.capture_file(filepath).result()

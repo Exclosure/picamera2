@@ -118,7 +118,7 @@ class RequestMachinery:
 
     def _switch_mode(self, camera_config):
         self._stop()
-        self._configure(camera_config)
+        self.configure(camera_config)
         self._start()
         return self.camera_config
 

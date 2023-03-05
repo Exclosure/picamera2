@@ -22,11 +22,11 @@ def check(raw_config, fps):
     if raw_config["size"][0] * raw_config["size"][1] > 5e6:
         print("Not checking", raw_config)
         return
-    camera.video_configuration = CameraConfig.for_video(
+    video_config = CameraConfig.for_video(
         camera,
         raw=raw_config,
     )
-    camera.configure("video")
+    camera.configure(video_config)
 
     # Check we got the correct raw format
     assert camera.camera_configuration().raw.size == raw_config["size"]
@@ -35,7 +35,7 @@ def check(raw_config, fps):
     assert (
         set_format.format == raw_config["format"]
     ), f'{camera.camera_configuration().raw.format} != {raw_config["format"]}'
-    camera.set_controls({"FrameRate": fps})
+    camera.controls.set_frame_rate(fps)
 
     camera.start()
     camera.discard_frames(2)

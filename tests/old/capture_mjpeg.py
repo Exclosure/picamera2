@@ -9,7 +9,6 @@ camera.configure(video_config)
 camera.start_preview()
 
 camera.start()
-mature_after_frames_or_timeout(camera, 5).result()
-
+mature_after_frames_or_timeout(camera)
 camera.stop()
 camera.close()
