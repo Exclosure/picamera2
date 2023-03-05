@@ -50,7 +50,7 @@ class MappedBuffer:
 
 class AbstractCompletedRequest(ABC):
     @abstractmethod
-    def get_config(self, name: str) -> CameraConfig:
+    def get_camera_config(self) -> CameraConfig:
         raise NotImplementedError()
 
     @abstractmethod
@@ -63,8 +63,8 @@ class AbstractCompletedRequest(ABC):
 
     def make_array(self, name: str) -> np.ndarray:
         """Make a 2d numpy array from the named stream's buffer."""
-        config = self.get_config(name)
-        stream_cfg = config.get_config(name)
+        config = self.get_camera_config()
+        stream_cfg = config.get_stream_config(name)
         w, h = stream_cfg.size
         stride = stream_cfg.stride
 
@@ -104,7 +104,7 @@ class AbstractCompletedRequest(ABC):
 
     def make_image(self, name: str) -> Image.Image:
         """Make a PIL image from the named stream's buffer."""
-        fmt = self.get_config(name).format
+        fmt = self.get_camera_config().format
         if fmt == "MJPEG":
             buffer = self.get_buffer(name)
             return Image.open(io.BytesIO(buffer))
@@ -166,7 +166,7 @@ class CompletedRequest(AbstractCompletedRequest):
             self.cleanup()
             self.request = None
 
-    def get_config(self, name: str) -> CameraConfig:
+    def get_camera_config(self) -> CameraConfig:
         """Fetch the configuration for the named stream."""
         return self.config
 
