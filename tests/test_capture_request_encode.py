@@ -15,7 +15,8 @@ def test_capture_request_encode(CameraClass: Type[Camera]):
     camera = CameraClass()
     camera.start_preview()
 
-    camera.configure("preview")
+    preview_config = CameraConfig.for_preview(camera)
+    camera.configure(preview_config)
 
     camera.start()
     camera.discard_frames(2)

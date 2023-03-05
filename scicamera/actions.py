@@ -21,6 +21,12 @@ class RequestMachinery:
         self._request_callbacks = []
         self._task_deque: Deque[LoopTask] = deque()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
     def add_request_callback(self, callback: Callable[[CompletedRequest], None]):
         """Add a callback to be called when every request completes.
 
