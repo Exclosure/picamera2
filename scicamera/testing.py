@@ -1,8 +1,11 @@
+import re
 import sys
 from concurrent.futures._base import TimeoutError as FuturesTimeoutError
 from typing import Iterable
 
-from scicamera import Camera
+import pytest
+
+from scicamera import Camera, FakeCamera
 
 
 def mature_after_frames_or_timeout(
@@ -16,6 +19,16 @@ def mature_after_frames_or_timeout(
         camera.discard_frames(n_frames).result(timeout_seconds)
     except FuturesTimeoutError as e:
         raise TimeoutError("Timed out waiting for camera to mature") from e
+
+
+def requires_camera_model(camera: Camera, model_pattern: str):
+    if isinstance(camera, FakeCamera):
+        return
+    if not re.match(model_pattern, camera.info.model):
+        camera.close()
+        pytest.skip(
+            f"Skipping test, camera model {camera.info.model} does not match {model_pattern}"
+        )
 
 
 def requires_controls(camera: Camera, controls: Iterable[str]):

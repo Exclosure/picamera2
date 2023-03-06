@@ -6,6 +6,8 @@ from typing import List
 
 import libcamera
 
+from scicamera.lc_helpers import lc_unpack
+
 _log = getLogger(__name__)
 
 
@@ -23,6 +25,9 @@ class CameraInfo:
     rotation: int | None
     """Rotation of the camera, if known."""
 
+    size: tuple[int, int] | None
+    """Size of the pixel array, if known."""
+
     @staticmethod
     def global_camera_info() -> List[CameraInfo]:
         """
@@ -30,17 +35,25 @@ class CameraInfo:
         and ordered correctly by camera number. Also return the location and rotation
         of the camera when known, as these may help distinguish which is which.
         """
-        infos = []
-        for cam in libcamera.CameraManager.singleton().cameras:
-            name_to_val = {}
-            for k, v in cam.properties.items():
-                if k.name in ("Model", "Location", "Rotation"):
-                    name_to_val[k.name.lower()] = v
-                else:
-                    _log.warning("Unknown property %s: %s", k.name, v)
-            name_to_val["id"] = cam.id
-            infos.append(CameraInfo(**name_to_val))
-        return infos
+        return list(
+            CameraInfo.from_lc_camera(cam)
+            for cam in libcamera.CameraManager.singleton().cameras
+        )
+
+    @classmethod
+    def from_lc_camera(cls, lc_camera: libcamera.Camera) -> CameraInfo:
+        name_to_val = {"location": None, "rotation": None, "size": None, "model": None}
+        _log.debug("Camera Property Keys: %s", lc_unpack(lc_camera.properties))
+        for k, v in lc_camera.properties.items():
+            renamed = k.name.lower()
+            if renamed == "pixelarraysize":
+                renamed = "size"
+            if renamed in name_to_val:
+                name_to_val[renamed] = v
+            else:
+                _log.debug("Unknown property %s: %s", k.name, v)
+        name_to_val["id"] = lc_camera.id
+        return cls(**name_to_val)
 
     @staticmethod
     def n_cameras() -> int:

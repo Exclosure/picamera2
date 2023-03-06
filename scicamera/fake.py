@@ -16,6 +16,7 @@ import numpy as np
 from scicamera.actions import RequestMachinery
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
+from scicamera.info import CameraInfo
 from scicamera.request import CompletedRequest
 from scicamera.typing import TypedFuture
 
@@ -123,6 +124,15 @@ class FakeCamera(RequestMachinery):
     def configure(self, config: CameraConfig) -> None:
         self.camera_config = config
         self.controls.set_controls(config.controls)
+
+    @property
+    def info(self) -> CameraInfo:
+        return CameraInfo(
+            id="fake",
+            model="Fake Camera",
+            size=FAKE_SIZE,
+            location="Nowhere",
+        )
 
     @property
     def camera_controls(self):

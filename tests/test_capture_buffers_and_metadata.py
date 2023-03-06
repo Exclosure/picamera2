@@ -4,12 +4,14 @@ import pytest
 
 from scicamera import Camera, CameraConfig, FakeCamera
 from scicamera.configuration import CameraConfig
-from scicamera.testing import mature_after_frames_or_timeout
+from scicamera.testing import mature_after_frames_or_timeout, requires_camera_model
 
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_buffers_and_metadata(CameraClass: Type[Camera]):
     camera = CameraClass()
+    requires_camera_model(camera, "imx")
+
     camera.start_preview()
 
     preview_config = CameraConfig.for_preview(camera)

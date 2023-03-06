@@ -27,6 +27,8 @@ def _convert_from_libcamera_type(value):
         value = (value.x, value.y, value.width, value.height)
     elif isinstance(value, libcamera.Size):
         value = (value.width, value.height)
+    elif isinstance(value, (tuple, list)):
+        value = [_convert_from_libcamera_type(v) for v in value]
     return value
 
 

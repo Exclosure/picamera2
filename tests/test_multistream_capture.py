@@ -3,6 +3,7 @@ from typing import Type
 import pytest
 
 from scicamera import Camera, CameraConfig, FakeCamera
+from scicamera.testing import requires_camera_model
 
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
@@ -10,6 +11,7 @@ def test_multiple_streams(CameraClass: Type[Camera]):
     main_size = (1280, 720)
     lores_size = (320, 240)
     camera = CameraClass()
+    requires_camera_model(camera, "imx")
     video_config = CameraConfig.for_video(
         camera,
         main={"size": main_size, "format": "RGB888"},
