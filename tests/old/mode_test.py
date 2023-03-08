@@ -54,7 +54,7 @@ modes = camera.sensor_modes
 # Make sure less than 5 modes, to avoid timing out
 modes = modes[:5]
 for i, mode in enumerate(modes):
-    if mode["format"]["format"] == "MJPEG":
+    if mode["format"] == "MJPEG":
         print("Skipping MJPEG mode", mode)
         continue
     print(f"Testing mode (packed): '{mode}' {i+1}/{len(modes)}")
