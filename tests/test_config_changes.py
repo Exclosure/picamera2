@@ -46,6 +46,7 @@ def test_config_video(CameraClass: Type[Camera]):
 
     camera.close()
 
+
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_config_still(CameraClass: Type[Camera]):
     camera = CameraClass()
@@ -61,7 +62,7 @@ def test_config_still(CameraClass: Type[Camera]):
     cfg_still.lores.format = "YUV420"
     cfg_still.enable_raw()
 
-    config = camera.camera_configuration()  
+    config = camera.camera_configuration()
     half_res = tuple([v // 2 for v in camera.sensor_resolution])
     cfg_still.raw.size = half_res
 
