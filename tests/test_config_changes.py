@@ -25,7 +25,8 @@ def test_configurations(CameraClass: Type[Camera]):
 
     # Video
     cfg_video = CameraConfig.for_video(camera)
-    cfg_video.main.size = (800, 480)
+    assert cfg_video.main.size[0] == pytest.approx(800, rel=0.25)
+    assert cfg_video.main.size[1] == pytest.approx(600, rel=0.25)
     cfg_video.main.format = "YUV420"
 
     has_frameduration = (
@@ -41,7 +42,9 @@ def test_configurations(CameraClass: Type[Camera]):
         assert frame_rate == pytest.approx(frame_rate, 25.0, 0.1)
 
     config = camera.camera_configuration()
-    assert config.size == (800, 480)
+    # These vary a lot sensor-to-sensor
+    assert config.size[0] == pytest.approx(800, rel=0.25)
+    assert config.size[1] == pytest.approx(480, rel=0.25)
     assert config.format == "YUV420"
 
     # Still

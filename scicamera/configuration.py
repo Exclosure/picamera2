@@ -413,6 +413,8 @@ class CameraConfig:
         # Make the libcamera configuration, and then we'll write all our parameters over
         # the ones it gave us.
         libcamera_config = lc_camera.generate_configuration(roles)
+        if libcamera_config is None:
+            raise RuntimeError(f"Failed to generate libcamera configuration for {self} using {lc_camera}")
         libcamera_config.transform = self.transform
         self._update_libcamera_stream_config(
             libcamera_config.at(main_index), self.main, self.buffer_count
