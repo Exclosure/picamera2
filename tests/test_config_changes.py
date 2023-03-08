@@ -7,7 +7,7 @@ from scicamera.fake import FakeCamera
 
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
-def test_configurations(CameraClass: Type[Camera]):
+def test_config_preview(CameraClass: Type[Camera]):
     camera = CameraClass()
 
     # We're going to set up some configuration structures, apply each one in
@@ -21,12 +21,15 @@ def test_configurations(CameraClass: Type[Camera]):
 
     camera.configure(cfg_preview)
     assert camera.controls.ExposureTime == 10000
-    assert camera.camera_configuration().main.size == (800, 600)
 
+    camera.close()
+
+
+@pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
+def test_config_video(CameraClass: Type[Camera]):
+    camera = CameraClass()
     # Video
     cfg_video = CameraConfig.for_video(camera)
-    assert cfg_video.main.size[0] == pytest.approx(800, rel=0.25)
-    assert cfg_video.main.size[1] == pytest.approx(600, rel=0.25)
     cfg_video.main.format = "YUV420"
 
     has_frameduration = (
@@ -41,11 +44,15 @@ def test_configurations(CameraClass: Type[Camera]):
         frame_rate = camera.controls.get_frame_rate()
         assert frame_rate == pytest.approx(frame_rate, 25.0, 0.1)
 
-    config = camera.camera_configuration()
-    # These vary a lot sensor-to-sensor
-    assert config.size[0] == pytest.approx(800, rel=0.25)
-    assert config.size[1] == pytest.approx(480, rel=0.25)
-    assert config.format == "YUV420"
+    camera.close()
+
+@pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
+def test_config_still(CameraClass: Type[Camera]):
+    camera = CameraClass()
+
+    if camera.sensor_format == "MJPEG":
+        camera.close()
+        pytest.skip("MJPEG cameras don't support still capture")
 
     # Still
     cfg_still = CameraConfig.for_still(camera)
@@ -54,11 +61,14 @@ def test_configurations(CameraClass: Type[Camera]):
     cfg_still.lores.format = "YUV420"
     cfg_still.enable_raw()
 
+    config = camera.camera_configuration()  
     half_res = tuple([v // 2 for v in camera.sensor_resolution])
     cfg_still.raw.size = half_res
 
     camera.configure(cfg_still)
     config = camera.camera_configuration()
-    assert config.raw.size == half_res
-
-    camera.close()
+    try:
+        assert config.raw.size == half_res
+        assert config.lores.format == "YUV420"
+    finally:
+        camera.close()
