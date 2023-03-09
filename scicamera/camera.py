@@ -110,7 +110,7 @@ class CameraManager:
                         CompletedRequest(
                             req,
                             replace(camera_inst.camera_config),
-                            camera_inst.`stream`_map,
+                            camera_inst.stream_map,
                             cleanup_call,
                         )
                     )
