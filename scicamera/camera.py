@@ -14,7 +14,7 @@ import libcamera
 
 import scicamera.formats as formats
 from scicamera.actions import RequestMachinery
-from scicamera.configuration import CameraConfig, StreamConfig
+from scicamera.configuration import CameraConfig
 from scicamera.controls import Controls
 from scicamera.info import CameraInfo
 from scicamera.lc_helpers import errno_handle, lc_unpack, lc_unpack_controls
@@ -110,7 +110,7 @@ class CameraManager:
                         CompletedRequest(
                             req,
                             replace(camera_inst.camera_config),
-                            camera_inst.stream_map,
+                            camera_inst.`stream`_map,
                             cleanup_call,
                         )
                     )

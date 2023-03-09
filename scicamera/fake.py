@@ -1,5 +1,5 @@
 """
-This submodule contins a fake camera implementation that can be used for
+This submodule contains a fake camera implementation that can be used for
 testing purposes. All instances of the FakeCamera class will share the
 same class structure so type-checking will work as expected. Similarly,
 the FakeCamera class will be a subclass of RequestMachinery so it can be
@@ -132,6 +132,7 @@ class FakeCamera(RequestMachinery):
             model="Fake Camera",
             size=FAKE_SIZE,
             location="Nowhere",
+            rotation=1,
         )
 
     @property
