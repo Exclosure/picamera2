@@ -8,13 +8,10 @@ from scicamera.testing import mature_after_frames_or_timeout
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_timeout_helper(CameraClass: Type[Camera]):
-    camera = CameraClass()
-    with pytest.raises(TimeoutError):
-        mature_after_frames_or_timeout(camera, 2, 0.1)
+    with CameraClass() as camera:
+        with pytest.raises(TimeoutError):
+            mature_after_frames_or_timeout(camera, 2, 0.1)
 
-    camera.start()
-    try:
+        camera.start()
         mature_after_frames_or_timeout(camera)
-    finally:
         camera.stop()
-        camera.close()

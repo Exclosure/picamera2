@@ -10,23 +10,22 @@ from scicamera.fake import FakeCamera
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_timestamps(CameraClass: Type[Camera]):
-    camera = CameraClass()
-    video_config = CameraConfig.for_video(camera)
-    camera.configure(video_config)
+    with CameraClass() as camera:
+        video_config = CameraConfig.for_video(camera)
+        camera.configure(video_config)
 
-    timestamps = []
+        timestamps = []
 
-    def _callback(request):
-        timestamps.append(time.time() * 1e6)
-        if len(timestamps) == 10:
-            camera.remove_request_callback(_callback)
+        def _callback(request):
+            timestamps.append(time.time() * 1e6)
+            if len(timestamps) == 10:
+                camera.remove_request_callback(_callback)
 
-    camera.add_request_callback(_callback)
+        camera.add_request_callback(_callback)
 
-    camera.start()
-    camera.discard_frames(10).result(timeout=5.0)
-    camera.stop()
-    camera.close()
+        camera.start()
+        camera.discard_frames(10).result(timeout=5.0)
+        camera.stop()
 
     # Now let's analyse all the timestamps
     timestamps = np.array(timestamps)

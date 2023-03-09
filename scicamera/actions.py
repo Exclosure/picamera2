@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from collections import deque
 from concurrent.futures import Future
 from logging import getLogger
@@ -14,13 +15,17 @@ from scicamera.typing import TypedFuture
 _log = getLogger(__name__)
 
 
-class RequestMachinery:
+class RequestMachinery(ABC):
     """RequestMachinery is a helper class for the Camera class."""
 
     def __init__(self) -> None:
         self._requests = deque()
         self._request_callbacks = []
         self._task_deque: Deque[LoopTask] = deque()
+
+    @abstractmethod
+    def close(self):
+        raise NotImplementedError()
 
     def __enter__(self):
         return self
