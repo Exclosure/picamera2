@@ -158,7 +158,10 @@ class FakeCamera(RequestMachinery):
             self.stop()
 
     def switch_mode(self, camera_config: CameraConfig) -> TypedFuture[CameraConfig]:
-        return Future().set_result(camera_config)
+        self.configure(camera_config)
+        future = Future()
+        future.set_result(camera_config)
+        return future
 
     # TODO(meawoppl) - Kill methods below here
     def set_controls(self, controls: Dict[str, Any]) -> None:
