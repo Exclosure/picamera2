@@ -10,7 +10,7 @@ from scicamera.testing import mature_after_frames_or_timeout, requires_camera_mo
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_buffers_and_metadata(CameraClass: Type[Camera]):
     camera = CameraClass()
-    requires_camera_model(camera, "imx")
+    requires_camera_model(camera, "imx", allow_fake=False)
 
     camera.start_preview()
 

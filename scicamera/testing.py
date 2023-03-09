@@ -21,8 +21,8 @@ def mature_after_frames_or_timeout(
         raise TimeoutError("Timed out waiting for camera to mature") from e
 
 
-def requires_camera_model(camera: Camera, model_pattern: str):
-    if isinstance(camera, FakeCamera):
+def requires_camera_model(camera: Camera, model_pattern: str, allow_fake: bool = True):
+    if isinstance(camera, FakeCamera) and allow_fake:
         return
     if not re.match(model_pattern, camera.info.model):
         camera.close()
