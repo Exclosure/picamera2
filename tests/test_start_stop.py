@@ -5,6 +5,9 @@ import pytest
 from scicamera import Camera, FakeCamera
 from scicamera.testing import mature_after_frames_or_timeout
 
+from logging import getLogger
+
+_log = getLogger(__name__)
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_start_stop_runloop(CameraClass: Type[Camera]):
@@ -23,7 +26,9 @@ def test_start_stop_runloop(CameraClass: Type[Camera]):
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_start_stop(CameraClass: Type[Camera]):
     with CameraClass() as camera:
-        for _ in range(3):
+        for cycle in range(3):
+            _log.info("Starting camera %s", cycle)
             camera.start()
             mature_after_frames_or_timeout(camera)
             camera.stop()
+            _log.info("Stopped camera %s", cycle)
