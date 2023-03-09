@@ -8,25 +8,25 @@ from scicamera.testing import requires_camera_model
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_multiple_streams(CameraClass: Type[Camera]):
-    main_size = (1280, 720)
-    lores_size = (320, 240)
+    main_shape = (1280, 720)
+    lores_shape = (320, 240)
     camera = CameraClass()
-    requires_camera_model(camera, "imx")
+    requires_camera_model(camera, "imx", allow_fake=False)
     video_config = CameraConfig.for_video(
         camera,
-        main={"size": main_size, "format": "RGB888"},
-        lores={"size": lores_size, "format": "YUV420"},
+        main={"size": main_shape, "format": "RGB888"},
+        lores={"size": lores_shape, "format": "YUV420"},
     )
     camera.configure(video_config)
     camera.start()
 
     try:
         for _ in range(2):
-            cur = camera.capture_array("lores").result()
-            assert cur.size == lores_size + (3,)
+            main = camera.capture_array("main").result()
+            assert main.shape == main_shape + (3,)
 
-            main_array = camera.capture_array("main").result()
-            assert main_array.size == main_size + (3,)
+            lores = camera.capture_array("lores").result()
+            assert lores.shape == lores_shape + (3,)
     finally:
         camera.stop()
         camera.close()
