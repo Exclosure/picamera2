@@ -34,7 +34,9 @@ def test_set_gain_exposure(CameraClass: Type[Camera]):
     with CameraClass() as camera:
         available_controls = camera.controls.available_control_names()
 
-        if not {"ExposureTime", "AnalogueGain", "ColourGains"}.issubset(available_controls):
+        if not {"ExposureTime", "AnalogueGain", "ColourGains"}.issubset(
+            available_controls
+        ):
             pytest.skip(f"This camera {camera} does not support setting gain/exposure")
 
         camera.start_preview()
@@ -46,7 +48,9 @@ def test_set_gain_exposure(CameraClass: Type[Camera]):
         mature_after_frames_or_timeout(camera)
         metadata = camera.capture_metadata().result(timeout=0.5)
         pprint(metadata)
-        controls = {c: metadata[c] for c in ["ExposureTime", "AnalogueGain", "ColourGains"]}
+        controls = {
+            c: metadata[c] for c in ["ExposureTime", "AnalogueGain", "ColourGains"]
+        }
         print(controls)
 
         camera.controls.set_controls(controls)

@@ -23,7 +23,6 @@ def test_config_preview(CameraClass: Type[Camera]):
         assert camera.controls.ExposureTime == 10000
 
 
-
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_config_video(CameraClass: Type[Camera]):
     with CameraClass() as camera:

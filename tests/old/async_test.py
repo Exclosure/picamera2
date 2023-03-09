@@ -9,6 +9,7 @@ from scicamera.configuration import CameraConfig
 abort = Event()
 started = Event()
 
+
 def thread_func():
     n = 0
     while not abort.wait(0.1):

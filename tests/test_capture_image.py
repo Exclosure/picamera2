@@ -24,4 +24,3 @@ def test_capture_image(CameraClass: Type[Camera]):
         assert isinstance(image, Image.Image)
 
         mature_after_frames_or_timeout(camera)
-

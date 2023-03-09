@@ -189,7 +189,6 @@ class Camera(RequestMachinery):
             for k, v in self.camera_ctrl_info.items()
         }
 
-
     def __del__(self):
         """Without this libcamera will complain if we shut down without closing the camera."""
         if self.is_open:

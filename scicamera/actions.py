@@ -1,5 +1,5 @@
-from collections import deque
 from abc import ABC, abstractmethod
+from collections import deque
 from concurrent.futures import Future
 from logging import getLogger
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
