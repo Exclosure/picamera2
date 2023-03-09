@@ -1,13 +1,15 @@
+import logging
 import re
 import sys
 from concurrent.futures._base import TimeoutError as FuturesTimeoutError
 from typing import Iterable
-import logging
+
 import pytest
 
 from scicamera import Camera, FakeCamera
 
 _log = logging.getLogger(__name__)
+
 
 def mature_after_frames_or_timeout(
     camera: Camera, n_frames: int = 2, timeout_seconds=5
