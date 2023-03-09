@@ -163,6 +163,17 @@ class Camera(RequestMachinery):
         )
 
     @property
+    def info(self) -> CameraInfo:
+        """Get camera info
+        :return: Camera info
+        :rtype: CameraInfo
+        """
+
+        _log.warning("Starting camera init")
+        _log.warning(self.camera)
+        return CameraInfo.from_lc_camera(self.camera)
+
+    @property
     def camera_properties(self) -> dict:
         """Camera properties
 
