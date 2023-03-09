@@ -13,7 +13,7 @@ with Camera(0) as camera1:
     with Camera(1) as camera2:
         camera2.start_preview()
         camera2.start()
-        mature_after_frames_or_timeout(camera2)        
+        mature_after_frames_or_timeout(camera2)
 
     with Camera(1) as camera2:
         camera2 = Camera(1)

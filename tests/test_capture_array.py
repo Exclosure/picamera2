@@ -20,7 +20,6 @@ def test_capture_file_encodings(CameraClass: Type[Camera]):
         camera.stop()
 
 
-
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_array_mode_change(CameraClass: Type[Camera]):
     with CameraClass() as camera:
