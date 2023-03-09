@@ -4,23 +4,19 @@ from scicamera import Camera, CameraConfig
 from scicamera.controls import Controls
 from scicamera.testing import requires_controls
 
-camera = Camera()
+with Camera() as camera:
+    requires_controls(camera, ("ExposureTime", "AnalogueGain"))
+    camera.start_preview()
 
+    preview_config = CameraConfig.for_preview(camera)
+    camera.configure(preview_config)
 
-requires_controls(camera, ("ExposureTime", "AnalogueGain"))
+    camera.start()
+    camera.discard_frames(2)
 
-camera.start_preview()
+    controls = Controls(camera)
+    controls.AnalogueGain = 1.0
+    controls.ExposureTime = 10000
 
-preview_config = CameraConfig.for_preview(camera)
-camera.configure(preview_config)
-
-camera.start()
-camera.discard_frames(2)
-
-controls = Controls(camera)
-controls.AnalogueGain = 1.0
-controls.ExposureTime = 10000
-
-camera.set_controls(controls)
-camera.discard_frames(2).result()
-camera.close()
+    camera.set_controls(controls)
+    camera.discard_frames(2).result()
