@@ -23,10 +23,10 @@ def test_multiple_streams(CameraClass: Type[Camera]):
     try:
         for _ in range(2):
             main = camera.capture_array("main").result()
-            assert main.shape == main_shape + (3,)
+            assert main.shape == main_shape[::-1] + (3,)
 
             lores = camera.capture_array("lores").result()
-            assert lores.shape == lores_shape + (3,)
+            assert lores.shape == lores_shape[::-1] + (3,)
     finally:
         camera.stop()
         camera.close()
