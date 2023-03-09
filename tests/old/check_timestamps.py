@@ -5,17 +5,17 @@ import numpy as np
 
 from scicamera import Camera, CameraConfig
 
-camera = Camera()
-video_config = CameraConfig.for_video(camera)
-camera.configure(video_config)
+with Camera() as camera:
+    video_config = CameraConfig.for_video(camera)
+    camera.configure(video_config)
 
-timestamps = []
+    timestamps = []
 
-camera.add_request_callback(lambda r: timestamps.append(time.time() * 1e6))
+    camera.add_request_callback(lambda r: timestamps.append(time.time() * 1e6))
 
-camera.start()
-camera.discard_frames(10).result()
-camera.stop()
+    camera.start()
+    camera.discard_frames(10).result()
+    camera.stop()
 
 # Now let's analyse all the timestamps
 diffs = timestamps[:-1] - timestamps[1:]
@@ -41,4 +41,3 @@ if hist[2] > 3:
     raise RuntimeError(f"Unexpectedly large number ({hist[2]}) of late frames")
 if hist[3] > 0:
     raise RuntimeError(f"{hist[3]} very late frames detected")
-camera.close()

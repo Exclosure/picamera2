@@ -8,10 +8,9 @@ from scicamera.testing import requires_camera_model
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_camera_info(CameraClass: Type[Camera]):
-    camera = CameraClass()
-    assert isinstance(camera.info.model, str)
-    assert isinstance(camera.info.id, str)
-    camera.close()
+    with CameraClass() as camera:
+        assert isinstance(camera.info.model, str)
+        assert isinstance(camera.info.id, str)
 
 
 def test_camera_skip():
@@ -27,9 +26,6 @@ def test_fake_camera_skip():
 
 
 def test_camera_skip_fail():
-    camera = Camera()
-    try:
+    with Camera() as camera:
         requires_camera_model(camera, "XXX")
         pytest.fail("Should be skipped.")
-    finally:
-        camera.close()

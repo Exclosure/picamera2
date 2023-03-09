@@ -189,26 +189,6 @@ class Camera(RequestMachinery):
             for k, v in self.camera_ctrl_info.items()
         }
 
-    def __enter__(self):
-        """Used for allowing use with context manager
-
-        :return: self
-        :rtype: Camera
-        """
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_traceback):
-        """Used for allowing use with context manager
-
-        :param exc_type: Exception type
-        :type exc_type: Type[BaseException]
-        :param exc_val: Exception
-        :type exc_val: BaseException
-        :param exc_traceback: Traceback
-        :type exc_traceback: TracebackType
-        """
-        self.close()
-
     def __del__(self):
         """Without this libcamera will complain if we shut down without closing the camera."""
         if self.is_open:

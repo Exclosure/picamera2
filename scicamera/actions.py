@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from collections import deque
 from concurrent.futures import Future
 from logging import getLogger
@@ -6,6 +7,7 @@ from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 import numpy as np
 from PIL import Image
 
+from scicamera.configuration import CameraConfig
 from scicamera.frame import CameraFrame
 from scicamera.request import CompletedRequest, LoopTask
 from scicamera.typing import TypedFuture
@@ -13,13 +15,23 @@ from scicamera.typing import TypedFuture
 _log = getLogger(__name__)
 
 
-class RequestMachinery:
+class RequestMachinery(ABC):
     """RequestMachinery is a helper class for the Camera class."""
 
     def __init__(self) -> None:
         self._requests = deque()
         self._request_callbacks = []
         self._task_deque: Deque[LoopTask] = deque()
+
+    @abstractmethod
+    def close(self):
+        raise NotImplementedError()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def add_request_callback(self, callback: Callable[[CompletedRequest], None]):
         """Add a callback to be called when every request completes.
@@ -116,13 +128,13 @@ class RequestMachinery:
             *[LoopTask.with_request(self._discard_request) for _ in range(n_frames)]
         )[-1]
 
-    def _switch_mode(self, camera_config):
+    def _switch_mode(self, camera_config: CameraConfig):
         self._stop()
         self.configure(camera_config)
         self._start()
         return self.camera_config
 
-    def switch_mode(self, camera_config: dict) -> TypedFuture[dict]:
+    def switch_mode(self, camera_config: CameraConfig) -> TypedFuture[CameraConfig]:
         """Switch the camera into another mode given by the camera_config."""
         return self._dispatch_loop_tasks(
             LoopTask.without_request(self._switch_mode, camera_config)

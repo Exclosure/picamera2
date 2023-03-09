@@ -6,10 +6,6 @@ from typing import List
 from scicamera import Camera
 from scicamera.configuration import CameraConfig
 
-camera = Camera()
-config = CameraConfig.for_preview(camera)
-camera.configure(config)
-camera.start()
 abort = Event()
 started = Event()
 
@@ -23,23 +19,27 @@ def thread_func():
     print("Thread received", n, "frames")
 
 
-threads = [Thread(target=thread_func, args=()) for _ in range(3)]
+with Camera() as camera:
+    config = CameraConfig.for_preview(camera)
+    camera.configure(config)
+    camera.start()
 
-for thread in threads:
-    thread.start()
+    threads = [Thread(target=thread_func, args=()) for _ in range(3)]
 
-try:
-    futures: List[Future] = []
-    for i in range(4):
-        futures.append(camera.capture_metadata())
-    wait(futures, timeout=10)
-finally:
-    abort.set()
     for thread in threads:
-        thread.join()
+        thread.start()
 
-    camera.stop()
-    camera.close()
+    try:
+        futures: List[Future] = []
+        for i in range(4):
+            futures.append(camera.capture_metadata())
+        wait(futures, timeout=10)
+    finally:
+        abort.set()
+        for thread in threads:
+            thread.join()
+
+        camera.stop()
 
 times = [job.result()["SensorTimestamp"] for job in futures]
 times_sorted = sorted(times)
