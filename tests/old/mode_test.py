@@ -15,7 +15,6 @@ from scicamera import Camera, CameraConfig
 from scicamera.sensor_format import SensorFormat
 
 
-
 def check(camera: Camera, raw_config, fps):
     # Don't bother checking anything over 5MP, as that may cause buffer issues
     if raw_config["size"][0] * raw_config["size"][1] > 5e6:
@@ -48,6 +47,7 @@ def check(camera: Camera, raw_config, fps):
     assert isclose(framerate, fps, abs_tol=1.0)
     camera.stop()
 
+
 with Camera() as camera:
     modes = camera.sensor_modes
     # Make sure less than 5 modes, to avoid timing out
@@ -58,7 +58,9 @@ with Camera() as camera:
             continue
         print(f"Testing mode (packed): '{mode}' {i+1}/{len(modes)}")
         # Check packed mode works
-        check(camera, {"size": mode["size"], "format": mode["format"].format}, mode["fps"])
+        check(
+            camera, {"size": mode["size"], "format": mode["format"].format}, mode["fps"]
+        )
 
         print(f"Testing mode (unpacked): '{mode}' {i+1}/{len(modes)}")
         # Check unpacked mode works

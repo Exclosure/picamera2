@@ -17,4 +17,3 @@ with Camera() as camera:
     raw = camera.capture_array("raw").result()
     print(raw.shape)
     print(camera.stream_configuration("raw"))
-
