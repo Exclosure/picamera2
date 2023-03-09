@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import Type
 
 import pytest
@@ -5,9 +6,8 @@ import pytest
 from scicamera import Camera, FakeCamera
 from scicamera.testing import mature_after_frames_or_timeout
 
-from logging import getLogger
-
 _log = getLogger(__name__)
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_start_stop_runloop(CameraClass: Type[Camera]):
