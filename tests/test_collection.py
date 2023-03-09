@@ -29,7 +29,6 @@ KNOWN_XFAIL = set(
     [
         "drm_multiple_test.py",
         "raw.py",
-        "stack_raw.py",
     ]
 )
 
