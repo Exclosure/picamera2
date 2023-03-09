@@ -26,9 +26,6 @@ def test_fake_camera_skip():
 
 
 def test_camera_skip_fail():
-    camera = Camera()
-    try:
+    with Camera() as camera:
         requires_camera_model(camera, "XXX")
         pytest.fail("Should be skipped.")
-    finally:
-        camera.close()
