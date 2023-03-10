@@ -134,23 +134,6 @@ class CameraConfig:
             "raw": self.raw,
         }[name]
 
-    # TODO: Remove forward references.
-    @property
-    def size(self):
-        return self.main.size
-
-    @size.setter
-    def size(self, value):
-        self.main.size = value
-
-    @property
-    def format(self):
-        return self.main.format
-
-    @format.setter
-    def format(self, value):
-        self.main.format = value
-
     def enable_lores(self, enable: bool = True) -> None:
         self.lores = (
             StreamConfig(size=self.main.size, format="YUV420") if enable else None

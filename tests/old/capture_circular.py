@@ -27,3 +27,5 @@ with Camera() as camera:
             mse = np.square(np.subtract(cur, prev)).mean()
             print("New Motion", mse)
         prev = cur
+
+    camera.stop()

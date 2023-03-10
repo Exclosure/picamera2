@@ -16,7 +16,7 @@ def test_config_preview(CameraClass: Type[Camera]):
         # Preview
         cfg_preview = CameraConfig.for_preview(camera)
         cfg_preview.size = (800, 600)
-        cfg_preview.format = "RGB888"
+        cfg_preview.main.format = "RGB888"
         cfg_preview.controls.ExposureTime = 10000
 
         camera.configure(cfg_preview)
