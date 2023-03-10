@@ -153,19 +153,6 @@ class Camera(RequestMachinery):
         self.sensor_modes_ = None
 
     @property
-    def asynchronous(self) -> bool:
-        """True if there is threaded operation
-
-        :return: Thread operation state
-        :rtype: bool
-        """
-        return (
-            self._preview is not None
-            and getattr(self._preview, "thread", None) is not None
-            and self._preview.thread.is_alive()
-        )
-
-    @property
     def info(self) -> CameraInfo:
         """Get camera info
 
@@ -297,26 +284,19 @@ class Camera(RequestMachinery):
         self._preview = preview
 
     def stop_preview(self) -> None:
-        """Stop preview
-
-        :raises RuntimeError: Unable to stop preview
-        """
+        """Stop preview the preview thread"""
         if not self._preview:
-            raise RuntimeError("No preview specified.")
+            return
 
-        try:
-            self._preview.stop()
-            self._preview = None
-        except Exception:
-            raise RuntimeError("Unable to stop preview.")
+        self._preview.stop()
+        self._preview = None
 
     def close(self) -> None:
         """Close camera
 
         :raises RuntimeError: Closing failed
         """
-        if self._preview:
-            self.stop_preview()
+        self.stop_preview()
         if not self.is_open:
             return
 
@@ -384,7 +364,7 @@ class Camera(RequestMachinery):
                 if request.add_buffer(stream, self.allocator.buffers(stream)[i]) < 0:
                     raise RuntimeError("Failed to set request buffer")
             requests.append(request)
-        _log.warning("Made %d requests", len(requests))
+        _log.warning("Made %d requests", len(requests)) 
         return requests
 
     def _config_opts(self, config: dict | CameraConfig) -> CameraConfig:
@@ -488,9 +468,6 @@ class Camera(RequestMachinery):
         loop, such as in a Qt application.
         """
         if self.started:
-            if self._preview:
-                self.stop_preview()
-
             self.stop_count += 1
             code = self.camera.stop()
             errno_handle(code, "camera.stop()")
@@ -509,10 +486,8 @@ class Camera(RequestMachinery):
         if not self.started:
             _log.debug("Camera was not started")
             return
-        if self.asynchronous:
-            self._dispatch_loop_tasks(LoopTask.without_request(self._stop))[0].result()
-        else:
-            self._stop()
+        self.stop_preview()
+        self._stop()
 
     def set_controls(self, controls) -> None:
         """Set camera controls. These will be delivered with the next request that gets submitted."""
