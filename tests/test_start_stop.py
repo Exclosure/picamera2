@@ -11,7 +11,7 @@ _log = getLogger(__name__)
 
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
-def test_start_stop_runloop(CameraClass: Type[Camera]):
+def test_different_name_start_stop_runloop(CameraClass: Type[Camera]):
     with CameraClass() as camera:
         camera.start()
         mature_after_frames_or_timeout(camera)
