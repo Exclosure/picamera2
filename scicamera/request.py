@@ -105,7 +105,7 @@ class AbstractCompletedRequest(ABC):
 
     def make_image(self, name: str) -> Image.Image:
         """Make a PIL image from the named stream's buffer."""
-        fmt = self.get_camera_config().format
+        fmt = self.get_camera_config().get_stream_config(name).format
         if fmt == "MJPEG":
             buffer = self.get_buffer(name)
             return Image.open(io.BytesIO(buffer))
