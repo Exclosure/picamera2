@@ -27,8 +27,8 @@ def test_start_stop_runloop(CameraClass: Type[Camera]):
 def test_start_stop(CameraClass: Type[Camera]):
     with CameraClass() as camera:
         for cycle in range(3):
-            _log.info("Starting camera %s", cycle)
+            _log.warning("Starting camera %s", cycle)
             camera.start()
             mature_after_frames_or_timeout(camera)
             camera.stop()
-            _log.info("Stopped camera %s", cycle)
+            _log.warning("Stopped camera %s", cycle)
