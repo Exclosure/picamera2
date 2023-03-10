@@ -14,7 +14,7 @@ import libcamera
 
 import scicamera.formats as formats
 from scicamera.actions import RequestMachinery
-from scicamera.configuration import CameraConfig, StreamConfig
+from scicamera.configuration import CameraConfig
 from scicamera.controls import Controls
 from scicamera.info import CameraInfo
 from scicamera.lc_helpers import errno_handle, lc_unpack, lc_unpack_controls
@@ -42,6 +42,9 @@ class CameraManager:
         self.cameras = {}
         self._lock = threading.Lock()
         self.cms = libcamera.CameraManager.singleton()
+
+    def n_cameras_attached(self):
+        return len(self.cms.cameras)
 
     def get_camera(self, idx: int):
         """Get the (lc) camera with the given index"""
@@ -89,28 +92,32 @@ class CameraManager:
 
         sel.unregister(self.cms.event_fd)
 
-    def handle_request(self, flushid=None):
+    def handle_request(self, flushid: int | None = None) -> int:
         """Handle requests"""
+        n_flushed = 0
         with self._lock:
-            cams = set()
             for req in self.cms.get_ready_requests():
-                if (
-                    req.status == libcamera.Request.Status.Complete
-                    and req.cookie != flushid
-                ):
-                    cams.add(req.cookie)
-                    camera_inst = self.cameras[req.cookie]
-                    cleanup_call = partial(
-                        camera_inst.recycle_request, camera_inst.stop_count, req
+                if req.status != libcamera.Request.Status.Complete:
+                    _log.warning("Unexpected request status: %s", req.status)
+                    continue
+                if req.cookie == flushid:
+                    _log.warning("Flushing request.")
+                    n_flushed += 1
+                    continue
+
+                camera_inst = self.cameras[req.cookie]
+                cleanup_call = partial(
+                    camera_inst.recycle_request, camera_inst.stop_count, req
+                )
+                self.cameras[req.cookie].add_completed_request(
+                    CompletedRequest(
+                        req,
+                        replace(camera_inst.camera_config),
+                        camera_inst.stream_map,
+                        cleanup_call,
                     )
-                    self.cameras[req.cookie].add_completed_request(
-                        CompletedRequest(
-                            req,
-                            replace(camera_inst.camera_config),
-                            camera_inst.stream_map,
-                            cleanup_call,
-                        )
-                    )
+                )
+        return n_flushed
 
 
 class Camera(RequestMachinery):
@@ -150,27 +157,12 @@ class Camera(RequestMachinery):
         self.sensor_modes_ = None
 
     @property
-    def asynchronous(self) -> bool:
-        """True if there is threaded operation
-
-        :return: Thread operation state
-        :rtype: bool
-        """
-        return (
-            self._preview is not None
-            and getattr(self._preview, "thread", None) is not None
-            and self._preview.thread.is_alive()
-        )
-
-    @property
     def info(self) -> CameraInfo:
         """Get camera info
+
         :return: Camera info
         :rtype: CameraInfo
         """
-
-        _log.warning("Starting camera init")
-        _log.warning(self.camera)
         return CameraInfo.from_lc_camera(self.camera)
 
     @property
@@ -296,26 +288,19 @@ class Camera(RequestMachinery):
         self._preview = preview
 
     def stop_preview(self) -> None:
-        """Stop preview
-
-        :raises RuntimeError: Unable to stop preview
-        """
+        """Stop preview the preview thread"""
         if not self._preview:
-            raise RuntimeError("No preview specified.")
+            return
 
-        try:
-            self._preview.stop()
-            self._preview = None
-        except Exception:
-            raise RuntimeError("Unable to stop preview.")
+        self._preview.stop()
+        self._preview = None
 
     def close(self) -> None:
         """Close camera
 
         :raises RuntimeError: Closing failed
         """
-        if self._preview:
-            self.stop_preview()
+        self.stop_preview()
         if not self.is_open:
             return
 
@@ -380,9 +365,10 @@ class Camera(RequestMachinery):
                 raise RuntimeError("Could not create request")
 
             for stream in self.streams:
-                if request.add_buffer(stream, self.allocator.buffers(stream)[i]) < 0:
-                    raise RuntimeError("Failed to set request buffer")
+                code = request.add_buffer(stream, self.allocator.buffers(stream)[i])
+                errno_handle(code, "Request.add_buffer()")
             requests.append(request)
+        _log.warning("Made %d requests", len(requests))
         return requests
 
     def _config_opts(self, config: dict | CameraConfig) -> CameraConfig:
@@ -468,13 +454,6 @@ class Camera(RequestMachinery):
     def start(self) -> None:
         """
         Start the camera system running.
-
-        Camera controls may be sent to the camera before it starts running.
-
-        The following parameters may be supplied:
-
-        config - if not None this is used to configure the camera. This is just a
-            convenience so that you don't have to call configure explicitly.
         """
         if self.camera_config is None:
             _log.warning("Camera has not been configured, using preview config")
@@ -500,8 +479,9 @@ class Camera(RequestMachinery):
             # Flush Requests from the event queue.
             # This is needed to prevent old completed Requests from showing
             # up when the camera is started the next time.
-            self._cm.handle_request(self.camera_idx)
+            n_flushed = self._cm.handle_request(self.camera_idx)
             self.started = False
+            _log.warning("Flushed %s requests", n_flushed)
             self._requests = deque()
             _log.info("Camera stopped")
 
@@ -510,10 +490,8 @@ class Camera(RequestMachinery):
         if not self.started:
             _log.debug("Camera was not started")
             return
-        if self.asynchronous:
-            self._dispatch_loop_tasks(LoopTask.without_request(self._stop))[0].result()
-        else:
-            self._stop()
+        self.stop_preview()
+        self._stop()
 
     def set_controls(self, controls) -> None:
         """Set camera controls. These will be delivered with the next request that gets submitted."""
