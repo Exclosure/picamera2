@@ -1,5 +1,6 @@
 from logging import getLogger
 from typing import Type
+import time
 
 import pytest
 
@@ -32,3 +33,4 @@ def test_start_stop(CameraClass: Type[Camera]):
             mature_after_frames_or_timeout(camera)
             camera.stop()
             _log.warning("Stopped camera %s", cycle)
+            time.sleep(0.1)
