@@ -384,6 +384,7 @@ class Camera(RequestMachinery):
                 if request.add_buffer(stream, self.allocator.buffers(stream)[i]) < 0:
                     raise RuntimeError("Failed to set request buffer")
             requests.append(request)
+        _log.warning("Made %d requests", len(requests))
         return requests
 
     def _config_opts(self, config: dict | CameraConfig) -> CameraConfig:
@@ -487,6 +488,9 @@ class Camera(RequestMachinery):
         loop, such as in a Qt application.
         """
         if self.started:
+            if self._preview:
+                self.stop_preview()
+
             self.stop_count += 1
             code = self.camera.stop()
             errno_handle(code, "camera.stop()")
@@ -496,6 +500,7 @@ class Camera(RequestMachinery):
             # up when the camera is started the next time.
             self._cm.handle_request(self.camera_idx)
             self.started = False
+            _log.warning("Removed %s requests", len(self._requests))
             self._requests = deque()
             _log.info("Camera stopped")
 
