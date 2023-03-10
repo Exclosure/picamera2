@@ -1,6 +1,6 @@
+import time
 from logging import getLogger
 from typing import Type
-import time
 
 import pytest
 
