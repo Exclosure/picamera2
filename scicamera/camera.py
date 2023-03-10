@@ -92,28 +92,32 @@ class CameraManager:
 
         sel.unregister(self.cms.event_fd)
 
-    def handle_request(self, flushid=None):
+    def handle_request(self, flushid: int | None=None) -> int:
         """Handle requests"""
+        n_flushed = 0
         with self._lock:
-            cams = set()
             for req in self.cms.get_ready_requests():
-                if (
-                    req.status == libcamera.Request.Status.Complete
-                    and req.cookie != flushid
-                ):
-                    cams.add(req.cookie)
-                    camera_inst = self.cameras[req.cookie]
-                    cleanup_call = partial(
-                        camera_inst.recycle_request, camera_inst.stop_count, req
+                if req.status != libcamera.Request.Status.Complete:
+                    _log.warning("Unexpected request status: %s", req.status)
+                    continue
+                if req.cookie == flushid:
+                    _log.warning("Flushing request.")
+                    n_flushed += 1
+                    continue
+
+                camera_inst = self.cameras[req.cookie]
+                cleanup_call = partial(
+                    camera_inst.recycle_request, camera_inst.stop_count, req
+                )
+                self.cameras[req.cookie].add_completed_request(
+                    CompletedRequest(
+                        req,
+                        replace(camera_inst.camera_config),
+                        camera_inst.stream_map,
+                        cleanup_call,
                     )
-                    self.cameras[req.cookie].add_completed_request(
-                        CompletedRequest(
-                            req,
-                            replace(camera_inst.camera_config),
-                            camera_inst.stream_map,
-                            cleanup_call,
-                        )
-                    )
+                )
+        return n_flushed
 
 
 class Camera(RequestMachinery):
@@ -475,9 +479,9 @@ class Camera(RequestMachinery):
             # Flush Requests from the event queue.
             # This is needed to prevent old completed Requests from showing
             # up when the camera is started the next time.
-            self._cm.handle_request(self.camera_idx)
+            n_flushed = self._cm.handle_request(self.camera_idx)
             self.started = False
-            _log.warning("Removed %s requests", len(self._requests))
+            _log.warning("Flushed %s requests", n_flushed)
             self._requests = deque()
             _log.info("Camera stopped")
 
