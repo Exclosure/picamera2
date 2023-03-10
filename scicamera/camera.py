@@ -364,7 +364,7 @@ class Camera(RequestMachinery):
                 if request.add_buffer(stream, self.allocator.buffers(stream)[i]) < 0:
                     raise RuntimeError("Failed to set request buffer")
             requests.append(request)
-        _log.warning("Made %d requests", len(requests)) 
+        _log.warning("Made %d requests", len(requests))
         return requests
 
     def _config_opts(self, config: dict | CameraConfig) -> CameraConfig:
