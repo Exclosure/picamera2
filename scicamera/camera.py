@@ -92,7 +92,7 @@ class CameraManager:
 
         sel.unregister(self.cms.event_fd)
 
-    def handle_request(self, flushid: int | None=None) -> int:
+    def handle_request(self, flushid: int | None = None) -> int:
         """Handle requests"""
         n_flushed = 0
         with self._lock:
@@ -365,8 +365,8 @@ class Camera(RequestMachinery):
                 raise RuntimeError("Could not create request")
 
             for stream in self.streams:
-                if request.add_buffer(stream, self.allocator.buffers(stream)[i]) < 0:
-                    raise RuntimeError("Failed to set request buffer")
+                code = request.add_buffer(stream, self.allocator.buffers(stream)[i])
+                errno_handle(code, "Request.add_buffer()")
             requests.append(request)
         _log.warning("Made %d requests", len(requests))
         return requests
