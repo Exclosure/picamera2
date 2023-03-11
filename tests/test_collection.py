@@ -20,13 +20,7 @@ def forward_subprocess_output(e: subprocess.CalledProcessError):
         print(e.stderr.decode("utf-8"), end="", file=sys.stderr)
 
 
-KNOWN_XFAIL = set(
-    [
-        "drm_multiple_test.py",
-        "multicamera_preview.py",
-        "raw.py",
-    ]
-)
+KNOWN_XFAIL = set(["drm_multiple_test.py", "raw.py"])
 
 
 def test_xfail_list():
