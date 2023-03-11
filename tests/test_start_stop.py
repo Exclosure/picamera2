@@ -23,7 +23,7 @@ def test_different_name_start_stop_runloop(CameraClass: Type[Camera]):
         mature_after_frames_or_timeout(camera)
         camera.stop()
 
-
+@pytest.skip("This test bricks the PI")
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_start_stop(CameraClass: Type[Camera]):
     import gc
