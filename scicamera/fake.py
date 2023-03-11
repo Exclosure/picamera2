@@ -1,11 +1,12 @@
 """
-This submodule contins a fake camera implementation that can be used for
+This submodule contains a fake camera implementation that can be used for
 testing purposes. All instances of the FakeCamera class will share the
 same class structure so type-checking will work as expected. Similarly,
 the FakeCamera class will be a subclass of RequestMachinery so it can be
 used as a drop-in replacement for a real camera in basically every way.
 """
 import time
+from concurrent.futures import Future
 from threading import Event, Thread
 from typing import Any, Dict, Tuple
 
@@ -15,7 +16,9 @@ import numpy as np
 from scicamera.actions import RequestMachinery
 from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
+from scicamera.info import CameraInfo
 from scicamera.request import CompletedRequest
+from scicamera.typing import TypedFuture
 
 FAKE_SIZE = (320, 240)
 FAKE_FORMAT = "RGB888"
@@ -53,13 +56,13 @@ class FakeCompletedRequest(CompletedRequest):
     def release(self):
         pass
 
-    def get_config(self, name: str) -> Dict[str, Any]:
+    def get_camera_config(self) -> CameraConfig:
         """Fetch the configuration for the named stream."""
         return self.config
 
     def get_buffer(self, name: str) -> np.ndarray:
         """Make a 1d numpy array from the named stream's buffer."""
-        size = self.config.get_config(name).size
+        size = self.config.get_stream_config(name).size
         return make_fake_image(size).flatten()
 
     def get_metadata(self) -> Dict[str, Any]:
@@ -76,6 +79,7 @@ class FakeCamera(RequestMachinery):
         self._abort = Event()
 
         self.sensor_resolution = FAKE_SIZE
+        self.sensor_format = FAKE_FORMAT
         self.camera_config = None
         self.camera_ctrl_info = {
             "AeEnable": 0,
@@ -86,7 +90,7 @@ class FakeCamera(RequestMachinery):
             "ColourGains": (2.5220680236816406, 1.8971731662750244),
             "ColourTemperature": 4000,
             "ExposureTime": 10000000,
-            "FrameDurationLimits": (10000000, 10000000),
+            "FrameDurationLimits": (33333, 33333),
             "NoiseReductionMode": 0,
         }
         self.controls = Controls(self, self.camera_ctrl_info)
@@ -102,7 +106,7 @@ class FakeCamera(RequestMachinery):
         )
 
     def _run(self):
-        while not self._abort.wait(0.1):
+        while not self._abort.wait(self.controls.FrameDurationLimits[0] / 1000000):
             metadata = self.controls.make_dict()
 
             metadata.update(
@@ -119,6 +123,17 @@ class FakeCamera(RequestMachinery):
 
     def configure(self, config: CameraConfig) -> None:
         self.camera_config = config
+        self.controls.set_controls(config.controls)
+
+    @property
+    def info(self) -> CameraInfo:
+        return CameraInfo(
+            id="fake",
+            model="Fake Camera",
+            size=FAKE_SIZE,
+            location="Nowhere",
+            rotation=1,
+        )
 
     @property
     def camera_controls(self):
@@ -143,6 +158,15 @@ class FakeCamera(RequestMachinery):
         if self._t.is_alive():
             self.stop()
 
-    # TODO(meawoppl) - Kill this method
+    def switch_mode(self, camera_config: CameraConfig) -> TypedFuture[CameraConfig]:
+        self.configure(camera_config)
+        future = Future()
+        future.set_result(camera_config)
+        return future
+
+    # TODO(meawoppl) - Kill methods below here
     def set_controls(self, controls: Dict[str, Any]) -> None:
         self.controls.set_controls(controls)
+
+    def camera_configuration(self) -> CameraConfig:
+        return self.camera_config

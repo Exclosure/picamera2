@@ -1,39 +1,39 @@
+import logging
+import re
 import sys
-from concurrent.futures import Future
-from threading import Thread
+from concurrent.futures._base import TimeoutError as FuturesTimeoutError
 from typing import Iterable
-from unittest.mock import Mock
 
-from scicamera import Camera
-from scicamera.request import CompletedRequest
+import pytest
+
+from scicamera import Camera, FakeCamera
+
+_log = logging.getLogger(__name__)
 
 
 def mature_after_frames_or_timeout(
-    camera: Camera, n_frames: int, timeout_seconds=5
-) -> Future:
-    """Return a future that will be mature after n_frames or 2 seconds."""
-    future = Future()
-    future.set_running_or_notify_cancel()
-    mock = Mock()
+    camera: Camera, n_frames: int = 2, timeout_seconds=5
+):
+    """Return a future that will be mature after n_frames or 2 seconds.
 
-    def timeout_thread():
-        try:
-            future.result(timeout=timeout_seconds)
-        except TimeoutError as e:
-            future.set_exception(e)
-            camera.remove_request_callback(callback)
+    Raises: TimeoutError if it takes too long.
+    """
+    try:
+        camera.discard_frames(n_frames).result(timeout_seconds)
+    except FuturesTimeoutError as e:
+        raise TimeoutError("Timed out waiting for camera to mature") from e
 
-    Thread(target=timeout_thread, daemon=True).start()
 
-    def callback(request: CompletedRequest):
-        mock(request)
-        if mock.call_count == n_frames:
-            future.set_result(None)
-            camera.remove_request_callback(callback)
-
-    camera.add_request_callback(callback)
-
-    return future
+def requires_camera_model(camera: Camera, model_pattern: str, allow_fake: bool = True):
+    if isinstance(camera, FakeCamera) and allow_fake:
+        return
+    model_name = camera.info.model
+    if not re.match(model_pattern, model_name):
+        _log.warning("Closing camera in fixture.")
+        camera.close()
+        pytest.skip(
+            f"Skipping test, camera model {model_name} does not match {model_pattern}"
+        )
 
 
 def requires_controls(camera: Camera, controls: Iterable[str]):

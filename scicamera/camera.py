@@ -14,7 +14,7 @@ import libcamera
 
 import scicamera.formats as formats
 from scicamera.actions import RequestMachinery
-from scicamera.configuration import CameraConfig, StreamConfig
+from scicamera.configuration import CameraConfig
 from scicamera.controls import Controls
 from scicamera.info import CameraInfo
 from scicamera.lc_helpers import errno_handle, lc_unpack, lc_unpack_controls
@@ -42,6 +42,9 @@ class CameraManager:
         self.cameras = {}
         self._lock = threading.Lock()
         self.cms = libcamera.CameraManager.singleton()
+
+    def n_cameras_attached(self):
+        return len(self.cms.cameras)
 
     def get_camera(self, idx: int):
         """Get the (lc) camera with the given index"""
@@ -87,16 +90,35 @@ class CameraManager:
 
         sel.unregister(self.cms.event_fd)
 
-    def handle_request(self, flushid: int=None):
+    def handle_request(self, flushid: int | None = None) -> int:
         """Handle requests"""
+        n_flushed = 0
         with self._lock:
             for req in self.cms.get_ready_requests():
                 if req.cookie == flushid:
-                    _log.info("Flushed request %s for camera %s", req, req.cookie)
+                    _log.warning("Flushing request.")
+                    n_flushed += 1
                     continue
 
                 if req.status == libcamera.Request.Status.Complete:
                     self.cameras[req.cookie].add_lc_request(req)
+                else:
+                    _log.warning("Unexpected request status: %s", req.status)
+                    continue
+
+                camera_inst = self.cameras[req.cookie]
+                cleanup_call = partial(
+                    camera_inst.recycle_request, camera_inst.stop_count, req
+                )
+                self.cameras[req.cookie].add_completed_request(
+                    CompletedRequest(
+                        req,
+                        replace(camera_inst.camera_config),
+                        camera_inst.stream_map,
+                        cleanup_call,
+                    )
+                )
+        return n_flushed
 
 
 class Camera(RequestMachinery):
@@ -121,16 +143,6 @@ class Camera(RequestMachinery):
         with TuningContext(tuning):
             self._open_camera()
 
-        # Configuration requires various bits of information from the camera
-        # so we build the default configurations here
-        self.preview_configuration = CameraConfig.for_preview(self)
-        self.still_configuration = CameraConfig.for_still(self)
-        self.video_configuration = CameraConfig.for_video(self)
-
-    @property
-    def camera_manager(self):
-        return self._cm.cms
-
     def _reset_flags(self) -> None:
         self.camera = None
         self.is_open = False
@@ -141,51 +153,18 @@ class Camera(RequestMachinery):
         self.stream_map = None
         self.started = False
         self.stop_count = 0
-        self.options = {}
-        self.post_callback = None
         self.camera_properties_ = {}
         self.controls = Controls(self)
         self.sensor_modes_ = None
 
     @property
-    def preview_configuration(self) -> CameraConfig:
-        return self.preview_configuration_
+    def info(self) -> CameraInfo:
+        """Get camera info
 
-    @preview_configuration.setter
-    def preview_configuration(self, value: CameraConfig):
-        assert isinstance(value, CameraConfig)
-        self.preview_configuration_ = value
-
-    @property
-    def still_configuration(self) -> CameraConfig:
-        return self.still_configuration_
-
-    @still_configuration.setter
-    def still_configuration(self, value: CameraConfig):
-        assert isinstance(value, CameraConfig)
-        self.still_configuration_ = value
-
-    @property
-    def video_configuration(self) -> CameraConfig:
-        return self.video_configuration_
-
-    @video_configuration.setter
-    def video_configuration(self, value: CameraConfig):
-        assert isinstance(value, CameraConfig)
-        self.video_configuration_ = value
-
-    @property
-    def asynchronous(self) -> bool:
-        """True if there is threaded operation
-
-        :return: Thread operation state
-        :rtype: bool
+        :return: Camera info
+        :rtype: CameraInfo
         """
-        return (
-            self._preview is not None
-            and getattr(self._preview, "thread", None) is not None
-            and self._preview.thread.is_alive()
-        )
+        return CameraInfo.from_lc_camera(self.camera)
 
     @property
     def camera_properties(self) -> dict:
@@ -203,46 +182,24 @@ class Camera(RequestMachinery):
             for k, v in self.camera_ctrl_info.items()
         }
 
-    def __enter__(self):
-        """Used for allowing use with context manager
-
-        :return: self
-        :rtype: Camera
-        """
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_traceback):
-        """Used for allowing use with context manager
-
-        :param exc_type: Exception type
-        :type exc_type: Type[BaseException]
-        :param exc_val: Exception
-        :type exc_val: BaseException
-        :param exc_traceback: Traceback
-        :type exc_traceback: TracebackType
-        """
-        self.close()
-
     def __del__(self):
         """Without this libcamera will complain if we shut down without closing the camera."""
         if self.is_open:
             _log.warning(f"__del__ call responsible for cleanup of {self}")
             self.close()
 
-    def requires_camera(self):
+    def _initialize_camera(self) -> None:
+        """Initialize camera
+
+        :raises RuntimeError: Failure to initialize camera
+        """
+        CameraInfo.requires_camera()
+
+        self.camera = self._cm.get_camera(self.camera_idx)
         if self.camera is None:
             message = "Initialization failed."
             _log.error(message)
             raise RuntimeError(message)
-
-    def _initialize_camera(self) -> None:
-        """Initialize camera
-
-        :raises RuntimeError: Failure to initialise camera
-        """
-        CameraInfo.requires_camera()
-        self.camera = self._cm.get_camera(self.camera_idx)
-        self.requires_camera()
 
         self.__identify_camera()
         self.camera_ctrl_info = lc_unpack_controls(self.camera.controls)
@@ -260,7 +217,7 @@ class Camera(RequestMachinery):
 
     def __identify_camera(self):
         # TODO(meawoppl) make this a helper on the camera_manager
-        for idx, address in enumerate(self.camera_manager.cameras):
+        for idx, address in enumerate(self._cm.cms.cameras):
             if address == self.camera:
                 self.camera_idx = idx
                 break
@@ -332,26 +289,19 @@ class Camera(RequestMachinery):
         self._preview = preview
 
     def stop_preview(self) -> None:
-        """Stop preview
-
-        :raises RuntimeError: Unable to stop preview
-        """
+        """Stop preview the preview thread"""
         if not self._preview:
-            raise RuntimeError("No preview specified.")
+            return
 
-        try:
-            self._preview.stop()
-            self._preview = None
-        except Exception:
-            raise RuntimeError("Unable to stop preview.")
+        self._preview.stop()
+        self._preview = None
 
     def close(self) -> None:
         """Close camera
 
         :raises RuntimeError: Closing failed
         """
-        if self._preview:
-            self.stop_preview()
+        self.stop_preview()
         if not self.is_open:
             return
 
@@ -366,9 +316,7 @@ class Camera(RequestMachinery):
         self.camera = None
         self.camera_ctrl_info = None
         self.camera_config = None
-        self.preview_configuration_ = None
-        self.still_configuration_ = None
-        self.video_configuration_ = None
+        self._preview_configuration = None
         self.allocator = None
         _log.info("Camera closed successfully.")
 
@@ -387,6 +335,10 @@ class Camera(RequestMachinery):
             return
 
         request.reuse()
+
+        # This is where controls on the camera get updated
+        # TODO(meawoppl) - attach a future to he request.cookie
+        # so that we can mature the future when the controls are set
         controls = self.controls.get_libcamera_controls()
         for id, value in controls.items():
             request.set_control(id, value)
@@ -414,9 +366,10 @@ class Camera(RequestMachinery):
                 raise RuntimeError("Could not create request")
 
             for stream in self.streams:
-                if request.add_buffer(stream, self.allocator.buffers(stream)[i]) < 0:
-                    raise RuntimeError("Failed to set request buffer")
+                code = request.add_buffer(stream, self.allocator.buffers(stream)[i])
+                errno_handle(code, "Request.add_buffer()")
             requests.append(request)
+        _log.warning("Made %d requests", len(requests))
         return requests
 
     def _config_opts(self, config: dict | CameraConfig) -> CameraConfig:
@@ -502,17 +455,10 @@ class Camera(RequestMachinery):
     def start(self) -> None:
         """
         Start the camera system running.
-
-        Camera controls may be sent to the camera before it starts running.
-
-        The following parameters may be supplied:
-
-        config - if not None this is used to configure the camera. This is just a
-            convenience so that you don't have to call configure explicitly.
         """
         if self.camera_config is None:
             _log.warning("Camera has not been configured, using preview config")
-            self.configure(self.preview_configuration)
+            self.configure(CameraConfig.for_preview(self))
         if self.camera_config is None:
             raise RuntimeError("Camera has not been configured")
         # By default we will create an event loop is there isn't one running already.
@@ -534,8 +480,9 @@ class Camera(RequestMachinery):
             # Flush Requests from the event queue.
             # This is needed to prevent old completed Requests from showing
             # up when the camera is started the next time.
-            self._cm.handle_request(self.camera_idx)
+            n_flushed = self._cm.handle_request(self.camera_idx)
             self.started = False
+            _log.warning("Flushed %s requests", n_flushed)
             self._requests = deque()
             _log.info("Camera stopped")
 
@@ -544,10 +491,8 @@ class Camera(RequestMachinery):
         if not self.started:
             _log.debug("Camera was not started")
             return
-        if self.asynchronous:
-            self._dispatch_loop_tasks(LoopTask.without_request(self._stop))[0].result()
-        else:
-            self._stop()
+        self.stop_preview()
+        self._stop()
 
     def set_controls(self, controls) -> None:
         """Set camera controls. These will be delivered with the next request that gets submitted."""

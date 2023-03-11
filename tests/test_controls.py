@@ -5,23 +5,23 @@ import pytest
 
 from scicamera import Camera, CameraConfig, FakeCamera
 from scicamera.fake import FakeCamera
+from scicamera.testing import mature_after_frames_or_timeout
 
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_set_controls(CameraClass: Type[Camera]):
-    camera = CameraClass()
-    camera.start_preview()
+    with CameraClass() as camera:
+        camera.start_preview()
 
-    preview_config = CameraConfig.for_preview(camera)
-    camera.configure(preview_config)
+        preview_config = CameraConfig.for_preview(camera)
+        camera.configure(preview_config)
 
-    camera.start()
-    camera.discard_frames(2)
+        camera.start()
+        mature_after_frames_or_timeout(camera)
 
-    if {"AwbEnable", "AeEnable"} <= camera.controls.available_control_names():
-        camera.set_controls({"AwbEnable": 0, "AeEnable": 0})
-    camera.discard_frames(2).result()
-    camera.close()
+        if {"AwbEnable", "AeEnable"} <= camera.controls.available_control_names():
+            camera.set_controls({"AwbEnable": 0, "AeEnable": 0})
+        mature_after_frames_or_timeout(camera)
 
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
@@ -31,35 +31,35 @@ def test_set_gain_exposure(CameraClass: Type[Camera]):
     Here, after one second, we fix the AGC/AEC to the values it
     has reached whereafter it will no longer change.
     """
-    camera = CameraClass()
-    available_controls = camera.controls.available_control_names()
+    with CameraClass() as camera:
+        available_controls = camera.controls.available_control_names()
 
-    if not {"ExposureTime", "AnalogueGain", "ColourGains"}.issubset(available_controls):
-        camera.close()
-        pytest.skip(f"This camera {camera} does not support setting gain/exposure")
+        if not {"ExposureTime", "AnalogueGain", "ColourGains"}.issubset(
+            available_controls
+        ):
+            pytest.skip(f"This camera {camera} does not support setting gain/exposure")
 
-    camera.start_preview()
+        camera.start_preview()
 
-    preview_config = CameraConfig.for_preview(camera)
-    camera.configure(preview_config)
+        preview_config = CameraConfig.for_preview(camera)
+        camera.configure(preview_config)
 
-    camera.start()
-    camera.discard_frames(2)
-    metadata = camera.capture_metadata().result(timeout=0.5)
-    pprint(metadata)
-    controls = {c: metadata[c] for c in ["ExposureTime", "AnalogueGain", "ColourGains"]}
-    print(controls)
+        camera.start()
+        mature_after_frames_or_timeout(camera)
+        metadata = camera.capture_metadata().result(timeout=0.5)
+        pprint(metadata)
+        controls = {
+            c: metadata[c] for c in ["ExposureTime", "AnalogueGain", "ColourGains"]
+        }
+        print(controls)
 
-    camera.controls.set_controls(controls)
-    camera.discard_frames(2)
-
-    camera.close()
+        camera.controls.set_controls(controls)
+        mature_after_frames_or_timeout(camera)
 
 
 @pytest.mark.parametrize("CameraClass", [FakeCamera])
 def test_set_frame_rate(CameraClass: Type[Camera]):
-    camera = CameraClass()
-    camera.start()
-    camera.controls.FrameRate = 30
-    camera.stop()
-    camera.close()
+    with CameraClass() as camera:
+        camera.start()
+        camera.controls.set_frame_rate(30)
+        camera.stop()

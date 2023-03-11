@@ -10,9 +10,9 @@ tuning = load_tuning_file("imx477.json")
 algo = find_tuning_algo(tuning, "rpi.agc")
 algo["exposure_modes"]["normal"] = {"shutter": [100, 66666], "gain": [1.0, 8.0]}
 
-camera = Camera(tuning=tuning)
-camera.configure(CameraConfig.for_preview(camera))
-camera.start_preview()
-camera.start()
-camera.discard_frames(2).result()
-camera.close()
+with Camera(tuning=tuning) as camera:
+    camera.configure(CameraConfig.for_preview(camera))
+    camera.start_preview()
+    camera.start()
+    camera.discard_frames(2).result()
+    camera.stop()

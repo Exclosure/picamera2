@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 from scicamera import Camera, CameraConfig
+from scicamera.testing import mature_after_frames_or_timeout
 
-camera = Camera()
-video_config = CameraConfig.for_video(camera)
-camera.configure(video_config)
+with Camera() as camera:
+    video_config = CameraConfig.for_video(camera)
+    camera.configure(video_config)
 
-camera.start()
-camera.discard_frames(2).result()
-camera.stop()
-camera.close()
+    camera.start()
+    mature_after_frames_or_timeout(camera)
+    camera.stop()

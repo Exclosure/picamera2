@@ -127,22 +127,12 @@ class CameraConfig:
     # This is set only after validation by libcamera
     libcamera_config: Optional[Any] = None
 
-    # TODO: Remove forward references.
-    @property
-    def size(self):
-        return self.main.size
-
-    @size.setter
-    def size(self, value):
-        self.main.size = value
-
-    @property
-    def format(self):
-        return self.main.format
-
-    @format.setter
-    def format(self, value):
-        self.main.format = value
+    def get_stream_config(self, name: str) -> StreamConfig | None:
+        return {
+            "main": self.main,
+            "lores": self.lores,
+            "raw": self.raw,
+        }[name]
 
     def enable_lores(self, enable: bool = True) -> None:
         self.lores = (
@@ -161,16 +151,6 @@ class CameraConfig:
         if self.lores is not None:
             self.lores.align(optimal)
         # No sense trying to align the raw stream.
-
-    def get_config(self, config_name: str) -> StreamConfig:
-        # TODO(meawoppl) - backcompat shim. remove me.
-        if config_name == "main":
-            return self.main
-        if config_name == "lores":
-            return self.lores
-        if config_name == "raw":
-            return self.raw
-        raise ValueError("Unknown config name " + config_name)
 
     def get_stream_indices(self) -> Tuple[int, int, int]:
         """Get the main, lores, and raw stream indices.
@@ -416,6 +396,10 @@ class CameraConfig:
         # Make the libcamera configuration, and then we'll write all our parameters over
         # the ones it gave us.
         libcamera_config = lc_camera.generate_configuration(roles)
+        if libcamera_config is None:
+            raise RuntimeError(
+                f"Failed to generate libcamera configuration for {self} using {lc_camera}"
+            )
         libcamera_config.transform = self.transform
         self._update_libcamera_stream_config(
             libcamera_config.at(main_index), self.main, self.buffer_count
