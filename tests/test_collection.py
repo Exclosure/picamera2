@@ -1,3 +1,8 @@
+"""NOTE(meawoppl) This is a pytest script that runs the old tests.
+
+Do not add new tests here, instead add them to the new test suite.
+Follow patterns found in `/tests/test_*.py` to maximize your joy.
+"""
 import os
 import subprocess
 import sys
