@@ -8,7 +8,11 @@ _log = getLogger(__name__)
 
 
 def errno_handle(code: int, callname: str) -> None:
-    """Convert an errno to a string."""
+    """Convert an errno to a string.
+
+    If code is >= 0, it will log a debug message and otherwise noop
+    If code is < 0, it will log an error message and raise a ``RuntimeError``
+    """
     if code >= 0:
         str_rep = "Success"
     else:
@@ -27,6 +31,8 @@ def _convert_from_libcamera_type(value):
         value = (value.x, value.y, value.width, value.height)
     elif isinstance(value, libcamera.Size):
         value = (value.width, value.height)
+    elif isinstance(value, (tuple, list)):
+        value = [_convert_from_libcamera_type(v) for v in value]
     return value
 
 

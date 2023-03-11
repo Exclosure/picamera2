@@ -1,11 +1,12 @@
 """
-This submodule contins a fake camera implementation that can be used for
+This submodule contains a fake camera implementation that can be used for
 testing purposes. All instances of the FakeCamera class will share the
 same class structure so type-checking will work as expected. Similarly,
 the FakeCamera class will be a subclass of RequestMachinery so it can be
 used as a drop-in replacement for a real camera in basically every way.
 """
 import time
+from concurrent.futures import Future
 from threading import Event, Thread
 from typing import Any, Dict, Tuple
 
@@ -17,6 +18,7 @@ from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.info import CameraInfo
 from scicamera.request import CompletedRequest
+from scicamera.typing import TypedFuture
 
 FAKE_SIZE = (320, 240)
 FAKE_FORMAT = "RGB888"
@@ -88,7 +90,7 @@ class FakeCamera(RequestMachinery):
             "ColourGains": (2.5220680236816406, 1.8971731662750244),
             "ColourTemperature": 4000,
             "ExposureTime": 10000000,
-            "FrameDurationLimits": (10000000, 10000000),
+            "FrameDurationLimits": (33333, 33333),
             "NoiseReductionMode": 0,
         }
         self.controls = Controls(self, self.camera_ctrl_info)
@@ -104,7 +106,7 @@ class FakeCamera(RequestMachinery):
         )
 
     def _run(self):
-        while not self._abort.wait(0.1):
+        while not self._abort.wait(self.controls.FrameDurationLimits[0] / 1000000):
             metadata = self.controls.make_dict()
 
             metadata.update(
@@ -155,6 +157,12 @@ class FakeCamera(RequestMachinery):
     def close(self) -> None:
         if self._t.is_alive():
             self.stop()
+
+    def switch_mode(self, camera_config: CameraConfig) -> TypedFuture[CameraConfig]:
+        self.configure(camera_config)
+        future = Future()
+        future.set_result(camera_config)
+        return future
 
     # TODO(meawoppl) - Kill methods below here
     def set_controls(self, controls: Dict[str, Any]) -> None:
