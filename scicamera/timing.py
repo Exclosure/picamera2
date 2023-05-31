@@ -7,11 +7,11 @@ from scicamera.request import CompletedRequest
 _log = getLogger(__name__)
 
 
-def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
+def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> float:
     """Calibrate the ``SensorTimestamp`` wrt to the epoch time.
 
-    Returns the number of integer nanoseconds you should add to
-    the camera ``SensorTimestamp`` to get the epoch time in nanoseconds.
+    Returns the number of nanoseconds you should add to the camera 
+    ``SensorTimestamp`` to get the epoch time in nanoseconds.
     """
     deltas = []
 
@@ -32,5 +32,5 @@ def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> int:
     diffs = sum([(d - offset) ** 2 for d in deltas])
     stdev = math.sqrt(diffs / (len(deltas) - 1))
 
-    _log.warning(f"Camera offset: {offset} +/-{stdev}")
+    _log.warning(f"Camera offset: {offset} ± {stdev}")
     return offset
