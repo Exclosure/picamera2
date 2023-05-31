@@ -7,7 +7,10 @@ from scicamera.request import CompletedRequest
 _log = getLogger(__name__)
 
 
-def calibrate_camera_offset(camera: Camera, n_frames: int = 100) -> float:
+def calibrate_camera_offset(
+    camera: Camera, 
+    n_frames: int = 100,
+) -> float:
     """Calibrate the ``SensorTimestamp`` wrt to the epoch time.
 
     Returns the number of nanoseconds you should add to the camera 
