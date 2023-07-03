@@ -430,10 +430,6 @@ class Camera(RequestMachinery):
         """Return the camera configuration."""
         return self.camera_config
 
-    def stream_configuration(self, name="main") -> StreamConfig:
-        """Return the stream configuration for the named stream."""
-        return self.camera_config.get_stream_config(name)
-
     def _start(self) -> None:
         """Start the camera system running."""
         if self.camera_config is None:
