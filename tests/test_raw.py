@@ -1,11 +1,10 @@
 # Configure a raw stream and capture an image from it.
-from scicamera import Camera, CameraConfig
 import os
 import tempfile
+from logging import getLogger
 
 import numpy as np
 from PIL import Image
-from logging import getLogger
 
 from scicamera import Camera, CameraConfig
 from scicamera.sensor_format import SensorFormat
