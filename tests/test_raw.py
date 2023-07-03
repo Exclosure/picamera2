@@ -13,7 +13,7 @@ from scicamera.sensor_format import SensorFormat
 _log = getLogger(__name__)
 
 
-def capture_raw():
+def test_capture_raw():
     with Camera() as camera:
         camera.start_preview()
 
