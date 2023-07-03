@@ -30,9 +30,11 @@ def test_capture_raw():
         )
         print(preview_config)
 
-        assert camera.camera_configuration().get_stream_config("raw") is not None
 
         camera.configure(preview_config)
+
+        assert camera.camera_configuration().get_stream_config("raw") is not None
+
         camera.start()
         camera.discard_frames(4).result()
         raw = camera.capture_array("raw").result()
