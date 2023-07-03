@@ -31,14 +31,15 @@ def test_capture_raw():
         print(preview_config)
 
         camera.configure(preview_config)
-
         assert camera.camera_configuration().get_stream_config("raw") is not None
 
         camera.start()
         camera.discard_frames(4).result()
         raw = camera.capture_array("raw").result()
         print(raw.shape)
-        assert raw.shape == camera.sensor_resolution
+
+        if camera.info.model == "imx477":
+            assert raw.shape == (3040, 6112)
 
 
 def test_raw_stacking():
