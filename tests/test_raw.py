@@ -4,6 +4,7 @@ import tempfile
 from logging import getLogger
 
 import numpy as np
+import pytest
 from PIL import Image
 
 from scicamera import Camera, CameraConfig
@@ -12,8 +13,15 @@ from scicamera.sensor_format import SensorFormat
 _log = getLogger(__name__)
 
 
+def _skip_if_no_raw(camera: Camera):
+    if camera.sensor_format == "MJPEG":
+        pytest.skip("Skipping raw test for MJPEG camera")
+
+
 def test_capture_raw():
     with Camera() as camera:
+        _skip_if_no_raw(camera)
+
         camera.start_preview()
 
         preview_config = CameraConfig.for_preview(
@@ -36,6 +44,8 @@ def test_raw_stacking():
 
     # Configure an unpacked raw format as these are easier to add.
     with Camera() as camera:
+        _skip_if_no_raw(camera)
+
         raw_format = SensorFormat(camera.sensor_format)
         raw_format.packing = None
         config = CameraConfig.for_still(

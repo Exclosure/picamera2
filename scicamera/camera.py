@@ -14,7 +14,7 @@ import libcamera
 
 import scicamera.formats as formats
 from scicamera.actions import RequestMachinery
-from scicamera.configuration import CameraConfig
+from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.info import CameraInfo
 from scicamera.lc_helpers import errno_handle, lc_unpack, lc_unpack_controls
@@ -430,9 +430,9 @@ class Camera(RequestMachinery):
         """Return the camera configuration."""
         return self.camera_config
 
-    def stream_configuration(self, name="main") -> dict:
+    def stream_configuration(self, name="main") -> StreamConfig:
         """Return the stream configuration for the named stream."""
-        return self.camera_config[name]
+        return self.camera_config.get_stream_config(name)
 
     def _start(self) -> None:
         """Start the camera system running."""
