@@ -30,7 +30,6 @@ def test_capture_raw():
         )
         print(preview_config)
 
-
         camera.configure(preview_config)
 
         assert camera.camera_configuration().get_stream_config("raw") is not None
