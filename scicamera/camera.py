@@ -210,7 +210,7 @@ class Camera(RequestMachinery):
         # Poke through the various available raw-formats
         formats: Dict[int, str] = {}
         configs = self.camera.generate_configuration([libcamera.StreamRole.Raw])
-        for i in range(configs.size()):
+        for i in range(configs.size):
             formats[i] = str(configs.at(i).pixel_format)
 
         self.sensor_format = formats[0]
