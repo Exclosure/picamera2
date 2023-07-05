@@ -214,7 +214,7 @@ class Camera(RequestMachinery):
             formats[i] = str(configs.at(i).pixel_format)
 
         self.sensor_format = formats[0]
-        _log.info("Available sensor raw formats: %s", list(formats.values()))
+        _log.warning("Available sensor raw formats: %s", list(formats.values()))
 
         _log.info("Initialization successful.")
 
