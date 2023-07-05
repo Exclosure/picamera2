@@ -206,11 +206,15 @@ class Camera(RequestMachinery):
 
         # The next two lines could be placed elsewhere?
         self.sensor_resolution = self.camera_properties_["PixelArraySize"]
-        self.sensor_format = str(
-            self.camera.generate_configuration([libcamera.StreamRole.Raw])
-            .at(0)
-            .pixel_format
-        )
+
+        # Poke through the various available raw-formats
+        formats: Dict[int, str] = {}
+        configs = self.camera.generate_configuration([libcamera.StreamRole.Raw])
+        for i in range(configs.size()):
+            formats[i] = str(configs.at(i).pixel_format)
+
+        self.sensor_format = formats[0]
+        _log.info("Available sensor raw formats: %s", list(formats.values()))
 
         _log.info("Initialization successful.")
 

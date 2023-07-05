@@ -19,8 +19,8 @@ class RequestMachinery(ABC):
     """RequestMachinery is a helper class for the Camera class."""
 
     def __init__(self) -> None:
-        self._requests = deque()
-        self._request_callbacks = []
+        self._requests: Deque[CompletedRequest] = deque()
+        self._request_callbacks: List[Callable[[CompletedRequest], None]] = []
         self._task_deque: Deque[LoopTask] = deque()
 
     @abstractmethod
