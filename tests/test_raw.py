@@ -40,7 +40,11 @@ def test_capture_raw():
 
         if camera.info.model == "imx477":
             assert raw.shape == (3040, 6112)
-        assert False, camera.sensor_format
+            assert camera.sensor_format == "SBGGR12_CSI2P"
+
+        if camera.info.model == "imx219":
+            assert raw.shape == (2464, 3280)
+            assert camera.sensor_format == "SBGGR10_CSI2P"
 
 
 def test_raw_stacking():
