@@ -24,10 +24,8 @@ def test_capture_raw():
 
         camera.start_preview()
 
-        preview_config = CameraConfig.for_preview(
-            camera,
-            raw={"size": camera.sensor_resolution, "format": camera.sensor_format},
-        )
+        preview_config = CameraConfig.for_preview(camera)
+        preview_config.enable_raw()
         print(preview_config)
 
         camera.configure(preview_config)
@@ -45,6 +43,8 @@ def test_capture_raw():
         if camera.info.model == "imx219":
             assert raw.shape == (2464, 3280)
             assert camera.sensor_format == "SBGGR10_CSI2P"
+
+        assert raw.shape == camera.sensor_format
 
 
 def test_raw_stacking():

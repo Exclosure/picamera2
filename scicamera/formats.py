@@ -1,3 +1,7 @@
+import numpy as np
+
+from scicamera.sensor_format import SensorFormat
+
 YUV_FORMATS = {"NV21", "NV12", "YUV420", "YVU420", "YVYU", "YUYV", "UYVY", "VYUY"}
 
 RGB_FORMATS = {"BGR888", "RGB888", "XBGR8888", "XRGB8888"}
@@ -57,3 +61,54 @@ def is_format_valid(fmt: str) -> bool:
 def assert_format_valid(fmt: str) -> None:
     if not is_format_valid(fmt):
         raise ValueError(f"Invalid format: {fmt}. Valid formats are: {ALL_FORMATS}")
+
+
+def unpack_raw(array: np.ndarray, format: str) -> np.ndarray:
+    """This converts a raw numpy byte array (flat, uint8) into a 2d numpy array
+
+    Note that in most formats this will still be a bayered image.
+    """
+    assert array.dtype == np.uint8, "Raw unpack only accepts uint8 arrays"
+    assert array.ndim == 1, "Unpack raw only accepts flat arrays"
+    assert is_raw(format), "Passed format string does not represent a raw format"
+
+    bit_depth = SensorFormat(format).bit_depth
+    original_len = array.size
+
+    # NOTE(meawoppl) - the below implementations are a bit memory inefficient when it comes
+    # to deserialization of the 10/12 bit arrays, as it will overallocated by 1/5 and 1/3
+    # respectively. This is a tradeoff for simplicity of implementation using numpy.
+    # The approach breaks down to the following:
+    # - Compute the number of bytes needed at which the data realigns itself to the next byte boundary
+    #   [for 10 bit (4 pixels) and every 3 bytes for 12 bit (2 pixels)]
+    # - Unspool things into alignment blocks (0th axis) and realigned stuff within the blocks
+    # - Flatten the index space downward, and trim the tail of the array away (assumed extra bits)
+
+    if bit_depth == 8:
+        return array
+    elif bit_depth == 10:
+        array = np.reshape(array, (-1, 5)).astype(np.uint16)
+
+        unpacked_data = np.zeros((len(array), 4), dtype=np.uint16)
+        # fmt: off
+        unpacked_data[:, 0] = ((array[:, 0] << 2)         | (array[:, 1] >> 6)) & 0x3FF
+        unpacked_data[:, 1] = ((array[:, 1] << 4) & 0x3C0 | (array[:, 2] >> 4)) & 0x3FF
+        unpacked_data[:, 2] = ((array[:, 2] << 6) & 0x300 | (array[:, 3] >> 2)) & 0x3FF
+        unpacked_data[:, 3] = ((array[:, 3] << 8) & 0x300 | (array[:, 4]     )) & 0x3FF
+        # fmt: on
+
+        print(unpacked_data)
+
+        return unpacked_data.ravel()[: array.size * 4 // 5]
+    elif bit_depth == 12:
+        array = np.reshape(array, (-1, 3))
+
+        unpacked_data = np.zeros((len(array), 2), dtype=np.uint16)
+        # fmt: off
+        unpacked_data[:, 0] = ((array[:, 0] << 4)         | (array[:, 1] >> 4)) & 0xFFF
+        unpacked_data[:, 1] = ((array[:, 1] << 8) & 0xF00 |  array[:, 2]      ) & 0xFFF
+        # fmt: on
+
+        return unpacked_data.ravel()[: original_len * 2 // 3]
+    else:
+        raise RuntimeError(f"Unsupported bit depth: {bit_depth}")
