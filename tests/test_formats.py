@@ -1,24 +1,15 @@
 import numpy as np
 
+from typing import List
 from scicamera.formats import unpack_raw
 
+import pytest
 
 def bitstring_to_bytes(s):
-    chars = list(c for c in s)
-    bytez = b""
-    while chars:
-        counter = 0
-        val = 0
-        while counter < 8:
-            c = chars.pop(0)
-            if c in "_ ":
-                continue
+    s = s.replace(" ", "")
+    s = s.replace("_", "")
 
-            if c == "1":
-                val += 2**counter
-            counter += 1
-        bytez += bytes([val])
-    return bytez
+    return int(s, 2).to_bytes((len(s) + 7) // 8, byteorder='big')
 
 
 def test_unpack_raw_12bit_minimum():
@@ -29,27 +20,57 @@ def test_unpack_raw_12bit_minimum():
 
 def test_unpack_raw_10bit_minimum():
     raw_10_bit = np.zeros(5, dtype=np.uint8)
-    unpacked = unpack_raw(raw_10_bit, "SBGGR12_CSI2P")
+    unpacked = unpack_raw(raw_10_bit, "SBGGR10_CSI2P")
+    np.testing.assert_array_equal(unpacked, np.zeros(4, dtype=np.uint16))
     assert unpacked.size == 4
 
+zero = "0" * 10
+full = "1" * 10
 
-def test_unpack_raw_10bit_alignment():
-    # bytez = bitstring_to_bytes("1"*10 + "0" * 10 + "1" * 10 + "0" * 10)
-    # assert len(bytez) == 5
-    # array = np.frombuffer(bytez, dtype=np.uint8)
-    # assert array.size == 5
+@pytest.mark.parametrize("inp,expected", [
+    ("00000_00001 00000_00000 00000_00000 00000_00000", [1, 0, 0, 0]),
+    ("00000_00011 00000_00000 00000_00000 00000_00000", [3, 0, 0, 0]),
+    ("00111_11111 00000_00000 00000_00000 00000_00000", [255, 0, 0, 0]),
+    ("01000_00000 00000_00000 00000_00000 00000_00000", [256, 0, 0, 0]),
+    ("10000_00000 00000_00000 00000_00000 00000_00000", [512, 0, 0, 0]),
+    ("11111_11111 00000_00000 00000_00000 00000_00000", [1023, 0, 0, 0]),
+    ("_".join((zero, zero, zero, zero)), [0, 0, 0, 0]),
+    ("_".join((full, full, full, full)), [1023, 1023, 1023, 1023]),
+    ("_".join((zero, full, full, full)), [0, 1023, 1023, 1023]),
+    ("_".join((full, zero, zero, zero)), [1023, 0, 0, 0]),
+    ("_".join((zero, zero, zero, full)), [0, 0, 0, 1023]),
+    ("_".join((zero, full, zero, full)), [0, 1023, 0, 1023]),
 
-    # unpacked = unpack_raw(array, "SBGGR10_CSI2P")
-    # assert np.testing.assert_array_equal(unpacked, np.array([2**16-1, 0, 2**16-1, 0], dtype=np.uint16))
-    # assert unpacked.size == 4
-
-    bytez = bitstring_to_bytes("10000_00000 00000_00000 00000_00000 00000_00000")
-    assert len(bytez) == 5
+])
+def test_unpack_raw_10bit(inp: str, expected: List[int]):
+    bytez = bitstring_to_bytes(inp)
     array = np.frombuffer(bytez, dtype=np.uint8)
-    assert array.size == 5
-
     unpacked = unpack_raw(array, "SBGGR10_CSI2P")
-    assert np.testing.assert_array_equal(
-        unpacked, np.array([2**16 - 1, 0, 2**16 - 1, 0], dtype=np.uint16)
-    )
-    assert unpacked.size == 4
+    np.testing.assert_array_equal(unpacked, np.array(expected, dtype=np.uint16))
+
+zero = "0" * 12
+full = "1" * 12
+
+@pytest.mark.parametrize("inp,expected", [
+    ("000000_000001 000000_000000", [1, 0]),
+    ("000000_000011 000000_000000", [3, 0]),
+    ("000011_111111 000000_000000", [255, 0]),
+    ("000100_000000 000000_000000", [256, 0]),
+    ("001000_000000 000000_000000", [512, 0]),
+    ("010000_000000 000000_000000", [1024, 0]),
+    ("100000_000000 000000_000000", [2048, 0]),
+    ("111111_111111 000000_000000", [4095, 0]),
+    ("_".join((zero, zero, zero, zero)), [0, 0, 0, 0]),
+    ("_".join((full, full, full, full)), [4095, 4095, 4095, 4095]),
+    ("_".join((zero, full, full, full)), [0, 4095, 4095, 4095]),
+    ("_".join((full, zero, zero, zero)), [4095, 0, 0, 0]),
+    ("_".join((zero, zero, zero, full)), [0, 0, 0, 4095]),
+    ("_".join((zero, full, zero, full)), [0, 4095, 0, 4095]),
+])
+def test_unpack_raw_12bit(inp: str, expected: List[int]):
+    bytez = bitstring_to_bytes(inp)
+    array = np.frombuffer(bytez, dtype=np.uint8)
+    unpacked = unpack_raw(array, "SBGGR12_CSI2P")
+    np.testing.assert_array_equal(unpacked, np.array(expected, dtype=np.uint16))
+
+

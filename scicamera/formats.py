@@ -80,33 +80,32 @@ def unpack_raw(array: np.ndarray, format: str) -> np.ndarray:
     # respectively. This is a tradeoff for simplicity of implementation using numpy.
     # The approach breaks down to the following:
     # - Compute the number of bytes needed at which the data realigns itself to the next byte boundary
-    #   [for 10 bit (4 pixels) and every 3 bytes for 12 bit (2 pixels)]
+    #   - for 10 bit (4 pixels) - 40 bits, 5 bytes  
+    #   - fot 12 bit (2 pixels) - 24 bits, 3 bytes
     # - Unspool things into alignment blocks (0th axis) and realigned stuff within the blocks
     # - Flatten the index space downward, and trim the tail of the array away (assumed extra bits)
 
     if bit_depth == 8:
         return array
     elif bit_depth == 10:
-        array = np.reshape(array, (-1, 5)).astype(np.uint16)
+        array16 = array.reshape((-1, 5)).astype(np.uint16)
 
         unpacked_data = np.zeros((len(array), 4), dtype=np.uint16)
         # fmt: off
-        unpacked_data[:, 0] = ((array[:, 0] << 2)         | (array[:, 1] >> 6)) & 0x3FF
-        unpacked_data[:, 1] = ((array[:, 1] << 4) & 0x3C0 | (array[:, 2] >> 4)) & 0x3FF
-        unpacked_data[:, 2] = ((array[:, 2] << 6) & 0x300 | (array[:, 3] >> 2)) & 0x3FF
-        unpacked_data[:, 3] = ((array[:, 3] << 8) & 0x300 | (array[:, 4]     )) & 0x3FF
+        unpacked_data[:, 0] = ((array16[:, 0] << 2) | (array16[:, 1] >> 6)) & 0x3FF
+        unpacked_data[:, 1] = ((array16[:, 1] << 4) | (array16[:, 2] >> 4)) & 0x3FF
+        unpacked_data[:, 2] = ((array16[:, 2] << 6) | (array16[:, 3] >> 2)) & 0x3FF
+        unpacked_data[:, 3] = ((array16[:, 3] << 8) | (array16[:, 4]     )) & 0x3FF
         # fmt: on
-
-        print(unpacked_data)
 
         return unpacked_data.ravel()[: array.size * 4 // 5]
     elif bit_depth == 12:
-        array = np.reshape(array, (-1, 3))
+        array = array.reshape((-1, 3)).astype(np.uint16)
 
         unpacked_data = np.zeros((len(array), 2), dtype=np.uint16)
         # fmt: off
-        unpacked_data[:, 0] = ((array[:, 0] << 4)         | (array[:, 1] >> 4)) & 0xFFF
-        unpacked_data[:, 1] = ((array[:, 1] << 8) & 0xF00 |  array[:, 2]      ) & 0xFFF
+        unpacked_data[:, 0] = ((array[:, 0] << 4) | (array[:, 1] >> 4)) & 0xFFF
+        unpacked_data[:, 1] = ((array[:, 1] << 8) | (array[:, 2]     )) & 0xFFF
         # fmt: on
 
         return unpacked_data.ravel()[: original_len * 2 // 3]
