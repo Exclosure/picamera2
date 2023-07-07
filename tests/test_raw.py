@@ -1,16 +1,9 @@
-# Configure a raw stream and capture an image from it.
-import os
-import tempfile
-from logging import getLogger
+from typing import Type
 
-import numpy as np
 import pytest
-from PIL import Image
 
 from scicamera import Camera, CameraConfig
-from scicamera.sensor_format import SensorFormat
-
-_log = getLogger(__name__)
+from scicamera.fake import FakeCamera
 
 
 def _skip_if_no_raw(camera: Camera):
@@ -18,8 +11,9 @@ def _skip_if_no_raw(camera: Camera):
         pytest.skip("Skipping raw test for MJPEG camera")
 
 
-def test_capture_raw():
-    with Camera() as camera:
+@pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
+def test_capture_raw(CameraClass: Type[Camera]):
+    with CameraClass() as camera:
         _skip_if_no_raw(camera)
 
         camera.start_preview()
@@ -35,7 +29,6 @@ def test_capture_raw():
         camera.start()
         camera.discard_frames(4).result()
         raw = camera.capture_array("raw").result()
-        print(raw.shape)
 
         if camera.info.model == "imx477":
             assert camera.sensor_format == "SBGGR12_CSI2P"

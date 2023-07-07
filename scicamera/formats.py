@@ -80,7 +80,7 @@ def unpack_raw(array: np.ndarray, format: str) -> np.ndarray:
     # respectively. This is a tradeoff for simplicity of implementation using numpy.
     # The approach breaks down to the following:
     # - Compute the number of bytes needed at which the data realigns itself to the next byte boundary
-    #   - for 10 bit (4 pixels) - 40 bits, 5 bytes  
+    #   - for 10 bit (4 pixels) - 40 bits, 5 bytes
     #   - fot 12 bit (2 pixels) - 24 bits, 3 bytes
     # - Unspool things into alignment blocks (0th axis) and realigned stuff within the blocks
     # - Flatten the index space downward, and trim the tail of the array away (assumed extra bits)
