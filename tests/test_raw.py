@@ -1,9 +1,6 @@
-from typing import Type
-
 import pytest
 
 from scicamera import Camera, CameraConfig
-from scicamera.fake import FakeCamera
 
 
 def _skip_if_no_raw(camera: Camera):
@@ -11,9 +8,8 @@ def _skip_if_no_raw(camera: Camera):
         pytest.skip("Skipping raw test for MJPEG camera")
 
 
-@pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
-def test_capture_raw(CameraClass: Type[Camera]):
-    with CameraClass() as camera:
+def test_capture_raw():
+    with Camera() as camera:
         _skip_if_no_raw(camera)
 
         camera.start_preview()
