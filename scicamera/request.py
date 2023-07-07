@@ -17,6 +17,7 @@ from PIL import Image
 import scicamera.formats as formats
 from scicamera import formats
 from scicamera.configuration import CameraConfig
+from scicamera.formats import unpack_raw
 from scicamera.lc_helpers import lc_unpack
 
 _log = getLogger(__name__)
@@ -98,7 +99,8 @@ class AbstractCompletedRequest(ABC):
         elif fmt == "MJPEG":
             image = np.array(Image.open(io.BytesIO(array)))
         elif formats.is_raw(fmt):
-            image = array.reshape((h, stride))
+            array = unpack_raw(array, fmt)
+            image = array.reshape((h, -1))
         else:
             raise RuntimeError("Format " + config.format + " not supported")
         return image

@@ -40,7 +40,6 @@ full = "1" * 10
     ("_".join((full, zero, zero, zero)), [1023, 0, 0, 0]),
     ("_".join((zero, zero, zero, full)), [0, 0, 0, 1023]),
     ("_".join((zero, full, zero, full)), [0, 1023, 0, 1023]),
-
 ])
 def test_unpack_raw_10bit(inp: str, expected: List[int]):
     bytez = bitstring_to_bytes(inp)
