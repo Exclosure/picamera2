@@ -71,6 +71,17 @@ def _assert_is_byte_array(array: np.ndarray) -> None:
     assert array.ndim == 1, "Unpack raw only accepts flat arrays"
 
 
+# NOTE(meawoppl) - the below implementations are a bit memory inefficient when it comes
+# to deserialization of the 10/12 bit arrays, as it will overallocated by 1/5 and 1/3
+# respectively. This is a tradeoff for simplicity of implementation using numpy.
+# The approach breaks down to the following:
+# - Compute the number of bytes needed at which the data realigns itself to the next byte boundary
+#   - for 10 bit (4 pixels) - 40 bits, 5 bytes
+#   - fot 12 bit (2 pixels) - 24 bits, 3 bytes
+# - Unspool things into alignment blocks (0th axis) and realigned stuff within the blocks
+# - Flatten the index space downward, and trim the tail of the array away (assumed extra bits)
+
+
 def _unpack_10bit(array: np.ndarray) -> np.ndarray:
     original_len = array.size
     array16 = array.reshape((-1, 5)).astype(np.uint16)
@@ -113,12 +124,12 @@ def unpack_csi_padded(
         fmt:
 
     """
-    # The IMX series of sensors pad each row up to the nearest multiple of 32 bytes.
-    # This is somewhat annoying to deal with, as we need also to also keep alignment
-    # with the 10/12 bit packing. So here is what we are doing in a comment form:
-    #
     _assert_is_byte_array(raw)
     assert fmt.packing == "CSI2P", "This method only treats CSI2P packing"
+
+    # The Unicam (MIPI CSI?) series of sensors pad each row up to the nearest multiple of 32 bytes.
+    # This is somewhat annoying to deal with, as we need also to also keep alignment
+    # with the 10/12 bit packing.
 
     # 1. Compute the smallest nominal np array shape which meets the bit-alrignment requirements
     row_bit_length = fmt.bit_depth * pixel_shape[1]
@@ -159,28 +170,17 @@ def unpack_csi_padded(
     return trimmed
 
 
-def unpack_raw(raw: np.ndarray, fmt: SensorFormat) -> np.ndarray:
-    """This converts a raw numpy byte array (flat, uint8) into a 2d numpy array
-
-    Note that in most formats this will still be a bayered image.
+def unpack_raw(
+    raw: np.ndarray, pixel_shape: Tuple[int, int], fmt: SensorFormat
+) -> np.ndarray:
+    """
+    This converts a raw numpy byte array (flat, uint8) into a 2d numpy array of `pixel_shape`
+    and dtype baed on SensorFormat. Note that in most formats this will still be a bayered image.
     """
     _assert_is_byte_array(raw)
-    # NOTE(meawoppl) - the below implementations are a bit memory inefficient when it comes
-    # to deserialization of the 10/12 bit arrays, as it will overallocated by 1/5 and 1/3
-    # respectively. This is a tradeoff for simplicity of implementation using numpy.
-    # The approach breaks down to the following:
-    # - Compute the number of bytes needed at which the data realigns itself to the next byte boundary
-    #   - for 10 bit (4 pixels) - 40 bits, 5 bytes
-    #   - fot 12 bit (2 pixels) - 24 bits, 3 bytes
-    # - Unspool things into alignment blocks (0th axis) and realigned stuff within the blocks
-    # - Flatten the index space downward, and trim the tail of the array away (assumed extra bits)
 
-    if fmt.bit_depth == 8:
-        return raw
-    elif fmt.bit_depth == 10:
-        return _unpack_10bit(raw)
-    elif fmt.bit_depth == 12:
-        return _unpack_12bit(raw)
-
+    # TODO(meawoppl) - add other packed formats here
+    if fmt.packing == "CSI2P":
+        return unpack_csi_padded(raw, pixel_shape, fmt)
     else:
-        raise RuntimeError(f"Unsupported bit depth: {fmt.bit_depth}")
+        raise RuntimeError(f"Unsupported bit raw format: {fmt}")

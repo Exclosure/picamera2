@@ -3,26 +3,37 @@ from typing import List
 import numpy as np
 import pytest
 
-from scicamera.formats import SensorFormat, unpack_csi_padded, unpack_raw
+from scicamera.formats import (
+    SensorFormat,
+    round_up_to_multiple,
+    unpack_csi_padded,
+    unpack_raw,
+)
+
+_10BIT = SensorFormat("SBGGR10_CSI2P")
+_12BIT = SensorFormat("SBGGR12_CSI2P")
 
 
 def bitstring_to_bytes(s):
     s = s.replace(" ", "")
     s = s.replace("_", "")
 
-    return int(s, 2).to_bytes((len(s) + 7) // 8, byteorder="big")
+    bytez = int(s, 2).to_bytes((len(s) + 7) // 8, byteorder="big")
+    padding = round_up_to_multiple(len(bytez), 32) - len(bytez)
+
+    return bytez + (b"\x00" * padding)
 
 
 def test_unpack_raw_12bit_minimum():
-    raw_10_bit = np.zeros(3, dtype=np.uint8)
-    unpacked = unpack_raw(raw_10_bit, "SBGGR12_CSI2P")
-    assert unpacked.size == 2
+    raw_12_bit = np.zeros(32, dtype=np.uint8)
+    unpacked = unpack_raw(raw_12_bit, (1, 2), _12BIT)
+    np.testing.assert_array_equal(unpacked, np.zeros((1, 2), dtype=np.uint16))
 
 
 def test_unpack_raw_10bit_minimum():
-    raw_10_bit = np.zeros(5, dtype=np.uint8)
-    unpacked = unpack_raw(raw_10_bit, "SBGGR10_CSI2P")
-    np.testing.assert_array_equal(unpacked, np.zeros(4, dtype=np.uint16))
+    raw_10_bit = np.zeros(32, dtype=np.uint8)
+    unpacked = unpack_raw(raw_10_bit, (1, 4), _10BIT)
+    np.testing.assert_array_equal(unpacked, np.zeros((1, 4), dtype=np.uint16))
     assert unpacked.size == 4
 
 
@@ -48,10 +59,15 @@ full = "1" * 10
     ],
 )
 def test_unpack_raw_10bit(inp: str, expected: List[int]):
+    out_shape = (1, 4)
     bytez = bitstring_to_bytes(inp)
     array = np.frombuffer(bytez, dtype=np.uint8)
-    unpacked = unpack_raw(array, "SBGGR10_CSI2P")
-    np.testing.assert_array_equal(unpacked, np.array(expected, dtype=np.uint16))
+
+    unpacked = unpack_raw(array, out_shape, _10BIT)
+    assert unpacked.shape == out_shape
+    np.testing.assert_array_equal(
+        unpacked, np.array(expected, dtype=np.uint16).reshape(out_shape)
+    )
 
 
 zero = "0" * 12
@@ -78,24 +94,30 @@ full = "1" * 12
     ],
 )
 def test_unpack_raw_12bit(inp: str, expected: List[int]):
+    out_shape = (1, len(expected))
     bytez = bitstring_to_bytes(inp)
     array = np.frombuffer(bytez, dtype=np.uint8)
-    unpacked = unpack_raw(array, "SBGGR12_CSI2P")
-    np.testing.assert_array_equal(unpacked, np.array(expected, dtype=np.uint16))
+    unpacked = unpack_raw(array, out_shape, _12BIT)
+    assert unpacked.shape == out_shape
+    np.testing.assert_array_equal(
+        unpacked, np.array(expected, dtype=np.uint16).reshape(out_shape)
+    )
 
 
 @pytest.mark.parametrize("size", (1, 2, 10, 1000, 10000))
 def test_unpack_sizes_10bit(size: int):
-    raw_10_bit = np.zeros(size * 5, dtype=np.uint8)
-    unpacked = unpack_raw(raw_10_bit, "SBGGR10_CSI2P")
-    assert unpacked.size == size * 4
+    out_shape = (1, size)
+    raw_10_bit = np.zeros(round_up_to_multiple(size * 10 / 8, 32), dtype=np.uint8)
+    unpacked = unpack_raw(raw_10_bit, out_shape, _10BIT)
+    np.testing.assert_array_equal(unpacked, np.zeros(out_shape, dtype=np.uint16))
 
 
 @pytest.mark.parametrize("size", (1, 2, 10, 1000, 10000))
 def test_unpack_sizes_12bit(size: int):
-    raw_12_bit = np.zeros(size * 3, dtype=np.uint8)
-    unpacked = unpack_raw(raw_12_bit, "SBGGR12_CSI2P")
-    assert unpacked.size == size * 2
+    out_shape = (1, size)
+    raw_12_bit = np.zeros(round_up_to_multiple(size * 12 / 8, 32), dtype=np.uint8)
+    unpacked = unpack_raw(raw_12_bit, out_shape, _12BIT)
+    assert unpacked.shape == out_shape
 
 
 def test_unpack_padded_imx477():
