@@ -146,7 +146,7 @@ class CameraConfig:
             else None
         )
 
-    def align(self, optimal=True):
+    def align(self, optimal: bool = True):
         self.main.align(optimal)
         if self.lores is not None:
             self.lores.align(optimal)

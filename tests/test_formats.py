@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 import pytest
 
-from scicamera.formats import unpack_raw
+from scicamera.formats import SensorFormat, unpack_csi_padded, unpack_raw
 
 
 def bitstring_to_bytes(s):
@@ -96,3 +96,25 @@ def test_unpack_sizes_12bit(size: int):
     raw_12_bit = np.zeros(size * 3, dtype=np.uint8)
     unpacked = unpack_raw(raw_12_bit, "SBGGR12_CSI2P")
     assert unpacked.size == size * 2
+
+
+def test_unpack_padded_imx477():
+    # IMX477 12-bit CSI2P
+    fmt = SensorFormat("SBGGR12_CSI2P")
+    raw = np.zeros(18580480, dtype=np.uint8)
+    nominal_size = (3040, 4056)
+
+    unpacked = unpack_csi_padded(raw, nominal_size, fmt)
+    assert unpacked.dtype == np.uint16
+    assert unpacked.shape == nominal_size
+
+
+def test_unpack_padded_imx219():
+    # IMX219 10-bit CSI2P
+    fmt = SensorFormat("SBGGR10_CSI2P")
+    raw = np.zeros(10171392, dtype=np.uint8)
+    nominal_size = (2464, 3280)
+
+    unpacked = unpack_csi_padded(raw, nominal_size, fmt)
+    assert unpacked.dtype == np.uint16
+    assert unpacked.shape == nominal_size

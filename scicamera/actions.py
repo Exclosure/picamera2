@@ -263,7 +263,7 @@ class RequestMachinery(ABC):
         )[0]
 
     def capture_serial_frames(
-        self, n_frames: int, name="main"
+        self, n_frames: int, name: str = "main"
     ) -> List[TypedFuture[CameraFrame]]:
         """Capture a number of frames from the named stream, returning a list of CameraFrames."""
         return self._dispatch_loop_tasks(
