@@ -37,11 +37,11 @@ def test_capture_raw():
         print(raw.shape)
 
         if camera.info.model == "imx477":
-            assert raw.shape == (3040, 6112)
+            assert raw.shape == preview_config.raw.size
             assert camera.sensor_format == "SBGGR12_CSI2P"
 
         if camera.info.model == "imx219":
-            assert raw.shape == (2464, 3280)
+            assert raw.shape == preview_config.raw.size
             assert camera.sensor_format == "SBGGR10_CSI2P"
 
         assert raw.shape == camera.sensor_format
