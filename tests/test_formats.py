@@ -72,4 +72,14 @@ def test_unpack_raw_12bit(inp: str, expected: List[int]):
     unpacked = unpack_raw(array, "SBGGR12_CSI2P")
     np.testing.assert_array_equal(unpacked, np.array(expected, dtype=np.uint16))
 
+@pytest.mark.parametrize("size", (1, 2, 10, 1000, 10000))
+def test_unpack_sizes_10bit(size: int):
+    raw_10_bit = np.zeros(size * 5, dtype=np.uint8)
+    unpacked = unpack_raw(raw_10_bit, "SBGGR10_CSI2P")
+    assert unpacked.size == size * 4
 
+@pytest.mark.parametrize("size", (1, 2, 10, 1000, 10000))
+def test_unpack_sizes_12bit(size: int):
+    raw_12_bit = np.zeros(size * 3, dtype=np.uint8)
+    unpacked = unpack_raw(raw_12_bit, "SBGGR12_CSI2P")
+    assert unpacked.size == size * 2

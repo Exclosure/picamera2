@@ -88,17 +88,17 @@ def unpack_raw(array: np.ndarray, format: str) -> np.ndarray:
     if bit_depth == 8:
         return array
     elif bit_depth == 10:
-        array16 = array.reshape((-1, 5)).astype(np.uint16)
+        array = array.reshape((-1, 5)).astype(np.uint16)
 
         unpacked_data = np.zeros((len(array), 4), dtype=np.uint16)
         # fmt: off
-        unpacked_data[:, 0] = ((array16[:, 0] << 2) | (array16[:, 1] >> 6)) & 0x3FF
-        unpacked_data[:, 1] = ((array16[:, 1] << 4) | (array16[:, 2] >> 4)) & 0x3FF
-        unpacked_data[:, 2] = ((array16[:, 2] << 6) | (array16[:, 3] >> 2)) & 0x3FF
-        unpacked_data[:, 3] = ((array16[:, 3] << 8) | (array16[:, 4]     )) & 0x3FF
+        unpacked_data[:, 0] = ((array[:, 0] << 2) | (array[:, 1] >> 6)) & 0x3FF
+        unpacked_data[:, 1] = ((array[:, 1] << 4) | (array[:, 2] >> 4)) & 0x3FF
+        unpacked_data[:, 2] = ((array[:, 2] << 6) | (array[:, 3] >> 2)) & 0x3FF
+        unpacked_data[:, 3] = ((array[:, 3] << 8) | (array[:, 4]     )) & 0x3FF
         # fmt: on
 
-        return unpacked_data.ravel()[: array.size * 4 // 5]
+        return unpacked_data.ravel()[: original_len * 4 // 5]
     elif bit_depth == 12:
         array = array.reshape((-1, 3)).astype(np.uint16)
 
