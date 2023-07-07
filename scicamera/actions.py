@@ -201,11 +201,11 @@ class RequestMachinery(ABC):
         )[0]
 
     # Array Capture Methods
-    def _capture_array(self, name, request: CompletedRequest):
+    def _capture_array(self, name: str, request: CompletedRequest):
         return request.make_array(name)
 
     def capture_array(
-        self, name="main", config: Optional[dict] = None
+        self, name:str="main", config: Optional[dict] = None
     ) -> Future[np.ndarray]:
         """Make a 2d image from the next frame in the named stream."""
         return self._dispatch_loop_tasks(
@@ -213,12 +213,12 @@ class RequestMachinery(ABC):
         )[0]
 
     def _capture_arrays_and_metadata(
-        self, names, request: CompletedRequest
+        self, names: List[str], request: CompletedRequest
     ) -> Tuple[List[np.ndarray], Dict[str, Any]]:
         return ([request.make_array(name) for name in names], request.get_metadata())
 
     def capture_arrays_and_metadata(
-        self, names=["main"]
+        self, names: List[str]=["main"]
     ) -> TypedFuture[Tuple[List[np.ndarray], Dict[str, Any]]]:
         """Make 2d image arrays from the next frames in the named streams."""
         return self._dispatch_loop_tasks(

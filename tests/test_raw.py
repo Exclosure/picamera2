@@ -14,12 +14,13 @@ def test_capture_raw():
 
         camera.start_preview()
 
-        preview_config = CameraConfig.for_preview(camera)
-        preview_config.enable_raw()
-        print(preview_config)
-        width, height = preview_config.raw.size
+        # Still config makes the main stream the rez of the sensor
+        still_config = CameraConfig.for_still(camera)
+        still_config.enable_raw()
+        print(still_config)
+        width, height = still_config.raw.size
 
-        camera.configure(preview_config)
+        camera.configure(still_config)
         assert camera.camera_configuration().get_stream_config("raw") is not None
 
         camera.start()
@@ -32,4 +33,5 @@ def test_capture_raw():
         if camera.info.model == "imx219":
             assert camera.sensor_format == "SBGGR10_CSI2P"
 
+        print(camera.info.model)
         assert raw.shape == (height, width)
