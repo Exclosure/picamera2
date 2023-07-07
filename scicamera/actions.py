@@ -141,7 +141,7 @@ class RequestMachinery(ABC):
         )[0]
 
     def _capture_file(
-        self, name, file_output, format, request: CompletedRequest
+        self, name: str, file_output, format, request: CompletedRequest
     ) -> dict:
         request.make_image(name).convert("RGB").save(file_output, format=format)
         return request.get_metadata()
