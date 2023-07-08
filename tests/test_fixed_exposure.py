@@ -1,14 +1,14 @@
-from scicamera import Camera, CameraConfig
-from scicamera.fake import FakeCamera
-
 from typing import Type
 
 import pytest
 
+from scicamera import Camera, CameraConfig
+from scicamera.fake import FakeCamera
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_fixed_exposure(CameraClass: Type[Camera]):
-# Start camera with fixed exposure and gain.
+    # Start camera with fixed exposure and gain.
     with Camera() as camera:
         camera.start_runloop()
 

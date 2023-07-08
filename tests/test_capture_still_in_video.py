@@ -3,6 +3,7 @@ from scicamera.request import CompletedRequest
 
 # Encode a VGA stream, and capture a higher resolution still image half way through.
 
+
 def test_capture_still_during_video():
     with Camera() as camera:
         half_resolution = tuple(dim // 2 for dim in camera.sensor_resolution)

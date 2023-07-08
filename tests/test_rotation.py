@@ -4,6 +4,7 @@ from scicamera import Camera, CameraConfig
 
 # Run the camera with a 180 degree rotation.
 
+
 def test_rotation():
     with Camera() as camera:
         camera.start_runloop()

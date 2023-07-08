@@ -1,14 +1,13 @@
 from concurrent.futures import wait
 
+import pytest
+
 from scicamera import Camera, CameraConfig, CameraInfo
 from scicamera.testing import mature_after_frames_or_timeout
-
-import pytest
 
 
 @pytest.mark.skipif(CameraInfo.n_cameras() <= 1, reason="Requires multiple cameras.")
 def test_multicamera_interleve():
-
     camera1 = Camera(0)
     camera1.configure(CameraConfig.for_preview(camera1))
     camera1.start()
@@ -36,6 +35,7 @@ def test_multicamera_interleve():
 
     camera1.close()
     camera2.close()
+
 
 @pytest.mark.skipif(CameraInfo.n_cameras() <= 1, reason="Requires multiple cameras.")
 def test_multicamera_context():
