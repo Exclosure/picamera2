@@ -159,7 +159,6 @@ class CameraConfig:
         """
         # Get the indices of the streams we want to use.
         index = 1
-        main_index = 0
         lores_index = -1
         raw_index = -1
         if self.lores is not None:
@@ -167,7 +166,7 @@ class CameraConfig:
             index += 1
         if self.raw is not None:
             raw_index = index
-        return main_index, lores_index, raw_index
+        return 0, lores_index, raw_index
 
     def __post_init__(self) -> None:
         if isinstance(self.controls, dict):

@@ -3,7 +3,7 @@
 from scicamera import Camera, CameraConfig
 
 with Camera() as camera:
-    camera.start_preview()
+    camera.start_runloop()
 
     if {"ExposureTime", "AnalogueGain"} < camera.controls.available_control_names():
         controls = {"ExposureTime": 10000, "AnalogueGain": 1.0}

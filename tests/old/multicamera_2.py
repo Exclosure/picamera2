@@ -8,8 +8,8 @@ if CameraInfo.n_cameras() <= 1:
 
 with Camera(0) as camera1:
     config1 = CameraConfig.for_preview(camera1)
+    camera1.start_runloop()
     camera1.configure(config1)
-    camera1.start_preview()
     camera1.start()
     mature_after_frames_or_timeout(camera1)
 

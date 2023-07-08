@@ -5,7 +5,7 @@
 from scicamera import Camera, CameraConfig
 
 with Camera() as camera:
-    camera.start_preview()
+    camera.start_runloop()
 
     preview_config = CameraConfig.for_preview(camera)
     camera.configure(preview_config)

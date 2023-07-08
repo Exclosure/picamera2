@@ -27,5 +27,7 @@ __all__ = [
     "FakeCamera",
     "StreamConfig",
 ]
-
-__version__ = importlib.metadata.version(__package__ or __name__)
+try:
+    __version__ = importlib.metadata.version(__package__ or __name__)
+except ModuleNotFoundError:
+    __version__ = "0.0.0-local"

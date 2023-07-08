@@ -11,7 +11,7 @@ from scicamera.testing import mature_after_frames_or_timeout
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_set_controls(CameraClass: Type[Camera]):
     with CameraClass() as camera:
-        camera.start_preview()
+        camera.start_runloop()
 
         preview_config = CameraConfig.for_preview(camera)
         camera.configure(preview_config)
@@ -39,7 +39,7 @@ def test_set_gain_exposure(CameraClass: Type[Camera]):
         ):
             pytest.skip(f"This camera {camera} does not support setting gain/exposure")
 
-        camera.start_preview()
+        camera.start_runloop()
 
         preview_config = CameraConfig.for_preview(camera)
         camera.configure(preview_config)

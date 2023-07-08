@@ -12,7 +12,7 @@ def test_capture_buffers_and_metadata(CameraClass: Type[Camera]):
     with CameraClass() as camera:
         requires_camera_model(camera, "imx", allow_fake=False)
 
-        camera.start_preview()
+        camera.start_runloop()
 
         preview_config = CameraConfig.for_preview(camera)
         capture_config = CameraConfig.for_still(camera, raw={})
