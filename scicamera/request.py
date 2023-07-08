@@ -100,8 +100,7 @@ class AbstractCompletedRequest(ABC):
         elif fmt == "MJPEG":
             image = np.array(Image.open(io.BytesIO(array)))
         elif formats.is_raw(fmt):
-            array = unpack_raw(array, (w, h), SensorFormat(fmt))
-            image = array.reshape((h, -1))
+            image = unpack_raw(array, (h, w), SensorFormat(fmt))
         else:
             raise RuntimeError("Format " + config.format + " not supported")
         return image
