@@ -3,24 +3,25 @@
 from scicamera import Camera, CameraConfig
 from scicamera.testing import requires_controls
 
-camera = Camera()
-requires_controls(camera, ("ScalerCrop",))
-camera.start_runloop()
-preview_config = CameraConfig.for_preview(camera)
-camera.configure(preview_config)
+with Camera() as camera:
+    requires_controls(camera, ("ScalerCrop",))
 
-camera.start()
+    camera.start_runloop()
 
-metadata = camera.capture_metadata().result()
-size = metadata["ScalerCrop"][2:]
+    preview_config = CameraConfig.for_preview(camera)
+    camera.configure(preview_config)
 
-for _ in range(20):
-    # This syncs us to the arrival of a new camera frame:
-    camera.capture_metadata()
+    camera.start()
 
-    size = [int(s * 0.95) for s in size]
-    offset = [(r - s) // 2 for r, s in zip(camera.sensor_resolution, size)]
-    camera.set_controls({"ScalerCrop": offset + size})
+    metadata = camera.capture_metadata().result()
+    size = metadata["ScalerCrop"][2:]
 
-camera.stop()
-camera.close()
+    for _ in range(20):
+        # This syncs us to the arrival of a new camera frame:
+        camera.capture_metadata()
+
+        size = [int(s * 0.95) for s in size]
+        offset = [(r - s) // 2 for r, s in zip(camera.sensor_resolution, size)]
+        camera.set_controls({"ScalerCrop": offset + size})
+
+    camera.stop()

@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from collections import deque
 from concurrent.futures import Future
 from logging import getLogger
@@ -7,6 +8,7 @@ from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 import numpy as np
 from PIL import Image
 
+from scicamera.configuration import CameraConfig
 from scicamera.frame import CameraFrame
 from scicamera.request import CompletedRequest, LoopTask
 from scicamera.typing import TypedFuture
@@ -14,8 +16,9 @@ from scicamera.typing import TypedFuture
 _log = getLogger(__name__)
 
 
-class RequestMachinery:
+class RequestMachinery(ABC):
     """RequestMachinery is a helper class for the Camera class."""
+
     def __init__(self) -> None:
         self._requests: Deque[CompletedRequest] = deque()
         self._request_callbacks: List[Callable[[CompletedRequest], None]] = []
@@ -26,6 +29,16 @@ class RequestMachinery:
         self._runloop_thread = Thread(target=lambda: 0, daemon=True)
         self._runloop_thread.start()
         self._runloop_thread.join()
+
+    @abstractmethod
+    def close(self):
+        raise NotImplementedError()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def add_request_callback(self, callback: Callable[[CompletedRequest], None]):
         """Add a callback to be called when every request completes.
@@ -160,20 +173,20 @@ class RequestMachinery:
             *[LoopTask.with_request(self._discard_request) for _ in range(n_frames)]
         )[-1]
 
-    def _switch_mode(self, camera_config):
+    def _switch_mode(self, camera_config: CameraConfig):
         self._stop()
-        self._configure(camera_config)
+        self.configure(camera_config)
         self._start()
         return self.camera_config
 
-    def switch_mode(self, camera_config: dict) -> TypedFuture[dict]:
+    def switch_mode(self, camera_config: CameraConfig) -> TypedFuture[CameraConfig]:
         """Switch the camera into another mode given by the camera_config."""
         return self._dispatch_loop_tasks(
             LoopTask.without_request(self._switch_mode, camera_config)
         )[0]
 
     def _capture_file(
-        self, name, file_output, format, request: CompletedRequest
+        self, name: str, file_output, format, request: CompletedRequest
     ) -> dict:
         request.make_image(name).convert("RGB").save(file_output, format=format)
         return request.get_metadata()
@@ -233,11 +246,11 @@ class RequestMachinery:
         )[0]
 
     # Array Capture Methods
-    def _capture_array(self, name, request: CompletedRequest):
+    def _capture_array(self, name: str, request: CompletedRequest):
         return request.make_array(name)
 
     def capture_array(
-        self, name="main", config: Optional[dict] = None
+        self, name: str = "main", config: Optional[dict] = None
     ) -> Future[np.ndarray]:
         """Make a 2d image from the next frame in the named stream."""
         return self._dispatch_loop_tasks(
@@ -245,12 +258,12 @@ class RequestMachinery:
         )[0]
 
     def _capture_arrays_and_metadata(
-        self, names, request: CompletedRequest
+        self, names: List[str], request: CompletedRequest
     ) -> Tuple[List[np.ndarray], Dict[str, Any]]:
         return ([request.make_array(name) for name in names], request.get_metadata())
 
     def capture_arrays_and_metadata(
-        self, names=["main"]
+        self, names: List[str] = ["main"]
     ) -> TypedFuture[Tuple[List[np.ndarray], Dict[str, Any]]]:
         """Make 2d image arrays from the next frames in the named streams."""
         return self._dispatch_loop_tasks(
@@ -295,7 +308,7 @@ class RequestMachinery:
         )[0]
 
     def capture_serial_frames(
-        self, n_frames: int, name="main"
+        self, n_frames: int, name: str = "main"
     ) -> List[TypedFuture[CameraFrame]]:
         """Capture a number of frames from the named stream, returning a list of CameraFrames."""
         return self._dispatch_loop_tasks(

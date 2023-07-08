@@ -3,16 +3,16 @@
 import multiprocessing
 import threading
 import time
+from typing import List
 
 from scicamera import Camera, CameraInfo
 
 
 def run_camera(idx):
-    camera = Camera(idx)
-    camera.start()
-    camera.discard_frames(10)
-    camera.stop()
-    camera.close()
+    with Camera(idx) as camera:
+        camera.start()
+        camera.discard_frames(10)
+        camera.stop()
 
 
 if __name__ == "__main__":
@@ -32,11 +32,10 @@ if __name__ == "__main__":
         proc.join()
 
     print("Test camera in main process")
-    camera = Camera(0)
-    camera.start()
-    time.sleep(3)
-    camera.stop()
-    camera.close()
+    with Camera(0) as camera:
+        camera.start()
+        time.sleep(3)
+        camera.stop()
 
     print("Test camera in subprocess")
     p = multiprocessing.Process(target=run_camera, args=(0,))
@@ -44,16 +43,15 @@ if __name__ == "__main__":
     p.join()
 
     print("Test camera in main process and subprocess")
-    camera = Camera(0)
-    camera.start()
-    p = multiprocessing.Process(target=run_camera, args=(1,))
-    p.start()
-    p.join()
-    camera.stop()
-    camera.close()
+    with Camera(0) as camera:
+        camera.start()
+        p = multiprocessing.Process(target=run_camera, args=(1,))
+        p.start()
+        p.join()
+        camera.stop()
 
     print("Test two threads")
-    threads = []
+    threads: List[threading.Thread] = []
     for i in range(2):
         thread = threading.Thread(target=run_camera, args=(i,), daemon=True)
         thread.start()
@@ -62,10 +60,9 @@ if __name__ == "__main__":
         thread.join()
 
     print("Test camera in main process and thread")
-    camera = Camera(0)
-    camera.start()
-    thread = threading.Thread(target=run_camera, args=(1,), daemon=True)
-    thread.start()
-    thread.join()
-    camera.stop()
-    camera.close()
+    with Camera(0) as camera:
+        camera.start()
+        thread = threading.Thread(target=run_camera, args=(1,), daemon=True)
+        thread.start()
+        thread.join()
+        camera.stop()
