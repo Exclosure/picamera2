@@ -1,7 +1,7 @@
-from scicamera import Camera, CameraInfo
-from scicamera.testing import mature_after_frames_or_timeout
 import time
 
+from scicamera import Camera, CameraInfo
+from scicamera.testing import mature_after_frames_or_timeout
 
 if CameraInfo.n_cameras < 2:
     print("SKIPPED (one camera)")
