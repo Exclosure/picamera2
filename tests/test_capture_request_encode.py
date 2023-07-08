@@ -13,7 +13,7 @@ from scicamera.configuration import CameraConfig
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_request_encode(CameraClass: Type[Camera]):
     with CameraClass() as camera:
-        camera.start_preview()
+        camera.start_runloop()
 
         preview_config = CameraConfig.for_preview(camera)
         camera.configure(preview_config)

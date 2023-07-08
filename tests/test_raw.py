@@ -12,7 +12,7 @@ def test_capture_raw():
     with Camera() as camera:
         _skip_if_no_raw(camera)
 
-        camera.start_preview()
+        camera.start_runloop()
 
         # Still config makes the main stream the rez of the sensor
         still_config = CameraConfig.for_still(camera)

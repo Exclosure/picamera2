@@ -159,8 +159,8 @@ class CameraConfig:
         """
         # Get the indices of the streams we want to use.
         index = 1
-        lores_index = None
-        raw_index = None
+        lores_index = -1
+        raw_index = -1
         if self.lores is not None:
             lores_index = index
             index += 1

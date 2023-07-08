@@ -23,7 +23,7 @@ def test_capture_file_encodings(CameraClass: Type[Camera]):
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_array_mode_change(CameraClass: Type[Camera]):
     with CameraClass() as camera:
-        camera.start_preview()
+        camera.start_runloop()
 
         preview_config = CameraConfig.for_preview(camera)
         still_config = CameraConfig.for_still(camera)

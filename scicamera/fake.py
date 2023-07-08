@@ -139,10 +139,10 @@ class FakeCamera(RequestMachinery):
     def camera_controls(self):
         return {}
 
-    def start_preview(self):
+    def start_runloop(self):
         pass
 
-    def stop_preview(self):
+    def stop_runloop(self):
         pass
 
     def start(self) -> None:
