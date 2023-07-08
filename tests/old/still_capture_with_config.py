@@ -4,7 +4,6 @@ from scicamera import Camera, CameraConfig
 from scicamera.testing import mature_after_frames_or_timeout
 
 with Camera() as camera:
-
     # We don't really need to change anything, but let's mess around just as a test.
     preview_config = CameraConfig.for_preview(camera)
     preview_config.main.size = (800, 600)

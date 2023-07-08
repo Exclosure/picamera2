@@ -14,7 +14,7 @@ import libcamera
 
 import scicamera.formats as formats
 from scicamera.actions import RequestMachinery
-from scicamera.configuration import CameraConfig
+from scicamera.configuration import CameraConfig, StreamConfig
 from scicamera.controls import Controls
 from scicamera.info import CameraInfo
 from scicamera.lc_helpers import errno_handle, lc_unpack, lc_unpack_controls
@@ -206,11 +206,15 @@ class Camera(RequestMachinery):
 
         # The next two lines could be placed elsewhere?
         self.sensor_resolution = self.camera_properties_["PixelArraySize"]
-        self.sensor_format = str(
-            self.camera.generate_configuration([libcamera.StreamRole.Raw])
-            .at(0)
-            .pixel_format
-        )
+
+        # Poke through the various available raw-formats
+        formats: Dict[int, str] = {}
+        configs = self.camera.generate_configuration([libcamera.StreamRole.Raw])
+        for i in range(configs.size):
+            formats[i] = str(configs.at(i).pixel_format)
+
+        self.sensor_format = formats[0]
+        _log.warning("Available sensor raw formats: %s", list(formats.values()))
 
         _log.info("Initialization successful.")
 
@@ -429,10 +433,6 @@ class Camera(RequestMachinery):
     def camera_configuration(self) -> CameraConfig:
         """Return the camera configuration."""
         return self.camera_config
-
-    def stream_configuration(self, name="main") -> dict:
-        """Return the stream configuration for the named stream."""
-        return self.camera_config[name]
 
     def _start(self) -> None:
         """Start the camera system running."""

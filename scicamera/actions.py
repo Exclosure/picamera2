@@ -19,8 +19,8 @@ class RequestMachinery(ABC):
     """RequestMachinery is a helper class for the Camera class."""
 
     def __init__(self) -> None:
-        self._requests = deque()
-        self._request_callbacks = []
+        self._requests: Deque[CompletedRequest] = deque()
+        self._request_callbacks: List[Callable[[CompletedRequest], None]] = []
         self._task_deque: Deque[LoopTask] = deque()
 
     @abstractmethod
@@ -141,7 +141,7 @@ class RequestMachinery(ABC):
         )[0]
 
     def _capture_file(
-        self, name, file_output, format, request: CompletedRequest
+        self, name: str, file_output, format, request: CompletedRequest
     ) -> dict:
         request.make_image(name).convert("RGB").save(file_output, format=format)
         return request.get_metadata()
@@ -201,11 +201,11 @@ class RequestMachinery(ABC):
         )[0]
 
     # Array Capture Methods
-    def _capture_array(self, name, request: CompletedRequest):
+    def _capture_array(self, name: str, request: CompletedRequest):
         return request.make_array(name)
 
     def capture_array(
-        self, name="main", config: Optional[dict] = None
+        self, name: str = "main", config: Optional[dict] = None
     ) -> Future[np.ndarray]:
         """Make a 2d image from the next frame in the named stream."""
         return self._dispatch_loop_tasks(
@@ -213,12 +213,12 @@ class RequestMachinery(ABC):
         )[0]
 
     def _capture_arrays_and_metadata(
-        self, names, request: CompletedRequest
+        self, names: List[str], request: CompletedRequest
     ) -> Tuple[List[np.ndarray], Dict[str, Any]]:
         return ([request.make_array(name) for name in names], request.get_metadata())
 
     def capture_arrays_and_metadata(
-        self, names=["main"]
+        self, names: List[str] = ["main"]
     ) -> TypedFuture[Tuple[List[np.ndarray], Dict[str, Any]]]:
         """Make 2d image arrays from the next frames in the named streams."""
         return self._dispatch_loop_tasks(
@@ -263,7 +263,7 @@ class RequestMachinery(ABC):
         )[0]
 
     def capture_serial_frames(
-        self, n_frames: int, name="main"
+        self, n_frames: int, name: str = "main"
     ) -> List[TypedFuture[CameraFrame]]:
         """Capture a number of frames from the named stream, returning a list of CameraFrames."""
         return self._dispatch_loop_tasks(
