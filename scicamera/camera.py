@@ -17,8 +17,12 @@ from scicamera.actions import RequestMachinery
 from scicamera.configuration import CameraConfig
 from scicamera.controls import Controls
 from scicamera.info import CameraInfo
-from scicamera.lc_helpers import errno_handle, lc_unpack, lc_unpack_controls
-from scicamera.preview import NullPreview
+from scicamera.lc_helpers import (
+    errno_handle,
+    lc_return_code_helper,
+    lc_unpack,
+    lc_unpack_controls,
+)
 from scicamera.request import CompletedRequest, LoopTask
 from scicamera.sensor_format import SensorFormat
 from scicamera.tuning import TuningContext
@@ -147,7 +151,6 @@ class Camera(RequestMachinery):
         self.camera = None
         self.is_open = False
         self.camera_ctrl_info = {}
-        self._preview = None
         self.camera_config = None
         self.streams = None
         self.stream_map = None
@@ -207,11 +210,15 @@ class Camera(RequestMachinery):
 
         # The next two lines could be placed elsewhere?
         self.sensor_resolution = self.camera_properties_["PixelArraySize"]
-        self.sensor_format = str(
-            self.camera.generate_configuration([libcamera.StreamRole.Raw])
-            .at(0)
-            .pixel_format
-        )
+
+        # Poke through the various available raw-formats
+        formats: Dict[int, str] = {}
+        configs = self.camera.generate_configuration([libcamera.StreamRole.Raw])
+        for i in range(configs.size):
+            formats[i] = str(configs.at(i).pixel_format)
+
+        self.sensor_format = formats[0]
+        _log.warning("Available sensor raw formats: %s", list(formats.values()))
 
         _log.info("Initialization successful.")
 
@@ -229,8 +236,8 @@ class Camera(RequestMachinery):
         """
         self._initialize_camera()
 
-        acq_code = self.camera.acquire()
-        errno_handle(acq_code, "camera.acquire()")
+        return_code = self.camera.acquire()
+        lc_return_code_helper(return_code, "camera.acquire()")
 
         self.is_open = True
         _log.info("Camera now open.")
@@ -276,38 +283,19 @@ class Camera(RequestMachinery):
                 self.sensor_modes_.append(cam_mode)
         return self.sensor_modes_
 
-    # TODO(meawoppl) we don't really support previews, so change the language here
-    def start_preview(self) -> None:
-        """
-        Start the preview loop.
-        """
-        if self._preview:
-            raise RuntimeError("An event loop is already running")
-
-        preview = NullPreview()
-        preview.start(self)
-        self._preview = preview
-
-    def stop_preview(self) -> None:
-        """Stop preview the preview thread"""
-        if not self._preview:
-            return
-
-        self._preview.stop()
-        self._preview = None
-
     def close(self) -> None:
         """Close camera
 
         :raises RuntimeError: Closing failed
         """
-        self.stop_preview()
+        if self.is_runloop_running():
+            self.stop_runloop()
         if not self.is_open:
             return
 
         self.stop()
-        code = self.camera.release()
-        errno_handle(code, "camera.release()")
+        release_code = self.camera.release()
+        lc_return_code_helper(release_code, "camera.release()")
 
         self._cm.cleanup(self.camera_idx)
         self.is_open = False
@@ -431,10 +419,6 @@ class Camera(RequestMachinery):
         """Return the camera configuration."""
         return self.camera_config
 
-    def stream_configuration(self, name="main") -> dict:
-        """Return the stream configuration for the named stream."""
-        return self.camera_config[name]
-
     def _start(self) -> None:
         """Start the camera system running."""
         if self.camera_config is None:
@@ -444,8 +428,8 @@ class Camera(RequestMachinery):
         controls = self.controls.get_libcamera_controls()
         self.controls = Controls(self)
 
-        code = self.camera.start(controls)
-        errno_handle(code, "camera.start()")
+        return_code = self.camera.start(controls)
+        lc_return_code_helper(return_code, "camera.start()")
 
         for request in self._make_requests():
             self.camera.queue_request(request)
@@ -462,8 +446,8 @@ class Camera(RequestMachinery):
         if self.camera_config is None:
             raise RuntimeError("Camera has not been configured")
         # By default we will create an event loop is there isn't one running already.
-        if not self._preview:
-            self.start_preview()
+        if not self.is_runloop_running():
+            self.start_runloop()
         self._start()
 
     def _stop(self) -> None:
@@ -474,8 +458,8 @@ class Camera(RequestMachinery):
         """
         if self.started:
             self.stop_count += 1
-            code = self.camera.stop()
-            errno_handle(code, "camera.stop()")
+            return_code = self.camera.stop()
+            lc_return_code_helper(return_code, "camera.stop()")
 
             # Flush Requests from the event queue.
             # This is needed to prevent old completed Requests from showing
@@ -491,8 +475,10 @@ class Camera(RequestMachinery):
         if not self.started:
             _log.debug("Camera was not started")
             return
-        self.stop_preview()
-        self._stop()
+        if self.is_runloop_running():
+            self._dispatch_loop_tasks(LoopTask.without_request(self._stop))[0].result()
+        else:
+            self._stop()
 
     def set_controls(self, controls) -> None:
         """Set camera controls. These will be delivered with the next request that gets submitted."""

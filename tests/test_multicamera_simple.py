@@ -10,7 +10,7 @@ def _n_camera_run(n: int, CameraClass: Type[Camera]):
     cameras = [CameraClass(i) for i in range(n)]
     for camera in cameras:
         camera.configure(CameraConfig.for_preview(camera))
-        camera.start_preview()
+        camera.start_runloop()
         camera.start()
 
     futs = []

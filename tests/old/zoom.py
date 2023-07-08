@@ -6,7 +6,7 @@ from scicamera.testing import requires_controls
 with Camera() as camera:
     requires_controls(camera, ("ScalerCrop",))
 
-    camera.start_preview()
+    camera.start_runloop()
 
     preview_config = CameraConfig.for_preview(camera)
     camera.configure(preview_config)

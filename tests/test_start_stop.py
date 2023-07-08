@@ -19,8 +19,8 @@ def test_different_name_start_stop_runloop(CameraClass: Type[Camera]):
         mature_after_frames_or_timeout(camera)
 
         for _ in range(2):
-            camera.stop_preview()
-            camera.start_preview()
+            camera.stop_runloop()
+            camera.start_runloop()
 
         mature_after_frames_or_timeout(camera)
         camera.stop()

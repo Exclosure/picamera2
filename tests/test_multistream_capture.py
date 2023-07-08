@@ -35,7 +35,7 @@ def test_multiple_streams(CameraClass: Type[Camera]):
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_multiple_streams_with_config(CameraClass: Type[Camera]):
     with CameraClass() as camera:
-        camera.start_preview()
+        camera.start_runloop()
 
         preview_config = CameraConfig.for_preview(camera)
         camera.configure(preview_config)

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 from concurrent.futures import Future
 from logging import getLogger
+from threading import Condition, Event, Thread
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -19,9 +20,15 @@ class RequestMachinery(ABC):
     """RequestMachinery is a helper class for the Camera class."""
 
     def __init__(self) -> None:
-        self._requests = deque()
-        self._request_callbacks = []
+        self._requests: Deque[CompletedRequest] = deque()
+        self._request_callbacks: List[Callable[[CompletedRequest], None]] = []
         self._task_deque: Deque[LoopTask] = deque()
+
+        self._runloop_cond = Condition()
+        self._runloop_abort = Event()
+        self._runloop_thread = Thread(target=lambda: 0, daemon=True)
+        self._runloop_thread.start()
+        self._runloop_thread.join()
 
     @abstractmethod
     def close(self):
@@ -59,6 +66,44 @@ class RequestMachinery(ABC):
 
     def add_completed_request(self, request: CompletedRequest) -> None:
         self._requests.append(request)
+
+        with self._runloop_cond:
+            self._runloop_cond.notify()
+
+    def _runloop(self) -> None:
+        while True:
+            with self._runloop_cond:
+                self._runloop_cond.wait(timeout=0.05)
+
+            if self._runloop_abort.is_set():
+                break
+
+            if len(self._requests) > 0:
+                self.process_requests()
+
+    def start_runloop(self) -> None:
+        """
+        Start the preview loop.
+        """
+        if self._runloop_thread.is_alive():
+            raise RuntimeError("Runloop thread already running?")
+
+        self._runloop_abort.clear()
+        self._runloop_thread = Thread(target=self._runloop, daemon=True)
+        self._runloop_thread.start()
+
+    def is_runloop_running(self):
+        return self._runloop_thread.is_alive()
+
+    def stop_runloop(self) -> None:
+        """Stop preview
+
+        :raises RuntimeError: Unable to stop preview
+        """
+        self._runloop_abort.set()
+        with self._runloop_cond:
+            self._runloop_cond.notify()
+        self._runloop_thread.join()
 
     def has_requests(self) -> bool:
         return len(self._requests) > 0
@@ -146,7 +191,7 @@ class RequestMachinery(ABC):
         )[0]
 
     def _capture_file(
-        self, name, file_output, format, request: CompletedRequest
+        self, name: str, file_output, format, request: CompletedRequest
     ) -> dict:
         request.make_image(name).convert("RGB").save(file_output, format=format)
         return request.get_metadata()
@@ -206,11 +251,11 @@ class RequestMachinery(ABC):
         )[0]
 
     # Array Capture Methods
-    def _capture_array(self, name, request: CompletedRequest):
+    def _capture_array(self, name: str, request: CompletedRequest):
         return request.make_array(name)
 
     def capture_array(
-        self, name="main", config: Optional[dict] = None
+        self, name: str = "main", config: Optional[dict] = None
     ) -> Future[np.ndarray]:
         """Make a 2d image from the next frame in the named stream."""
         return self._dispatch_loop_tasks(
@@ -218,12 +263,12 @@ class RequestMachinery(ABC):
         )[0]
 
     def _capture_arrays_and_metadata(
-        self, names, request: CompletedRequest
+        self, names: List[str], request: CompletedRequest
     ) -> Tuple[List[np.ndarray], Dict[str, Any]]:
         return ([request.make_array(name) for name in names], request.get_metadata())
 
     def capture_arrays_and_metadata(
-        self, names=["main"]
+        self, names: List[str] = ["main"]
     ) -> TypedFuture[Tuple[List[np.ndarray], Dict[str, Any]]]:
         """Make 2d image arrays from the next frames in the named streams."""
         return self._dispatch_loop_tasks(
@@ -268,7 +313,7 @@ class RequestMachinery(ABC):
         )[0]
 
     def capture_serial_frames(
-        self, n_frames: int, name="main"
+        self, n_frames: int, name: str = "main"
     ) -> List[TypedFuture[CameraFrame]]:
         """Capture a number of frames from the named stream, returning a list of CameraFrames."""
         return self._dispatch_loop_tasks(

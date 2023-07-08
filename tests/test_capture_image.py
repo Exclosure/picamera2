@@ -12,7 +12,7 @@ from scicamera.testing import mature_after_frames_or_timeout
 def test_capture_image(CameraClass: Type[Camera]):
     """Capture a full resolution image to memory rather than to a file."""
     with CameraClass() as camera:
-        camera.start_preview()
+        camera.start_runloop()
         preview_config = CameraConfig.for_preview(camera)
         capture_config = CameraConfig.for_still(camera)
 

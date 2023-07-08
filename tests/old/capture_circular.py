@@ -11,7 +11,6 @@ with Camera() as camera:
         lores={"size": lsize, "format": "YUV420"},
     )
     camera.configure(video_config)
-    camera.start_preview()
     camera.start()
     camera.discard_frames(10)
 

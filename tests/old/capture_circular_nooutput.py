@@ -3,7 +3,6 @@ from scicamera import Camera, CameraConfig
 from scicamera.testing import mature_after_frames_or_timeout, requires_controls
 
 with Camera() as camera:
-
     requires_controls(camera, ("FrameDurationLimits",))
 
     video_cfg = CameraConfig.for_video(camera)

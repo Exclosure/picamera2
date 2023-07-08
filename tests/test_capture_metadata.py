@@ -11,7 +11,7 @@ from scicamera.testing import mature_after_frames_or_timeout
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_metadata(CameraClass: Type[Camera]):
     with CameraClass() as camera:
-        camera.start_preview()
+        camera.start_runloop()
 
         preview_config = CameraConfig.for_preview(camera)
         camera.configure(preview_config)
@@ -24,7 +24,7 @@ def test_capture_metadata(CameraClass: Type[Camera]):
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_metadata_deserializes(CameraClass: Type[Camera]):
     with CameraClass() as camera:
-        camera.start_preview()
+        camera.start_runloop()
 
         preview_config = CameraConfig.for_preview(camera)
         camera.configure(preview_config)

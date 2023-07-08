@@ -9,7 +9,6 @@ from scicamera.fake import FakeCamera
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_config_preview(CameraClass: Type[Camera]):
     with CameraClass() as camera:
-
         # We're going to set up some configuration structures, apply each one in
         # turn and see if it gave us the configuration we expected.
 
