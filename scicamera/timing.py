@@ -8,12 +8,12 @@ _log = getLogger(__name__)
 
 
 def calibrate_camera_offset(
-    camera: Camera, 
+    camera: Camera,
     n_frames: int = 100,
 ) -> float:
     """Calibrate the ``SensorTimestamp`` wrt to the epoch time.
 
-    Returns the number of nanoseconds you should add to the camera 
+    Returns the number of nanoseconds you should add to the camera
     ``SensorTimestamp`` to get the epoch time in nanoseconds.
     """
     deltas = []
