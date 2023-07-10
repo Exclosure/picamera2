@@ -56,3 +56,19 @@ def test_multicamera_context():
     mature_after_frames_or_timeout(camera1)
     camera2.capture_file("testb.jpg").result()
     camera2.stop()
+    
+
+@pytest.mark.skipif(CameraInfo.n_cameras() <= 1, reason="Requires multiple cameras.")
+def test_multi_camera_close():
+    with Camera(0) as camera1:
+        camera1.start()
+        mature_after_frames_or_timeout(camera1)
+
+        with Camera(1) as camera2:
+            camera2.start()
+            mature_after_frames_or_timeout(camera2)
+
+        with Camera(1) as camera2:
+            camera2.start()
+            mature_after_frames_or_timeout(camera2)
+            camera2.close()

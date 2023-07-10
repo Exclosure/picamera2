@@ -47,21 +47,21 @@ def check(camera: Camera, raw_config, fps):
     assert isclose(framerate, fps, abs_tol=1.0)
     camera.stop()
 
+def test_mode_switchs():
+    with Camera() as camera:
+        modes = camera.sensor_modes
+        # Make sure less than 5 modes, to avoid timing out
+        modes = modes[:5]
+        for i, mode in enumerate(modes):
+            if mode["format"] == "MJPEG":
+                print("Skipping MJPEG mode", mode)
+                continue
+            print(f"Testing mode (packed): '{mode}' {i+1}/{len(modes)}")
+            # Check packed mode works
+            check(
+                camera, {"size": mode["size"], "format": mode["format"].format}, mode["fps"]
+            )
 
-with Camera() as camera:
-    modes = camera.sensor_modes
-    # Make sure less than 5 modes, to avoid timing out
-    modes = modes[:5]
-    for i, mode in enumerate(modes):
-        if mode["format"] == "MJPEG":
-            print("Skipping MJPEG mode", mode)
-            continue
-        print(f"Testing mode (packed): '{mode}' {i+1}/{len(modes)}")
-        # Check packed mode works
-        check(
-            camera, {"size": mode["size"], "format": mode["format"].format}, mode["fps"]
-        )
-
-        print(f"Testing mode (unpacked): '{mode}' {i+1}/{len(modes)}")
-        # Check unpacked mode works
-        check(camera, {"size": mode["size"], "format": mode["unpacked"]}, mode["fps"])
+            print(f"Testing mode (unpacked): '{mode}' {i+1}/{len(modes)}")
+            # Check unpacked mode works
+            check(camera, {"size": mode["size"], "format": mode["unpacked"]}, mode["fps"])
