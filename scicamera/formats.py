@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import math
-from typing import Tuple, Literal
-from scipy.ndimage import convolve
+from typing import Literal, Tuple
 
 import numpy as np
+from scipy.ndimage import convolve
+
 from scicamera.sensor_format import SensorFormat
 
 YUV_FORMATS = {"NV21", "NV12", "YUV420", "YVU420", "YVYU", "YUYV", "UYVY", "VYUY"}
@@ -186,6 +188,7 @@ def unpack_raw(
     else:
         raise RuntimeError(f"Unsupported bit raw format: {fmt}")
 
+
 BayerLiterals = Literal["RGGB", "BGGR", "GRBG", "GBRG"]
 
 
@@ -210,8 +213,9 @@ def _bayer_masks(
     return channels
 
 
-
-def debayer_bilinear(raw: np.ndarray, pattern: BayerLiterals | str="RGGB") -> np.ndarray:
+def debayer_bilinear(
+    raw: np.ndarray, pattern: BayerLiterals | str = "RGGB"
+) -> np.ndarray:
     """
     Use a basic set of convolutions to debayer a raw image.
     """
@@ -219,17 +223,19 @@ def debayer_bilinear(raw: np.ndarray, pattern: BayerLiterals | str="RGGB") -> np
 
     r_mask, g_mask, b_mask = _bayer_masks(raw.shape, pattern)
 
+    # fmt: off
     g_kernel = np.array([
-        [0, 1, 0],
-        [1, 4, 1],
-        [0, 1, 0],
-    ], dtype=np.float32) / 4
+            [0, 1, 0],
+            [1, 4, 1],
+            [0, 1, 0],
+        ], dtype=np.float32) / 4
 
     rb_kernel = np.array([
-        [1, 2, 1],
-        [2, 4, 2],
-        [1, 2, 1],
-    ], dtype=np.float32) / 4
+            [1, 2, 1],
+            [2, 4, 2],
+            [1, 2, 1],
+        ], dtype=np.float32) / 4
+    # fmt: on
 
     r_plane = convolve(raw * r_mask, rb_kernel)
     g_plane = convolve(raw * g_mask, g_kernel)

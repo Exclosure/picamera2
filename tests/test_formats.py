@@ -5,10 +5,10 @@ import pytest
 
 from scicamera.formats import (
     SensorFormat,
+    debayer_bilinear,
     round_up_to_multiple,
     unpack_csi_padded,
     unpack_raw,
-    debayer_bilinear,
 )
 
 _10BIT = SensorFormat("SBGGR10_CSI2P")
@@ -166,6 +166,6 @@ def test_debayer_bilinear():
     print(rgb[:, :, 1])
     print(rgb[:, :, 2])
 
-    np.testing.assert_array_equal(trimmed[:,:,0], 2)
-    np.testing.assert_array_equal(trimmed[:,:,1], 5)
-    np.testing.assert_array_equal(trimmed[:,:,2], 3)
+    np.testing.assert_array_equal(trimmed[:, :, 0], 2)
+    np.testing.assert_array_equal(trimmed[:, :, 1], 5)
+    np.testing.assert_array_equal(trimmed[:, :, 2], 3)
