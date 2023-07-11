@@ -1,8 +1,9 @@
+from __future__ import annotations
 import math
-from typing import Tuple
+from typing import Tuple, Literal
+from scipy.ndimage import convolve
 
 import numpy as np
-
 from scicamera.sensor_format import SensorFormat
 
 YUV_FORMATS = {"NV21", "NV12", "YUV420", "YVU420", "YVYU", "YUYV", "UYVY", "VYUY"}
@@ -184,3 +185,59 @@ def unpack_raw(
         return unpack_csi_padded(raw, pixel_shape, fmt)
     else:
         raise RuntimeError(f"Unsupported bit raw format: {fmt}")
+
+BayerLiterals = Literal["RGGB", "BGGR", "GRBG", "GBRG"]
+
+
+def _bayer_masks(
+    shape: Tuple[int, ...],
+    pattern: BayerLiterals | str = "RGGB",
+) -> Tuple[np.ndarray, ...]:
+    """
+    Return the mask array for red, green and blue masks for given pattern.
+
+    shape - Dimensions of the bayered image
+    pattern - Color filters on the pixel array.
+
+    Returns a tuple of (r, g, b) masks
+    """
+
+    channel_index = {"R": 0, "G": 1, "B": 2}
+    channels = list(np.zeros(shape, dtype="bool") for _ in range(3))
+    for channel, (y, x) in zip(pattern, [(0, 0), (0, 1), (1, 0), (1, 1)]):
+        channels[channel_index[channel]][y::2, x::2] = 1
+
+    return channels
+
+
+
+def debayer_bilinear(raw: np.ndarray, pattern: BayerLiterals | str="RGGB") -> np.ndarray:
+    """
+    Use a basic set of convolutions to debayer a raw image.
+    """
+    # Create empty arrays to hold the red, green, and blue channels.
+
+    r_mask, g_mask, b_mask = _bayer_masks(raw.shape, pattern)
+
+    g_kernel = np.array([
+        [0, 1, 0],
+        [1, 4, 1],
+        [0, 1, 0],
+    ], dtype=np.float32) / 4
+
+    rb_kernel = np.array([
+        [1, 2, 1],
+        [2, 4, 2],
+        [1, 2, 1],
+    ], dtype=np.float32) / 4
+
+    r_plane = convolve(raw * r_mask, rb_kernel)
+    g_plane = convolve(raw * g_mask, g_kernel)
+    b_plane = convolve(raw * b_mask, rb_kernel)
+
+    rgb = np.empty((*raw.shape, 3), dtype=np.uint16)
+    rgb[..., 0] = np.round(r_plane)
+    rgb[..., 1] = np.round(g_plane)
+    rgb[..., 2] = np.round(b_plane)
+
+    return rgb

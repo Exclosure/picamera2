@@ -8,6 +8,7 @@ from scicamera.formats import (
     round_up_to_multiple,
     unpack_csi_padded,
     unpack_raw,
+    debayer_bilinear,
 )
 
 _10BIT = SensorFormat("SBGGR10_CSI2P")
@@ -140,3 +141,31 @@ def test_unpack_padded_imx219():
     unpacked = unpack_csi_padded(raw, nominal_size, fmt)
     assert unpacked.dtype == np.uint16
     assert unpacked.shape == nominal_size
+
+
+def test_debayer_bilinear():
+    # all red pixels are 2, all green pixels are 5, all blue pixels are 3
+    # fmt: off
+    mosaic = np.array([[2, 5,   2, 5,   2, 5,   2, 5],
+                       [5, 3,   5, 3,   5, 3,   5, 3],
+
+                       [2, 5,   2, 5,   2, 5,   2, 5],
+                       [5, 3,   5, 3,   5, 3,   5, 3],
+
+                       [2, 5,   2, 5,   2, 5,   2, 5],
+                       [5, 3,   5, 3,   5, 3,   5, 3],
+    ])
+    # fmt: on
+
+    rgb = debayer_bilinear(mosaic)
+    assert rgb.shape == mosaic.shape + (3,)
+
+    trimmed = rgb[1:-1, 1:-1, :]
+
+    print(rgb[:, :, 0])
+    print(rgb[:, :, 1])
+    print(rgb[:, :, 2])
+
+    np.testing.assert_array_equal(trimmed[:,:,0], 2)
+    np.testing.assert_array_equal(trimmed[:,:,1], 5)
+    np.testing.assert_array_equal(trimmed[:,:,2], 3)
