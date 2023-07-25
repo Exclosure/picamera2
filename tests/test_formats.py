@@ -2,6 +2,7 @@ from typing import List
 
 import numpy as np
 import pytest
+from pylab import *
 
 from scicamera.formats import (
     SensorFormat,
@@ -9,10 +10,6 @@ from scicamera.formats import (
     unpack_csi_padded,
     unpack_raw,
 )
-
-import numpy as np
-from pylab import *
-
 
 _10BIT = SensorFormat("SBGGR10_CSI2P")
 _12BIT = SensorFormat("SBGGR12_CSI2P")
@@ -81,7 +78,6 @@ full = "1" * 12
 @pytest.mark.parametrize(
     "inp,expected",
     [
-        
         # AAAAAAAA BBBBBBBB AAAA BBBB
         ("00000000 00000000 0000 0000", [0, 0]),
         ("00000000 00000000 0001 0001", [1, 1]),
