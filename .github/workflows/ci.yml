@@ -31,3 +31,9 @@ jobs:
         run: poetry install
       - name: Test
         run: PYTHONPATH=/usr/lib/python3/dist-packages bash test.sh
+      - name: Archive Image Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: image-numpy-exports
+          path: ./artifacts
+        if: always()
