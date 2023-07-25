@@ -6,7 +6,6 @@ import pytest
 
 from scicamera import Camera, CameraManager
 from scicamera.fake import FakeCamera
-from scicamera.testing import requires_controls
 
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
@@ -28,7 +27,8 @@ def test_close_handlers(CameraClass: Type[Camera]):
         camera.discard_frames(2).result()
         camera.stop()
 
-    if CameraManager.n_cameras_attached < 1:
+    if CameraManager.n_cameras_attached() < 1:
+        pytest.skip("No cameras attached")
         return
 
     # Check that everything is released so other processes can use the camera.
