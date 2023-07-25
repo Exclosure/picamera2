@@ -36,3 +36,4 @@ jobs:
         with:
           name: image-numpy-exports
           path: ./artifacts
+        if: always()
