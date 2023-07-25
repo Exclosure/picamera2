@@ -27,7 +27,7 @@ def test_close_handlers(CameraClass: Type[Camera]):
         camera.discard_frames(2).result()
         camera.stop()
 
-    if CameraManager.n_cameras_attached() < 1:
+    if CameraManager.singleton().n_cameras_attached() < 1:
         pytest.skip("No cameras attached")
         return
 
