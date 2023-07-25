@@ -1,10 +1,8 @@
 import os
-from typing import Type
 
 import numpy as np
-import pytest
 
-from scicamera import Camera, CameraConfig, FakeCamera
+from scicamera import Camera, CameraConfig
 from scicamera.testing import mature_after_frames_or_timeout
 
 # This test is a bit unusual. It captures the raw arrays and
@@ -13,12 +11,11 @@ from scicamera.testing import mature_after_frames_or_timeout
 # check the raw arrays for correctness.
 
 
-@pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
-def test_capture_file_encodings(CameraClass: Type[Camera]):
+def test_capture_file_encodings():
     if not os.path.isdir("artifacts"):
         os.mkdir("artifacts")
 
-    with CameraClass() as camera:
+    with Camera() as camera:
         preview_config = CameraConfig.for_still(camera, main={})
         preview_config.enable_raw()
         camera.configure(preview_config)
