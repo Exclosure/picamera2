@@ -14,6 +14,7 @@ camera.discard_frames(2)
 camera.stop()
 """
 
+
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_close_handlers(CameraClass: Type[Camera]):
     def run_camera():
