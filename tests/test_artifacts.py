@@ -29,7 +29,7 @@ def test_capture_file_encodings(CameraClass: Type[Camera]):
             mature_after_frames_or_timeout(camera)
             array = camera.capture_array(name=stream_name).result()
             np.save(f"artifacts/image-{stream_name}-0.npy", array)
-            
+
             bytez = camera.capture_buffer(name=stream_name).result()
             np.save(f"artifacts/bytes-{stream_name}-0.npy", bytez)
 
