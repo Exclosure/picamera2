@@ -1,18 +1,17 @@
 import os
 from typing import Type
 
+import numpy as np
 import pytest
 
 from scicamera import Camera, CameraConfig, FakeCamera
 from scicamera.testing import mature_after_frames_or_timeout
 
-import numpy as np
-
-
 # This test is a bit unusual. It captures the raw arrays and
 # exports them as npy files. These files are then loaded and
 # archived into githubs artifacts system. This allows to visually
 # check the raw arrays for correctness.
+
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_capture_file_encodings(CameraClass: Type[Camera]):
