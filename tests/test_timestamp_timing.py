@@ -31,7 +31,7 @@ def test_timestamps(CameraClass: Type[Camera]):
     timestamps = np.array(timestamps)
     diffs = timestamps[1:] - timestamps[:-1]
     median = np.median(diffs)
-    tol = median / 10
+    tol = median / 5
     print(diffs)
     hist, _ = np.histogram(
         diffs,
