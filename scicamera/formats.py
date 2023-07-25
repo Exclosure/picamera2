@@ -103,8 +103,8 @@ def _unpack_12bit(array: np.ndarray) -> np.ndarray:
 
     unpacked_data = np.zeros((array16.shape[0], 2), dtype=np.uint16)
     # fmt: off
-    unpacked_data[:, 0] = ((array16[:, 0] << 4) | (array16[:, 1] >> 4)) & 0xFFF
-    unpacked_data[:, 1] = ((array16[:, 1] << 8) | (array16[:, 2]     )) & 0xFFF
+    unpacked_data[:, 0] = ((array16[:, 0] << 4) | ((array16[:, 2] >> 0) & 0xF)) & 0xFFF
+    unpacked_data[:, 1] = ((array16[:, 1] << 4) | ((array16[:, 2] >> 4) & 0xF)) & 0xFFF
     # fmt: on
 
     return unpacked_data.ravel()[: original_len * 2 // 3]
