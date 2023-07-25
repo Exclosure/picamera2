@@ -2,7 +2,6 @@ from typing import List
 
 import numpy as np
 import pytest
-from pylab import *
 
 from scicamera.formats import (
     SensorFormat,
