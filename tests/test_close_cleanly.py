@@ -7,6 +7,12 @@ import pytest
 from scicamera import Camera, CameraManager
 from scicamera.fake import FakeCamera
 
+program = """from scicamera import Camera
+camera = Camera()
+camera.start()
+camera.discard_frames(2)
+camera.stop()
+"""
 
 @pytest.mark.parametrize("CameraClass", [Camera, FakeCamera])
 def test_close_handlers(CameraClass: Type[Camera]):
@@ -32,12 +38,6 @@ def test_close_handlers(CameraClass: Type[Camera]):
         return
 
     # Check that everything is released so other processes can use the camera.
-    program = """from scicamera import Camera
-    camera = Camera()
-    camera.start()
-    camera.discard_frames(2)
-    camera.stop()
-    """
     print("Start camera in separate process:")
     cmd = ["python3", "-c", program]
     p = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr)
