@@ -103,8 +103,8 @@ def _unpack_12bit(array: np.ndarray) -> np.ndarray:
 
     unpacked_data = np.zeros((array16.shape[0], 2), dtype=np.uint16)
     # fmt: off
-    unpacked_data[:, 0] = ((array16[:, 0] << 4) | (array16[:, 1] >> 4)) & 0xFFF
-    unpacked_data[:, 1] = ((array16[:, 1] << 8) | (array16[:, 2]     )) & 0xFFF
+    unpacked_data[:, 0] = ((array16[:, 0] << 4) | ((array16[:, 2] >> 0) & 0xF)) & 0xFFF
+    unpacked_data[:, 1] = ((array16[:, 1] << 4) | ((array16[:, 2] >> 4) & 0xF)) & 0xFFF
     # fmt: on
 
     return unpacked_data.ravel()[: original_len * 2 // 3]
@@ -131,7 +131,7 @@ def unpack_csi_padded(
     # This is somewhat annoying to deal with, as we need also to also keep alignment
     # with the 10/12 bit packing.
 
-    # 1. Compute the smallest nominal np array shape which meets the bit-alrignment requirements
+    # 1. Compute the smallest nominal np array shape which meets the bit-alignment requirements
     row_bit_length = fmt.bit_depth * pixel_shape[1]
     row_byte_length = round_up_to_multiple(row_bit_length, 8) // 8
     row_byte_length_padded = round_up_to_multiple(row_byte_length, 32)
