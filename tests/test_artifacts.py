@@ -27,7 +27,7 @@ def test_capture_file_encodings(CameraClass: Type[Camera]):
 
         for stream_name in ("main", "raw"):
             mature_after_frames_or_timeout(camera)
-            filepath = f"artifacts/{stream_name}-0.png"
+            filepath = f"artifacts/{stream_name}-0.npy"
             array = camera.capture_array(name=stream_name).result()
             np.save(filepath, array)
             assert os.path.isfile(filepath)
