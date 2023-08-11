@@ -67,6 +67,6 @@ class CameraInfo:
         """
         found = CameraInfo.n_cameras()
         if found < needed:
-            msg = "{n} camera(s) required found {found} not found (need) (Do not forget to disable legacy camera with raspi-config)."
+            msg = f"{n} camera(s) required found {found} not found (need) (Do not forget to disable legacy camera with raspi-config)."
             _log.error(msg)
             raise RuntimeError(msg)
