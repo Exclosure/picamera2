@@ -59,6 +59,11 @@ class RequestMachinery(ABC):
         """
         self._request_callbacks.remove(callback)
 
+    def add_lc_request(self, lc_request) -> None:
+        self.add_completed_request(
+            CompletedRequest.for_camera(self, lc_request)
+        )
+
     def add_completed_request(self, request: CompletedRequest) -> None:
         self._requests.append(request)
 

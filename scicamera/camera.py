@@ -86,13 +86,11 @@ class CameraManager:
 
     def listen(self):
         sel = selectors.DefaultSelector()
-        sel.register(self.cms.event_fd, selectors.EVENT_READ, self.handle_request)
+        sel.register(self.cms.event_fd, selectors.EVENT_READ)
 
         while self.running:
-            events = sel.select(0.05)
-            for key, _ in events:
-                callback = key.data
-                callback()
+            for _ in sel.select(0.05):
+                self.handle_request()
 
         sel.unregister(self.cms.event_fd)
 
@@ -101,12 +99,15 @@ class CameraManager:
         n_flushed = 0
         with self._lock:
             for req in self.cms.get_ready_requests():
-                if req.status != libcamera.Request.Status.Complete:
-                    _log.warning("Unexpected request status: %s", req.status)
-                    continue
                 if req.cookie == flushid:
                     _log.warning("Flushing request.")
                     n_flushed += 1
+                    continue
+
+                if req.status == libcamera.Request.Status.Complete:
+                    self.cameras[req.cookie].add_lc_request(req)
+                else:
+                    _log.warning("Unexpected request status: %s", req.status)
                     continue
 
                 camera_inst = self.cameras[req.cookie]
